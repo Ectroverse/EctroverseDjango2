@@ -116,7 +116,7 @@ public final class Constants {
 	race_info_list.put("SB",spacebournes);
 
 	dreamweavers.put("pop_growth", 1.1*0.02);
-	dreamweavers.put("research_bonus_military",    1.4);
+	dreamweavers.put("research_bonus_military",    1.0);
 	dreamweavers.put("research_bonus_construction", 1.4);
 	dreamweavers.put("research_bonus_tech",         2.8);
 	dreamweavers.put("research_bonus_energy",       1.4);
@@ -126,7 +126,7 @@ public final class Constants {
 	dreamweavers.put("research_bonus_portals",      1.4);
 	dreamweavers.put("energy_production",    0.8);
 	dreamweavers.put("mineral_production",   1.0);
-	dreamweavers.put("crystal_production",   1.0);
+	dreamweavers.put("crystal_production",   1.25);
 	dreamweavers.put("ectrolium_production",   1.0);
 	dreamweavers.put("travel_speed",   1.0*2.0);
 	dreamweavers.put("research_max_military", 100.0);

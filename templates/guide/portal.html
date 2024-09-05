@@ -1,0 +1,129 @@
+{% extends "gbase.html" %}
+
+{% block content %}
+{% load mathfilters %}
+{% load tags %}
+<head>
+<title>Ectroverse Guide</title>
+
+<style>
+#content-desktop {display: block;}
+#content-mobile {display: none;}
+
+@media screen and (max-width: 837px) {
+
+#content-desktop {display: none;}
+#content-mobile {display: block;}
+
+}
+
+
+</style>
+
+</head>
+<table cellSpacing="0" cellPadding="0" width="90%" align="center" border="0">
+  <tbody>
+    <tr>
+<p align="center"><b><font size="5">Portals</font></b></p>
+<p align="left">Portals allow your units to travel to different areas of the map, allow the defence of planets as well as shortening the time required
+ to reach planets, to explore, attack or use special operations.</p>
+<p align="left">Like all buildings, Portals are each 8 Networth, however their upkeep is very different, the formula to calculate upkeep is; </p>
+<p align="left">Upkeep = (((Portals-1)^1.2736)*10000) / (1.0 + Culture Research Percent/100.0)</p>
+<p align="left">Portals is your current Portal count, followed by minus 1. This means your first Portal on your Home Planet is free, however your next Portal will cost 10000 per week to upkeep, with the cost for each Portal increasing with each added Portal. Portals research helps to lower the cost, so if your Portals research is 100% and you have 2 Portals we get: 10000 / 2 = 5000 upkeep per week.
+<p align="left">This calculator will tell you the upkeep required, depending on Portal count and Research.
+
+<form name="Upkeep">
+          <p align="left">Portals<input type="text" name="Por" size="4"><br>
+          <p align="left">Portals Research<input type="text" name="Prc" size="4">%<br>
+          <br>
+          <input type="submit" value="Calculate" onclick="
+var PorNum=document.Upkeep.Por.value;
+var PorRc=document.Upkeep.Prc.value;
+var Cost1=PorNum-1;
+var Cost2=Math.pow(Cost1,1.2736);
+var Cost3=Cost2*10000;
+var Cost4=Math.round(Cost3);
+var Cost4=1 + PorRc/100;
+var Cost5=Math.round(Cost3/Cost4);
+document.Upkeep.Cost.value=Cost5;        
+return false" /><br>
+          Upkeep:<input type="text" name="Cost" size="13" style="background-color: #0b1119; color: white; border-style: solid; border-color: #0b1119;" />
+        </form></p>
+
+    </tr>
+<tr>
+<p align="center"><b><font size="5">Portal Coverage</font></b></p>
+<p align="left">Portals cover a certain area on the Map, offering protection to defending Planets. Starting at 100%, a system containing a Portal will have the maximum coverage, while the further away
+you get, the cover decreases. Use the Map below, along with Portal Research Percent to see how this changes.</p>
+<p align="left">Number shown is Protection Percent</p>
+<p align="left">There are 2 Portals in this diagram to show how they help cover planets between them too. They can be moved for further illustration.</p>
+
+<form action="/guide/portal" method="POST" >
+{% csrf_token %}
+<p align="center">Portals Research Percent <input type="text" required="required" pattern="[0-9]+" maxlength="4" name="weeks" value="{{wks}}" size="4">% <input type="submit" name="por_calc_form" value="Go" ></p>
+<table width="100%">
+<tr>
+<td colspan="2">Portal 1</td><td colspan="2">Portal 2</td>
+</tr><tr>
+<td>X&nbsp;<input type="text" required="required" pattern="[0-9]+" maxlength="4" name="x1" value="{{xone}}" size="4" max="10"></td>
+<td>Y&nbsp;<input type="text" required="required" pattern="[0-9]+" maxlength="4" name="y1" value="{{yone}}" size="4" max="17"></td>
+<td>X&nbsp;<input type="text" required="required" pattern="[0-9]+" maxlength="4" name="x2" value="{{xtwo}}" size="4" max="10"></td>
+<td>Y&nbsp;<input type="text" required="required" pattern="[0-9]+" maxlength="4" name="y2" value="{{ytwo}}" size="4" max="17"></td>
+</tr></table></form>
+<div id="speeddiv" style="background-color:black; "></div> 
+
+<script>
+    const width = 12;
+  const height = 20;
+  const circle_radius = 0.8;
+  const svg2 = d3.select("#speeddiv")
+    .append("div")
+    .append("svg")
+    .style("height", '100vh')
+    .style("width", '80vw')
+    .attr("preserveAspectRatio", "xMidYmin meet")
+    .attr("viewBox", [-1, -1, width, height])
+	
+	const ge = svg2.append("g");
+	
+	{% for key in speedgen %}
+    {% with s=speedgen|getvalue:key %}		
+	
+	ge.append("circle")
+		.attr("cx", {{s.x}})
+		.attr("cy", {{s.y}})
+		.attr("r", circle_radius * 0.45)
+		.style("fill", "{{s.color}}")
+		.style("opacity",1)
+        ge.append("text")
+        .attr("x", "{{s.x}}")
+        .attr("y", {{s.y}}+0.1)
+        .attr("font-family", "sans-serif")
+        .attr("font-size", "0.5")
+        .attr("fill", "blue")
+        .attr("text-anchor", "middle")
+		.attr("allignment-baseline", "after-edge")
+        .text("{{s.cover}}");
+    
+    {% if s.portal != "" %}
+	        ge.append("circle")
+			    .attr("cx", {{s.x}}+0.32)
+			    .attr("cy", {{s.y}}+0.27)
+			    .attr("r", circle_radius * 0.25)
+			    .style("fill", "{{s.portal}}")
+			    .style("opacity", 1)
+		    ge.append("image")
+			    .attr("xlink:href", "/static/buildings/Portal.png")
+			    .attr("x", {{s.x}}+0.2)
+			    .attr("y", {{s.y}}+0.15)
+			    .attr("width", circle_radius *0.3)
+			    .attr("height", circle_radius *0.3)
+    {% endif %}
+              
+	{% endwith %}
+	{% endfor %}
+
+</script>
+  </tbody>
+</table>
+{% endblock %}

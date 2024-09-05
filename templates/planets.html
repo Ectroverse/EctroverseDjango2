@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% load static %}
+{% load humanize %}
 
 {% load mathfilters %}
 
@@ -15,10 +16,119 @@ display: table-row;
 background-color: rgb(25,38,51);
 }
 
+input[type="submit"] {
+	margin: 5px;
+	}
 </style>
 
 <div class= "center">
+{% if msg != "" %}
+{{msg}}
+{% endif %}
+
+{% if error %}
+<span><b>{{error}}</b></span>
+{% endif %}
+
 <table width="100%">
+<tr>
+<td align="right" colspan="6">
+<div class="dropdown"><button class="dropbtn" disabled>Mass Build All</button>
+<div class="dropdown-content">
+{% if a_arts.count > 0 %}
+<form method="POST">
+{% csrf_token %}
+{% for m in a_arts %}
+<input type="hidden" name="planets_id_mass_build" value="{{m}}">
+{% endfor %}
+{% if status.galsel == 1 %}
+<input type="submit" formaction="/mass_build" name="massbuild" value="Artefacts">
+{% elif status.galsel == 2 %}
+<input type="submit" formaction="/galtwo/mass_build" name="massbuild" value="Artefacts">
+{% endif %}
+</form>
+{% endif %}
+{% if a_sols.count > 0 %}
+<form method="POST">
+{% csrf_token %}
+{% for m in a_sols %}
+<input type="hidden" name="planets_id_mass_build" value="{{m}}">
+{% endfor %}
+{% if status.galsel == 1 %}
+<input type="submit" formaction="/mass_build" name="massbuild" value="Solar Bonus">
+{% elif status.galsel == 2 %}
+<input type="submit" formaction="/galtwo/mass_build" name="massbuild" value="Solar Bonus">
+{% endif %}
+</form>
+{% endif %}
+{% if a_fisz.count > 0 %}
+<form method="POST">
+{% csrf_token %}
+{% for m in a_fisz %}
+<input type="hidden" name="planets_id_mass_build" value="{{m}}">
+{% endfor %}
+{% if status.galsel == 1 %}
+<input type="submit" formaction="/mass_build" name="massbuild" value="Fission Bonus">
+{% elif status.galsel == 2 %}
+<input type="submit" formaction="/galtwo/mass_build" name="massbuild" value="Fission Bonus">
+{% endif %}
+</form>
+{% endif %}
+{% if a_minz.count > 0 %}
+<form method="POST">
+{% csrf_token %}
+{% for m in a_minz %}
+<input type="hidden" name="planets_id_mass_build" value="{{m}}">
+{% endfor %}
+{% if status.galsel == 1 %}
+<input type="submit" formaction="/mass_build" name="massbuild" value="Mineral Bonus">
+{% elif status.galsel == 2 %}
+<input type="submit" formaction="/galtwo/mass_build" name="massbuild" value="Mineral Bonus">
+{% endif %}
+</form>
+{% endif %}
+{% if a_cryz.count > 0 %}
+<form method="POST">
+{% csrf_token %}
+{% for m in a_cryz %}
+<input type="hidden" name="planets_id_mass_build" value="{{m}}">
+{% endfor %}
+{% if status.galsel == 1 %}
+<input type="submit" formaction="/mass_build" name="massbuild" value="Crystal Bonus">
+{% elif status.galsel == 2 %}
+<input type="submit" formaction="/galtwo/mass_build" name="massbuild" value="Crystal Bonus">
+{% endif %}
+</form>
+{% endif %}
+{% if a_ectz.count > 0 %}
+<form method="POST">
+{% csrf_token %}
+{% for m in a_ectz %}
+<input type="hidden" name="planets_id_mass_build" value="{{m}}">
+{% endfor %}
+{% if status.galsel == 1 %}
+<input type="submit" formaction="/mass_build" name="massbuild" value="Ectrolium Bonus">
+{% elif status.galsel == 2 %}
+<input type="submit" formaction="/galtwo/mass_build" name="massbuild" value="Ectrolium Bonus">
+{% endif %}
+</form>
+{% endif %}
+{% if a_none.count > 0 %}
+<form method="POST">
+{% csrf_token %}
+{% for m in a_none %}
+<input type="hidden" name="planets_id_mass_build" value="{{m}}">
+{% endfor %}
+{% if status.galsel == 1 %}
+<input type="submit" formaction="/mass_build" name="massbuild" value="No Bonus">
+{% elif status.galsel == 2 %}
+<input type="submit" formaction="/galtwo/mass_build" name="massbuild" value="No Bonus">
+{% endif %}
+</form>
+{% endif %}
+</td>
+<td><a href="/guide/planets"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a></td>
+</tr>
 <tr>
 <td width="15%"><a href="?order_by=planet">Planet</a></td>
 <td width="10%"><a href="?order_by=-size">Size</a></td>
@@ -27,12 +137,12 @@ background-color: rgb(25,38,51);
 <td width="25%"><a href="?order_by=current_population">Population</a></td>
 <td width="28%">Build - <a href="?order_by=protection">Protection</a> -
 <style>
-.dropbtn {  background-color: #4CAF50;  color: white;  font-size: 12px;  border: none;  padding: 0px;}
+.dropbtn { font-size: 12px;  border: none;  padding: 0px;}
 .dropdown {  position: relative;  display: inline-block;}
-.dropdown-content {  display: none;  position: absolute;  background-color: #f1f1f1;  min-width: 160px;  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);  z-index: 1;}
-.dropdown-content a {  color: black;  padding: 12px 16px;  text-decoration: none;  display: block;}
-.dropdown-content a:hover {background-color: #ddd;}.dropdown:hover .dropdown-content {display: block;}
-.dropdown:hover .dropbtn {background-color: #3e8e41;}
+.dropdown-content {  display: none;  position: absolute;  background-color: #0e151d;  min-width: 100%;  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);  z-index: 1;}
+.dropdown-content a {  color: #0e151d;  padding: 12px 16px;  text-decoration: none;  display: block;}
+.dropdown-content a:hover {background-color: #37506e;}.dropdown:hover .dropdown-content {display: block;}
+.dropdown:hover .dropbtn {background-color: #37506e;}
 </style>
 <div class="dropdown"><button class="dropbtn" disabled>Bonus</button>
 <div class="dropdown-content">
@@ -42,17 +152,16 @@ background-color: rgb(25,38,51);
 <a href="?order_by=-bonus_crystal">Crystal</a>
 <a href="?order_by=-bonus_ectrolium">Ectrolium</a>
 <a href="?order_by=-bonus_fission">Fission</a></td>
-<td width="2%"><div class="href" onclick="toggleForm('massbuild');"><font size="1">Toggle</font></div></td>
+<td width="2%"><div class="href" onclick="toggleForm();"><font size="1">Toggle</font></div></font></td>
 </tr>
-
-<form action="/mass_build" method="POST" name="massbuild">
+<form method="POST">
 {% csrf_token %}
 
 {% for planet in planets %}
 
 <tr class="{% cycle 'row2' 'row1' %}">
 
-<td><a href="/planet{{planet.id}}">{{planet.x}},{{planet.y}}:{{planet.i}}
+<td><a href="planet{{planet.id}}">{{planet.x}},{{planet.y}}:{{planet.i}}
 </a></td>
 <td>{{planet.size}}</td>
 <td>{{planet.total_buildings}}
@@ -69,16 +178,22 @@ background-color: rgb(25,38,51);
 {% endif %}
 
 <td>
-{% if planet.popper >= 90 %}
+{% if planet.current_population|div:planet.max_population|mul:100 >= 90 %}
 <font color="#FF0000">
-{% elif planet.popper >= 70 %}
+{% elif planet.current_population|div:planet.max_population|mul:100 >= 70 %}
 <font color="#FFFF00">
 {% else %}
 <font color="#00FF00">
-{% endif %}{{planet.current_population}} / {{planet.max_population}}</font></td>
-<td><a href="/build{{planet.id}}">Build</a>
+{% endif %}{{planet.current_population|intcomma}} / {{planet.max_population|intcomma}}</font></td>
+<td>
+{% if status.galsel == 1 %}
+<a href="/build{{planet.id}}">Build</a>
+{% elif status.galsel == 2 %}
+<a href="/galtwo/build{{planet.id}}">Build</a>
+{% endif %}
+
 {% if planet.portal %}
-&nbsp;&nbsp;<img src="/static/buildings/Portal.png" width=16px height=16px>&nbsp;<font color="#00FF00">{{planet.protection}}%</font>
+&nbsp;&nbsp;<img src="/static/buildings/Portal.png" width=16px height=16px>&nbsp;&nbsp;<font color="#00FF00">{{planet.protection}}%</font>
 {% else %}
     {% if planet.protection >= 70 %}
     &nbsp;&nbsp;<font color="#00FF00">{{planet.protection}}%</font>
@@ -89,8 +204,12 @@ background-color: rgb(25,38,51);
     {% endif %}
 {% endif %}
 
+{% for sta in stationed %}
+	{% if sta.on_planet.id == planet.id %}
+		&nbsp;&nbsp;<img src="/static/units/forward-field.png" width="16px" height="16px">
+	{% endif %}{% endfor %}
 {% if planet.artefact is not None %}
-	<img src="{{planet.artefact.image}}" alt="{{planet.artefact.name}}" title="Artefact"></td>
+	<img src="{{planet.artefact.image}}" alt="{{planet.artefact.name}}" title="Artefact" width=16px height=16px></td>
 {% else %}
 
 {% if planet.bonus_solar %}
@@ -131,17 +250,40 @@ background-color: rgb(25,38,51);
 {% else %}
 <font color="#00FF00">
 {% endif %}
-{{currentpop}} / {{maxpop}}</font></td>
+{{currentpop|intcomma}} / {{maxpop|intcomma}}</font></td>
 <td>{{status.total_portals}}</td>
 <td></td></tr>
-<tr><td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td colspan="2" align="right"><input type="submit" value="Mass Build"></td></tr>
+<tr>
+<td colspan="5" align="center">
+
+Raze all : 
+<select name="buildingsel">
+			<option value="NA" selected>
+			<option value="SC">Solar Collecters
+			<option value="FI">Fission
+			<option value="MP">Mineral Plants
+			<option value="CL">Crystal Labs
+			<option value="RS">Refinement Stations
+			<option value="CI">Cities
+			<option value="RC">Research Centers
+			<option value="DS">Defense Satalites
+			<option value="SN">Shield Networks
+	</select>
+<input type="submit" onclick="return confirm('Are you sure you want to raze all?');" name="razeallbuild" value="Confirm">
+</td>
+
+<td colspan="2" align="right">
+{% if status.galsel == 1 %}
+<input type="submit" formaction="/mass_build" name="massbuild" value="Mass Build">
+{% elif status.galsel == 2 %}
+<input type="submit" formaction="/galtwo/mass_build" name="massbuild" value="Mass Build">
+{% endif %}
+</td></tr>
 </table>
 </form>
+
 </div>
+
+
 
 {% endblock %}

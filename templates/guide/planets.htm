@@ -1,0 +1,264 @@
+{% extends "gbase.html" %}
+
+{% block content %}
+
+{% load static %}
+
+<head>
+<title>Ectroverse Guide</title>
+
+<style>
+#content-desktop {display: block;}
+#content-mobile {display: none;}
+
+@media screen and (max-width: 837px) {
+
+#content-desktop {display: none;}
+#content-mobile {display: block;}
+
+}
+
+.row1{}
+
+.row2{
+display: table-row;
+background-color: rgb(25,38,51);
+}
+
+input[type="submit"] {
+	margin: 5px;
+	}
+
+</style>
+
+</head>
+
+<table cellSpacing="0" cellPadding="0" width="90%" align="center" border="0">
+  <tbody>
+    <tr>
+
+<p align="center"><font size="5"><b>Planets</B></font></p>
+<p align="left">Planets are the biggest part of your empire, it is what your
+empire is based on, usually the more planets you have the stronger is your
+empire. In the planet menu you can see a list of your planets, as well as the
+maximum number of buildings they can support and the number of buildings on
+them. You can build more buildings than the planet can support buy every next
+building you build after you reach the maximum will cost more and more money,
+the price will follow equation y=x<sup>2</sup>,where x is the number of
+buildings over the maximum and y is the price. So for example if you have twice
+the maximum amount of buildings, then the price would go up by a factor of 4. If
+you have more buildings on the planet than the maximum number it can support,
+then the increased cost will be shows next to the total amount of buildings. Also the current and the maximum population per planet is shown. The
+maximum population of the planet in directly proportional to the number of
+buildings the planet can support. The factor is 1:200, so for each building the
+planet can support there we be 200 people, so if a planet can support 100
+buildings the maximum population will be 20000. Also you will see whether or not
+there is a Portal on the planet, if there is no portal you will be offered to
+build one. Protection shows how protected your planet is, 100% is only achieved
+if you have a portal in the planet's system, the farther you get away from the
+nearest portal the less protected your planet will be.. Here is a sample planet list:</p>
+<p align="left">&nbsp;</p>
+
+<p align="left">Clicking one of the headers will allow you to sort the Planets. </p>
+<table width="100%" cellspacing="0" cellpadding="0" align="center">
+  <tr>
+      <table width="100%">
+          <tbody>
+            <tr>
+            <td align="right" colspan="6">
+            <div class="dropdown"><button class="dropbtn" disabled>Mass Build All</button>
+            <div class="dropdown-content">
+            <input type="submit"value="Artefacts">
+            <input type="submit"value="Solar Bonus">
+            <input type="submit"value="Fission Bonus">
+            <input type="submit"value="Mineral Bonus">
+            <input type="submit"value="Crystal Bonus">
+            <input type="submit"value="Ectrolium Bonus">
+            <input type="submit"value="No Bonus">
+            </td>
+            <td></td>
+            </tr>
+            <tr>
+              <td width="15%"><a href="javascript:void(0);">Planet</a></td>
+                <td width="10%"><a href="javascript:void(0);">Size</a></td>
+                <td width="8%"><a href="javascript:void(0);">Buildings</a></td>
+                <td width="12%"><a href="/guide/obcalc">Overbuilt %</a></td>
+                <td width="25%"><a href="javascript:void(0);">Population</a></td>
+                <td width="28%">Build - <a href="javascript:void(0);">Protection</a> -
+                <style>
+                .dropbtn { font-size: 12px;  border: none;  padding: 0px;}
+                .dropdown {  position: relative;  display: inline-block;}
+                .dropdown-content {  display: none;  position: absolute;  background-color: #0e151d;  min-width: 100%;  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);  z-index: 1;}
+                .dropdown-content a {  color: #0e151d;  padding: 12px 16px;  text-decoration: none;  display: block;}
+                .dropdown-content a:hover {background-color: #37506e;}.dropdown:hover .dropdown-content {display: block;}
+                .dropdown:hover .dropbtn {background-color: #37506e;}
+                </style>
+                <div class="dropdown"><button class="dropbtn" disabled>Bonus</button>
+                <div class="dropdown-content">
+                <a href="javascript:void(0);">Artefacts</a>
+                <a href="javascript:void(0);">Solar</a>
+                <a href="javascript:void(0);">Mineral</a>
+                <a href="javascript:void(0);">Crystal</a>
+                <a href="javascript:void(0);">Ectrolium</a>
+                <a href="javascript:void(0);">Fission</a></td>
+                <td width="2%"><div class="href" onclick="toggleForm();"><font size="1">Toggle</font></div></font></td>
+            </tr>
+            <tr class="row2">
+              <td><a href="javascript:void(0);">1,3:0</a></td>
+              <td>450</td>
+              <td>900 </td>
+              <td><font color="#ff4040">+281.44%</font></td>
+              <td>90000 / 90000</td>
+              <td><a href="buildings">Build</a>
+              <img src="/static/buildings/Portal.png" width=16px height=16px>
+              <font color="#00FF00">100%</font>
+              <img src="{% static 'pr0.gif' %}" width="16" height="16">+50%</td>
+              <td><input type="checkbox" name="m2224" value="ON"></td>
+            </tr>
+            <tr class="row1">
+              <td><a href="javascript:void(0);">1,8:0</a></td>
+              <td>267</td>
+              <td>267</td>
+              <td></td>
+              <td>53400 / 53400</td>
+              <td><a href="buildings">Build</a>
+              <font color="#FF0000">10%</font>
+              <img src="{% static 'pr1.gif' %}" width="16" height="16">+45%</td>
+              <td><input type="checkbox" name="m3415" value="ON"></td>
+            </tr>
+            <tr class="row2">
+              <td><a href="javascript:void(0);">2,1:0</a></td>
+              <td>162</td>
+              <td>162</td>
+              <td></td>
+              <td>32400 / 32400</td>
+              <td><a href="buildings">Build</a>&nbsp;
+              <img src="/static/buildings/Portal.png" width=16px height=16px>
+              <font color="#00FF00">100%</font>
+              <img src="{% static 'pr2.gif' %}" width="16" height="16">+90%</td>
+              <td><input type="checkbox" name="m1721" value="ON"></td>
+            </tr>
+            <tr class="row1">
+              <td><a href="javascript:void(0);">3,3:0</a></td>
+              <td>278</td>
+              <td>278</td>
+              <td></td>
+              <td>55600 / 55600</td>
+              <td><a href="buildings">Build</a>&nbsp;
+              <font color="#FF0000">45%</font>
+              <img src="{% static 'pr3.gif' %}" width="16" height="16">+30%</td>
+              <td><input type="checkbox" name="m1720" value="ON"></td>
+            </tr>
+            <tr class="row2">
+              <td><a href="javascript:void(0);">3,7:0</a></td>
+              <td>185</td>
+              <td>185</td>
+              <td></td>
+              <td>37000 / 37000</td>
+              <td><a href="buildings">Build</a>&nbsp;
+              <font color="#FF0000">15%</font>
+              <img src="{% static 'pr4.gif' %}" width="16" height="16">+20%</td>
+              <td><input type="checkbox" name="m1134" value="ON"></td>
+            </tr>
+            <tr>
+              <td>5 Planets</td>
+              <td>1142</td>
+              <td>1392</td>
+              <td><font color="#FF0000">+56.2%</font></td>
+              <td>228400 / 228400</td>
+              <td>2 Portals</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+            <td colspan="5" align="center">
+            Raze all : 
+            <select name="buildingsel">
+			            <option value="NA" selected>
+			            <option value="SC">Solar Collecters
+			            <option value="FI">Fission
+			            <option value="MP">Mineral Plants
+			            <option value="CL">Crystal Labs
+			            <option value="RS">Refinement Stations
+			            <option value="CI">Cities
+			            <option value="RC">Research Centers
+			            <option value="DS">Defense Satalites
+			            <option value="SN">Shield Networks
+	            </select>
+            <input type="submit" onclick="return confirm('Are you sure you want to raze all?');" value="Confirm">
+            </td>
+
+            <td colspan="2" align="right">
+            <input type="submit"value="Mass Build">
+            </td></tr>
+            
+          </tbody>
+        </table>
+      </form>
+    </td>
+  </table>
+  <p align="left">&nbsp;</p>
+<p align="left">Notice that each of those planets has a special bonus next to
+each, each one of those bonuses contributes to the production of specific
+resource on the planet and going from top to bottom the pictures represent:
+Solar Bonus, Mineral Bonus, Crystal Bonus, Ectrolium Bonus and Fission Bonus, the planets with bonuses are rather rare and don't expect that many of
+your will have bonuses on them and also don't expect the numbers to be round
+like mine. </p>
+
+  <p align="left">Notice the check boxes after each planet, this is done to save
+  you the time of build separately on each planet, so say if you want to build a
+  100 buildings on 5 planets of your choosing, you just mark the boxes next to
+  them and click on &quot;Mass Build&quot;. </p>
+  
+  <p align="left">Using the &quot;Mass Build All&quot; and selecting a bonus will select all your planets with that bonus and take you to mass build, removing the need to individually select them. </p>
+
+    <p align="left">&quot;Raze All&quot;, selecting a building and pressing confirm will delete all the selected buildings from all of the selected Planets. A warning will appear first before completing the action.</p>
+&nbsp;</td>
+    </tr>
+  </tbody>
+</table >
+<table width="100%" align="center">
+<tr>
+<td colspan="100%">Networth</td>
+</tr>
+<tr class="row2">
+<td colspan="100%">Everything in EV increases your total Networth, with planets being broken down depending on the size and bonus.</td>
+</tr>
+<tr>
+<td>Aspect</td><td>Networth</td>
+</tr>
+<tr class="row2">
+<td>Size</td><td>1.75</td>
+</tr>
+<tr>
+<td>Solar Bonus</td><td>1.25</td>
+</tr>
+<tr class="row2">
+<td>Mineral Bonus</td><td>1.45</td>
+</tr>
+<tr>
+<td>Crystal Bonus</td><td>2.25</td>
+</tr>
+<tr class="row2">
+<td>Ectrolium Bonus</td><td>1.65</td>
+</tr>
+<tr>
+<td>Fission Bonus</td><td>5</td>
+</tr>
+</table >
+<table width="100%" align="center">
+<tr class="row2">
+<td colspan="100%">To calculate a Planets Networth, you have to times by size, followed by the bonus.</td>
+</tr>
+<tr>
+<td>Size</td><td>Bonus</td><td>Total</td>
+</tr><tr class="row2">
+<td>100</td><td>10</td><td></td>
+</tr><tr>
+<td>100 * 1.75</td><td>10 * 1.25</td><td></td>
+</tr><tr class="row2">
+<td>175</td><td>12.5</td><td>187.5</td>
+</tr><tr>
+</table>
+
+{% endblock %}

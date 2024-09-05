@@ -11,7 +11,6 @@ services:
         - ./static:/static
       depends_on:
         - python
-
       
 
   db:

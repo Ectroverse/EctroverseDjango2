@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
-
+{% load humanize %}
 <head>
 
 	<script>
@@ -13,6 +13,7 @@
 			document.getElementById('mobilemenu').style.display = "block";
 			}
 	}
+	
 	window.onload = function() {
 		formatResources({{status.energy}}, {{status.minerals}}, {{status.crystals}}, {{status.ectrolium}}, {{status.networth}}, {{status.population}});
 		startTime();
@@ -44,18 +45,12 @@
 		document.getElementById('population').innerHTML = numberFormatter(population);
 	}
 
-	setInterval(function(){
-	   $('#btn1').load("/btn #btn1 > *");
-	   $('#btn2').load("/btn #btn2 > *");
-	   $('#btn3').load("/btn #btn3 > *");
-	   $('#btn4').load("/btn #btn4 > *");
-
-	   //alert('test!');
-	}, 2000) // time in milliseconds (ie 2 seconds)
-
-
 
 </script>
+
+
+
+
 
 <style>
 <!-- width>= 836px - normal desctop mode
@@ -118,6 +113,43 @@
     content:url({% static 'i07.jpg' %});
 }
 
+.menu_container_left2{
+	position: absolute;
+	width: 35px;
+	height: 63px;
+	left: 0px;
+	top: 21px;
+    content:url({% static 'files_018.jpg' %});
+}
+
+.menu_container_header_left2{
+	position: absolute;
+	width: 41px;
+	height: 21px;
+	left: 35px;
+	top: 21px;
+    content:url({% static 'i03.jpg' %});
+}
+
+.menu_container_header_mid2{
+	position: absolute;
+	height: 21px;
+	left: 76px;
+	right: 78px;
+	top: 21px;
+    background-image:url({% static 'i05.jpg' %});
+
+}
+
+.menu_container_header_right2{
+	position: absolute;
+	width: 78px;
+	height: 21px;
+	right: 0;
+	top: 21px;
+    content:url({% static 'i07.jpg' %});
+}
+
 .menu_container_btn1{
 	position: absolute;
 	width: 41px;
@@ -165,7 +197,7 @@
 	width: 18px;
 	height: 42px;
 	left: 76px;
-	top: 21px;
+	top: 42px;
     content:url({% static 'i13.jpg' %});
 }
 
@@ -183,7 +215,7 @@
 	height: 42px;
 	left: 92px;
 	right: 49px;
-	top: 21px;
+	top: 42px;
     background-image:url({% static 'i15.jpg' %});
 }
 
@@ -193,6 +225,15 @@
 	height: 42px;
 	right: 0px;
 	top: 21px;
+    content:url({% static 'i17.jpg' %});
+}
+
+.menu_container_footer_rightmob{
+	position: absolute;
+	width: 49px;
+	height: 42px;
+	right: 0px;
+	top: 42px;
     content:url({% static 'i17.jpg' %});
 }
 
@@ -210,7 +251,7 @@
 	width: 41px;
 	height: 42px;
 	left: 35px;
-	top: 21px;
+	top: 42px;
 }
 
 .mobdrop ul{
@@ -235,50 +276,92 @@
 
 </head>
 
-
 <body >
 
-	<div class="menu_containermob content-mobile">
+	<div class="menu_containermob content-mobile" style="position:fixed; z-index: 99;">
 			<div class="mob_menu_left_align">
 				<div class="content-mobile-menu"><input type="button" value="Menu" onclick="showMenu()" ></div>
 				<div id="mobilemenu" class="mobdrop mobilemenu" style="display: none;">
 					<ul>
+					{% if status.galsel == 1 %}
 					<li><a href="/headquarters">Headquarters </a></li>
 					<li><a href="/council">Council</a></li>
 					<li><a href="/units">Units</a></li>
 					<li><a href="/planets">Planets</a></li>
+					{% if status.empire.numplayers > 1 %}
+                        <li><a href="/offer">-Offer</a></li>
+                        {% endif %}
 					<li><a href="/empire{{status.empire_id}}">Empire</a>
-					<!--<li><a href="/famaid">-Send aid</a></li>
-					<li><a href="/famgetaid">-Receive aid</a></li>-->
+					{% if status.empire.numplayers > 1 %}
+					<li><a href="/famaid">-Send aid</a></li>
+					<li><a href="/famgetaid">-Receive aid</a></li>
+					{% endif %}
 					<li><a href="/famnews">-News</a></li>
 					<li><a href="/relations">-Relations</a></li>
 					<li><a href="/fleets">Fleets</a></li>
-					<li><a href="/map">Map</a></li>
+					<li><a href="/map">Full Map</a>&nbsp; <a href="/guide/map"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a></li>
 					<li><a href="/map_settings">-Map settings</a></li>
 					<li><a href="/scouting">-Scouting</a></li>
+					<li><a href="/smap">-Base Map</a></li>
 					<li><a href="/research">Research</a></li>
 					<li><a href="/specops">Operations</a></li>
-						<br>
 					<li><a href="/messages">Messages</a></li>
 					<li><a href="/ranking">Faction Rank</a></li>
 					<li><a href="/empire_ranking">Empire Rank</a></li>
 					<li><a href="/account{{status.id}}">Account</a></li>
-					<!--<li><a href="/?next={{request.path}}">Logout</a></li><br>-->
-					<li><a href="https://discord.gg/8Pkpqtd?2fix" target="_blank">Discord</a></li>
-					<li><a href="/guide">Guide</a></li>
-					<li><a href="https://web.facebook.com/groups/803616616363658?2fix" target="_blank">Facebook</a></b></li>
+					{% elif status.galsel == 2 %}
+					<li><a href="/galtwo/headquarters">Headquarters </a></li>
+					<li><a href="/galtwo/council">Council</a></li>
+					<li><a href="/galtwo/units">Units</a></li>
+					<li><a href="/galtwo/planets">Planets</a></li>
+					<li><a href="/galtwo/empire{{status.empire_id}}">Empire</a>
+					<li><a href="/galtwo/famnews">-News</a></li>
+					<li><a href="/galtwo/relations">-Relations</a></li>
+					<li><a href="/galtwo/fleets">Fleets</a></li>
+					<li><a href="/galtwo/map">Full Map</a>&nbsp; <a href="/guide/map"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a></li>
+					<li><a href="/galtwo/map_settings">-Map settings</a></li>
+					<li><a href="/galtwo/smap">-Base Map</a></li>
+					<li><a href="/galtwo/scouting">-Scouting</a></li>
+					<li><a href="/galtwo/research">Research</a></li>
+					<li><a href="/galtwo/specops">Operations</a></li>
+					<li><a href="/galtwo/messages">Messages</a></li>
+					<li><a href="/galtwo/ranking">Faction Rank</a></li>
+					<li><a href="/galtwo/empire_ranking">Empire Rank</a></li>
+					<li><a href="/galtwo/account{{status.id}}">Account</a></li>
+					{% endif %}
+					{% if status.galsel == 1 %}
+					<li><form action="/search" method="POST">{% csrf_token %}
+					<input type="text" name="u_inp" size="10"> <br>
+					<input type="submit" value="Search"></form></li>
+			        {% elif status.galsel == 2 %}
+					<li><form action="/galtwo/search" method="POST">{% csrf_token %}
+					<input type="text" name="u_inp" size="8"> <br>
+					<input type="submit" value="Search"></form></li>
+					{% endif %}
+					<li><a href="/portal">Portal</a></li></b>
+					<li><a href="https://discord.com/invite/UXyUAV9V" target="_blank">Discord</a></li>
+					<li><a href="/guide">Guide</a></li></b>
 					</ul>
 				</div>
 
 			</div>
-			<div class="mob_menu_mid_align">Next tick :
+			<div class="mob_menu_mid_align">
 			{% if round.is_running == False %}
-			Time frozen!
+				{% if round.tick_number == 0 %}
+				{% if round.round_start != None %}
+				<span id="roundstart"></span>
+				{% else%}
+				Pre Round Registration
+				{% endif %}
+				{% else %}
+				Round Over!
+				{% endif %}
 			{% else %}
+			Next tick :
 			<span id="headerTime1"></span>
 			{% endif %}		
 			</span> </div>
-			<div class="mob_menu_right_align">Networth : <span id="networth"></span> </div>
+			<div id="mobnw" class="mob_menu_right_align">Networth : <span id="networth"></span> </div>
 			<div class="hide_pop "><div class="mob_menu_right_align">Population: <span id="population"></span> </div></div>
 	</div>
 
@@ -286,23 +369,31 @@
 		<div class="menu_container_left"></div>
 		<div class="menu_container_header_left"></div>
 		<div class="menu_container_header_mid">
-			<div class = "menu_left_align">
-				Networth : {{status.networth}}
+			<div id="nw" class = "menu_left_align">
+				Networth : {{status.networth|intcomma}}
 			</div>
 			<div class = "menu_mid_align">
-			
-				Next tick  : 
 				{% if round.is_running == False %}
-				Time frozen!
+				{% if round.tick_number == 0 %}
+				{% if round.round_start != None %}
+				<span id="roundstart2"></span>
+				{% else%}
+				Pre Round Registration
+				{% endif %}
 				{% else %}
+				Round Over!
+				{% endif %}
+				{% else %}
+				Next tick  :
 				<span id="headerTime2"></span>
 				{% endif %}
 			</div>
-			<div class = "menu_right_align">
-				Population : {{status.population}}
+			<div id="pop" class = "menu_right_align">
+				Population : {{status.population|intcomma}}
 			</div>
 		</div>
 		<div class="menu_container_header_right"></div>
+		{% if status.galsel == 1 %}
 		<a href="/messages"><div id="btn1" class="menu_container_btn1"><img src=
 		{% if status.mail_flag == 0 %}
 			"{% static 'i09.jpg' %}"
@@ -317,7 +408,10 @@
 			"{% static 'i10a.jpg' %}"
 		{% endif %}
 		></div></a>
-		<a href="/headquarters"><div id="btn3" class="menu_container_btn3"><img src="{% static 'i11.jpg' %}"></div></a>
+		<a href="/headquarters"><div id="btn3" class="menu_container_btn3"><img src=
+		{% if status.economy_flag == 0 %} "{% static 'i11.jpg' %}"
+		{% elif status.economy_flag == 1 %} "{% static 'i11a.jpg' %}"
+		{% endif %}></div></a>
 		<a href="/headquarters"><div id="btn4" class="menu_container_btn4"><img src=
 		{% if status.military_flag == 0 %}
 			"{% static 'i12.jpg' %}"
@@ -329,17 +423,47 @@
 			"{% static 'i12c.jpg' %}"
 		{% endif %}
 		></div></a>
+		{% elif status.galsel == 2 %}
+		<a href="/galtwo/messages"><div id="btn1" class="menu_container_btn1"><img src=
+		{% if status.mail_flag == 0 %}
+			"{% static 'i09.jpg' %}"
+		{% else %}
+			"{% static 'i09a.jpg' %}"
+		{% endif %}
+		></div></a>
+		<a href="/galtwo/headquarters"><div id="btn2" class="menu_container_btn2"><img src=
+		{% if status.construction_flag == 0 %}
+			"{% static 'i10.jpg' %}"
+		{% else %}
+			"{% static 'i10a.jpg' %}"
+		{% endif %}
+		></div></a>
+		<a href="/galtwo/headquarters"><div id="btn3" class="menu_container_btn3"><img src=
+		{% if status.economy_flag == 0 %} "{% static 'i11.jpg' %}"
+		{% elif status.economy_flag == 1 %} "{% static 'i11a.jpg' %}"
+		{% endif %}></div></a>
+		<a href="/galtwo/headquarters"><div id="btn4" class="menu_container_btn4"><img src=
+		{% if status.military_flag == 0 %}
+			"{% static 'i12.jpg' %}"
+		{% elif status.military_flag == 1 %}
+			"{% static 'i12a.jpg' %}"
+		{% elif status.military_flag == 2 %}
+			"{% static 'i12b.jpg' %}"
+		{% else %}
+			"{% static 'i12c.jpg' %}"
+		{% endif %}
+		></div></a>{% endif %}
 		<div class="menu_container_footer_left"></div>
 		<div class="menu_container_footer_mid">
-			<div class = "menu_left_align">
-				Energy : {{status.energy}}<br>
-				Minerals : {{status.minerals}}
+			<div id="ressies1" class="menu_left_align">
+				Energy : {{status.energy|intcomma}}<br>
+				Minerals : {{status.minerals|intcomma}}
 			</div>
-			<div class = "menu_mid_align">
-				Crystals : {{status.crystals}}<br>
-				Ectrolium : {{status.ectrolium}}
+			<div id="ressies2" class="menu_mid_align">
+				Crystals: {{status.crystals|intcomma}}<br>
+				Ectrolium : {{status.ectrolium|intcomma}}
 			</div>
-			<div class = "menu_right_align">
+			<div id="ressies3" class="menu_right_align" >
 				FR: {{status.fleet_readiness}}%
 				AR: {{status.agent_readiness}}%
 				PR: {{status.psychic_readiness}}%
@@ -351,24 +475,24 @@
 
 	<!--Mobile Top Nav-->
 <div class="menu_container content-mobile">
-	<div class="menu_container_left"></div>
-	<div class="menu_container_header_left"></div>
-	<div class="menu_container_header_mid">
+	<div class="menu_container_left2"></div>
+	<div class="menu_container_header_left2"></div>
+	<div class="menu_container_header_mid2">
 		<div class="menu_left_mobile">FR : {{status.fleet_readiness}}%</div>
 		<div class="menu_cn1_mobile">AR : {{status.agent_readiness}}%</div>
 		<div class="menu_right_mobile">PR : {{status.psychic_readiness}}%</div>
 		</div>
 
-	<div class="menu_container_header_right"></div>
-	
-	
+	<div class="menu_container_header_right2"></div>
+	{% if status.galsel == 1 %}
+	<a href="/headquarters"><div id="mobbtn" class="menu_container_btnmob">
+	{% elif status.galsel == 2 %}
+	<a href="/galtwo/headquarters"><div id="mobbtn" class="menu_container_btnmob">
+	{% endif %}
 	{% if status.mail_flag == 1 %}
-	<a href="/messages"><div class="menu_container_btnmob">
 	<img src=
 		"{% static 'i09a.jpg' %}"
 	{% else %}
-	
-	<a href="/headquarters"><div class="menu_container_btnmob">
 	<img src=
 		{% if status.military_flag == 1 %}
 			"{% static 'i12a.jpg' %}"
@@ -380,29 +504,33 @@
 			"{% static 'i12c.jpg' %}"
 		{% elif status.construction_flag == 1 %}
 			"{% static 'i10a.jpg' %}"
+		{% elif status.economy_flag == 1 %} "{% static 'i11a.jpg' %}"
 		{% else %}
 			"{% static 'i09.jpg' %}"
 		{% endif %}
 	{% endif %}
 	>
+	
+	
 	</div></a>
 	<div class="menu_container_footer_leftmob"></div>
 	<div class="menu_container_footer_midmob">
-		<div class = "menu_leftmob1_align">
-			<img src="../static/pr0.gif" alt="Energy">  <span id="energy"></span>
+		<div id="nrg" class = "menu_leftmob1_align">
+			<img src="/static/pr0.gif" alt="Energy">  <span id="energy"></span>
 		</div>
 		<div class = "menu_leftmob2_align">
-			<img src="../static/pr1.gif" alt="Mineral">  <span id="minerals"></span>
+			<img src="/static/pr1.gif" alt="Mineral">  <span id="minerals"></span>
 		</div>
 		<div class = "menu_rightmob1_align">
-			<img src="../static/pr2.gif" alt="Crystal">  <span id="crystals"></span>
+			<img src="/static/pr2.gif" alt="Crystal">  <span id="crystals"></span>
 		</div>
 		<div class = "menu_rightmob2_align">
-			<img src="../static/pr3.gif" alt="Ectrolium">  <span id="ectrolium"></span>
+			<img src="/static/pr3.gif" alt="Ectrolium">  <span id="ectrolium"></span>
 		</div>
 	</div>
-	<div class="menu_container_footer_right"></div>
+	<div class="menu_container_footer_rightmob"></div>
 </div>
-
-
+<div class="content-mobile">
+<br></div>
+{{ mobbtn }}
 </body>

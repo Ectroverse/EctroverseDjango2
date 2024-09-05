@@ -1,20 +1,42 @@
 {% extends "base.html" %}
 
 {% load static %}
+{% load humanize %}
 
 {% block content %}
+</head>
+
+<style>
+.img_box {
+  max-width: 100%;
+  height: auto;
+  display: grid;
+  }
+.emp_img {
+  max-width: 100vw;
+  height: auto;
+}
+</style>
+</head>
+
 {% if status.empire.id == empire.id %}
 <br>
-<a href="/vote">Change your vote</a> -
+{% if status.galsel == 1 %}
+<a href="/vote">Change your vote</a>
 {% if status.empire_role == "PM" %}
-<a href="/pm_options">Prime Minister Options</a>
+<a href="/pm_options"> - Prime Minister Options</a>
 {% endif %}
+{% elif status.galsel == 2 %}
+<a href="/galtwo/vote">Change your vote</a>
+{% if status.empire_role == "PM" %}
+<a href="/galtwo/pm_options"> - Prime Minister Options</a>
 {% endif %}
+{% endif %}{% endif %}
 
 {% if empire.empire_image  %}
 <br>
 <img src="/media/{{empire.empire_image}}"
-     style="max-width:600px;width:100%,max-height:800px,height:100%"
+     style="max-width:400px;width:100%,max-height:400px,height:100%"
      alt="empire{{empire.id}}_picture">
 {% endif %}
 
@@ -23,11 +45,14 @@
 <td><b>Name</b></td>
 <td>Race</td>
 <td>Planets</td>
-<td>Networth</td></tr>
+<td>Networth</td>
+<td></td>
+</tr>
 {% for player in player_list %}
 <tr>
-<td>{{status.get_empire_role_display}}</td>
+<td>{{player.get_empire_role_display}}</td>
     <td>
+	{% if status.galsel == 1 %}
     {%if player.id == 1 %}<b><a href= "/account{{player.id}}" style="color:Yellow;">{{player.user_name}}</a></b>
     {% elif player.id == status.id %} <b><a href= "/account{{player.id}}" style="color:#0293FF;">{{player.user_name}}</a></b>
     {% elif player.empire_role == "PM" %} <b><a href= "/account{{player.id}}" style="color:Green;">{{player.user_name}}</a></b>
@@ -35,29 +60,43 @@
     {% elif player.empire_role == "I" %} <b><a href= "/account{{player.id}}" style="color:Red;">{{player.user_name}}</a></b>
     {% else %} <b><a href= "/account{{player.id}}">{{player.user_name}}</a></b>
     {% endif %}
+	{% elif status.galsel == 2 %}
+    {%if player.id == 1 %}<b><a href= "/galtwo/account{{player.id}}" style="color:Yellow;">{{player.user_name}}</a></b>
+    {% elif player.id == status.id %} <b><a href= "/galtwo/account{{player.id}}" style="color:#0293FF;">{{player.user_name}}</a></b>
+    {% elif player.empire_role == "PM" %} <b><a href= "/galtwo/account{{player.id}}" style="color:Green;">{{player.user_name}}</a></b>
+    {% elif player.empire_role == "VM" %} <b><a href= "/galtwo/account{{player.id}}" style="color:Orange;">{{player.user_name}}</a></b>
+    {% elif player.empire_role == "I" %} <b><a href= "/galtwo/account{{player.id}}" style="color:Red;">{{player.user_name}}</a></b>
+    {% else %} <b><a href= "/galtwo/account{{player.id}}">{{player.user_name}}</a></b>
+    {% endif %}{% endif %}
     </td>
 <td><a href= "/races" >{{player.get_race_display}}</a></td>
 <td>{{player.num_planets }}</td>
-<td>{{player.networth}}</td>
-{# status - online? #}
+<td>{{player.networth|intcomma}}</td>
+{% if status.empire.id == empire.id or status.id == 1 %}
+<td id="lastact{{player.id}}">
+{{ player.last_active|naturaltime }}
+</td>{% endif %}
 <br>
 </tr>
 {% endfor %}
 </table>
 <br>
-{% for arti in artefacts %}
-	{% if status.empire == empire or artis >= 4 or status.id == 1 %}
-<img src="{{arti.image}}" alt="{{arti.name}}" title="{{arti.name}}"></td> 
+{% for arti in emparts %}
+	
+<img src="{{arti.image}}" alt="{{arti.name}}" title="{{arti.name}}" width="16" height="16"></td> 
 {{arti.name}} -  {{ arti.description }}<br> 
-	{% endif %}	
-{% for a in artecount %}
-{{a}}
-{% endfor %}	
+
 {% endfor %}
-
 <br>
-{% if player.empire.id == empire.id %}
-
-{% endif %}
+<script>
+        var now = new Date().getTime();
+		{% for player in player_list %}
+		var date = new Date("{{player.last_active|date:'F d, Y, H:i:s'}}").getTime();
+		var distance = now - date;
+		var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+		if(days > 1){document.getElementById("lastact{{player.id}}").style.color = 'red';}
+		else if(days > 0){document.getElementById("lastact{{player.id}}").style.color = 'orange';}
+		{% endfor %}
+</script>
 
 {% endblock %}

@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+{% load humanize %}
+<head>
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="{% static 'icon.jpg' %}">
+
+{% block title %}<title>Ectroverse</title>{% endblock %}
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<style type="text/css">
+
+<!-- Somehow if we put background-image into css it doesnt work with @media-->
+
+.front_parent2{
+	position: relative;
+	width: 100%;
+}
+
+.front_bck06{
+	height: 75px;
+	background-image: url("/static/ectro_12.jpg");
+	width: 100%;
+}
+
+.front_imgBox  {
+    position:relative;
+    width: 660px; height: 75px;
+	background-image:url("/static/ectro_13.jpg");
+}
+
+
+
+.left_box, .right_box {
+	width: 100%;
+	}
+
+
+	
+
+.front_top_logo {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+  background-image:url("/static/evlogo4.jpg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+
+td {
+  font-size: 1.25em;
+  padding-bottom: 0.5em;
+} 
+
+input[type=submit] {
+    background:black;
+    border:0 none;
+    cursor:pointer;
+    float: left;
+    text-align: center;
+    padding: 0px 12px;
+    text-decoration: none;
+    font-size: 14px;
+	color: white;
+}
+
+input[type=submit]:hover{
+     background: #ddd;
+	 color:black;
+}
+
+@media all and (max-width: 660px){
+	.content-desktop {display: none;}
+	.content-mobile {display: block;}
+	.front_parent {display:none;}
+	.front_parent2 {display:block;}
+	.front_news {
+		width: 100%;
+		display: block;
+		padding-bottom: 5%;}
+}
+
+@media all and (min-width: 661px) and (max-width: 1259px) {
+	.content-mobile {display: block;}
+	.content-desktop {display: none;}
+	.hide_pop {display: inline;}
+	.front_parent {display:none;}
+	.front_parent2 {display:block;}
+	.front_news {
+		width: 100%;
+		display: block;
+		padding-bottom: 5%;}
+}
+
+@media all and (min-width: 1260px){
+	.content-desktop {display: block;}
+	.content-mobile {display: none;}
+	.front_parent {display:block;}
+	.front_parent2 {display:none;}
+	.front_news {
+		width: 50%;
+		display: inline-block;
+		margin: auto auto;
+		padding-right: 2%;
+		padding-left: 2%;
+	}
+}
+
+
+.menu_container_left{
+	position: absolute;
+	width: 35px;
+	height: 63px;
+	left: 0px;
+	top: 0px;
+    content:url({% static 'files_018.jpg' %});
+}
+
+.menu_container_header_left{
+	position: absolute;
+	width: 41px;
+	height: 21px;
+	left: 35px;
+	top: 0px;
+    content:url({% static 'i03.jpg' %});
+}
+
+.menu_container_header_mid{
+	position: absolute;
+	height: 21px;
+	left: 76px;
+	right: 78px;
+	top: 0px;
+    background-image:url({% static 'i05.jpg' %});
+
+}
+
+.menu_container_header_right{
+	position: absolute;
+	width: 78px;
+	height: 21px;
+	right: 0;
+	top: 0px;
+    content:url({% static 'i07.jpg' %});
+}
+
+.menu_container_btn1{
+	position: absolute;
+	width: 41px;
+	height: 42px;
+	left: 35px;
+	top: 21px;
+}
+
+.menu_container_btn2{
+	position: absolute;
+	width: 40px;
+	height: 42px;
+	left: 76px;
+	top: 21px;
+}
+
+.menu_container_btn3{
+	position: absolute;
+	width: 39px;
+	height: 42px;
+	left: 116px;
+	top: 21px;
+}
+
+.menu_container_btn4{
+	position: absolute;
+	width: 39px;
+	height: 42px;
+	left: 155px;
+	top: 21px;
+}
+
+.menu_container_footer_left{
+	position: absolute;
+	width: 18px;
+	height: 42px;
+	left: 194px;
+	top: 21px;
+    content:url({% static 'i13.jpg' %});
+}
+
+.menu_container_footer_leftmob{
+	position: absolute;
+	width: 18px;
+	height: 42px;
+	left: 76px;
+	top: 21px;
+    content:url({% static 'i13.jpg' %});
+}
+
+.menu_container_footer_mid{
+	position: absolute;
+	height: 42px;
+	left: 212px;
+	right: 49px;
+	top: 21px;
+    background-image:url({% static 'i15.jpg' %});
+}
+
+.menu_container_footer_midmob{
+	position: absolute;
+	height: 42px;
+	left: 92px;
+	right: 49px;
+	top: 21px;
+    background-image:url({% static 'i15.jpg' %});
+}
+
+.menu_container_footer_right{
+	position: absolute;
+	width: 49px;
+	height: 42px;
+	right: 0px;
+	top: 21px;
+    content:url({% static 'i17.jpg' %});
+}
+
+.menu_containermob {
+	width:100%;
+	height: 21px;
+	min-width: 360px;
+	background-image:url({% static 'i05.jpg' %});
+	position: relative;
+
+}
+
+.menu_container_btnmob{
+	position: absolute;
+	width: 41px;
+	height: 42px;
+	left: 35px;
+	top: 21px;
+}
+
+</style>
+
+
+    
+</head>
+
+<script>
+
+ function startTime() {
+  var today = new Date();
+  var m = today.getMinutes();
+  var s = today.getSeconds();
+  m_left = 9 - (m % 10);
+  s_left = 59 - (s % 60);  
+  {% if round.is_running == True %}
+  s_left = fixTimeDigits(s_left);
+  document.getElementById('headerTime1').innerHTML = m_left + ":" + s_left;
+  document.getElementById('headerTime2').innerHTML = m_left + ":" + s_left;
+  {% endif %}
+  {% if round2.is_running == True %}
+  s_left = 59 - (s % 60);
+  document.getElementById('headerTime3').innerHTML = s_left;
+  document.getElementById('headerTime4').innerHTML = s_left;
+  {% endif %}
+  var t = setTimeout(startTime, 600);
+
+}
+
+function fixTimeDigits(s_left) {
+  if (s_left < 10) {s_left = "0" + s_left};  // add zero in front of numbers < 10
+  return s_left;
+}
+
+</script>
+
+<body style="font-family:Verdana;
+   color:#aaaaaa; 
+   background-image: url('/static/background.gif');   
+   min-width:360px;        
+   display: inline-block;
+   width:100%;
+   margin:0 0 50px 0;"
+   onload="startTime();"
+   onload="sTime();"
+   >
+
+
+
+<div class="front_parent" style="overflow:auto">
+  <img class="front_image1" src="{% static 'ectro_03.jpg' %}" />
+  
+  <div class="front_bck06 ">
+  <img class=" front_image1" src= "{% static 'ectro_06.jpg' %}" />
+  </div>
+
+  <img class="front_image1" src= "{% static 'ectro_09.jpg' %}"  />
+
+  <div class="front_bck06 " width="100%">
+	  <div class="front_image1 front_imgBox ">
+		<div class="topnav ">
+			<div class="topnav_inner ">
+			<form action="" name="one" method="POST">
+			{% csrf_token %}
+			<input type="submit" name = "one" value="Regular Round"></form>
+			<form action="" name="ten" method="POST">
+			{% csrf_token %}
+			<input type="submit" name = "ten" value="Fast Tick"></form>
+			<a href="/update">Update Notes</a>
+			<a href="https://discord.com/invite/UXyUAV9V" target="_blank">Discord</a>
+			<a href="/guide">Guide</a>
+			</div>
+		</div>
+	  </div>
+   </div>
+</div>
+
+
+
+<div class="front_parent2" >
+	 <div class="front_top_logo">
+		<div class="topnav ">
+			<div class="topnav_inner ">
+				<div class="front_imgText2 " align="center">
+					</div>
+					<form action="" name="one" method="POST">
+			{% csrf_token %}
+			<input type="submit" name = "one" value="Regular Round"></form>
+			<form action="" name="ten" method="POST">
+			{% csrf_token %}
+			<input type="submit" name = "ten" value="Fast Tick"></form>
+				<div class="dropup">
+					  <input type="image" src="{% static 'hamburger.png' %}" style="height:25px; padding:0px 25px" class="dropbtn"/>
+					  <div class="dropup-content">
+					  <a href="/update">Update Notes</a>
+					  <a href="https://discord.com/invite/UXyUAV9V" target="_blank">Discord</a>
+						<a href="/guide">Guide</a>
+					  </div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+</body>
+
+{% if msg != '' %}
+<div width="100">
+	<div class="display_box_header">
+		<div class="display_box_header_left"></div>
+		<div class="display_box_header_center">
+			<div class="display_box_header_center_content">News</div>
+		</div>
+		<div class="display_box_header_right"></div>
+	</div>
+	<div class="display_box_content" style =" margin: 0 auto;" >
+		<div class="display_box_content_left"></div>
+		<div class="display_box_content_center" align="center" >
+		{{msg}}
+
+
+	{% include "box_bottom.html" %}
+
+</div></div></div>
+{% endif %}
+
+
+<div class="front_news">
+	<div class="display_box_header">
+		<div class="display_box_header_left"></div>
+		<div class="display_box_header_center">
+			<div class="display_box_header_center_content">Regular Round</div>
+		</div>
+		<div class="display_box_header_right"></div>
+	</div>
+	<div class="display_box_content" style =" margin: 0 auto;" >
+		<div class="display_box_content_left"></div>
+		<div class="display_box_content_center"  >
+	
+	{% if status.empire != None %}
+	
+	<div class="menu_containermob content-mobile">
+			<div class="mob_menu_left_align">Population: <span id="population"></span></div>
+			<div class="mob_menu_mid_align">
+			{% if round.is_running == False %}
+				{% if round.tick_number == 0 %}
+				<span id="roundstart"></span>
+				{% else %}
+				Round Over!
+				{% endif %}
+			{% else %}
+			Next tick: <span id="headerTime1"></span>
+			{% endif %}		
+			</span> </div>
+			<div id="mobnw" class="mob_menu_right_align"> </div>
+			<div class="hide_pop "><div class="mob_menu_right_align">Networth: <span id="networth"></span> </div></div>
+	</div>
+
+	<div class="menu_container content-desktop">
+		<div class="menu_container_left"></div>
+		<div class="menu_container_header_left"></div>
+		<div class="menu_container_header_mid">
+			<div id="nw" class = "menu_left_align">
+				Networth: {{status.networth|intcomma}}
+			</div>
+			<div class = "menu_mid_align">
+				{% if round.is_running == False %}
+				{% if round.tick_number == 0 %}
+				<span id="roundstart2"></span>
+				{% else %}
+				Round Over!
+				{% endif %}
+				{% else %}
+				Next tick : <span id="headerTime2"></span>
+				{% endif %}
+			</div>
+			<div id="pop" class = "menu_right_align">
+				Population: {{status.population|intcomma}}
+			</div>
+		</div>
+		<div class="menu_container_header_right"></div>
+		<form action="" name="onemsg" method="POST">
+			{% csrf_token %}
+		<button type="submit" style="z-index:-10000;" name="onemsg" value="Submit">
+		<div id="btn1" class="menu_container_btn1"><img src=
+		{% if status.mail_flag == 0 %}
+			"{% static 'i09.jpg' %}"
+		{% else %}
+			"{% static 'i09a.jpg' %}"
+		{% endif %}
+		></div></button></form>
+		<form action="" name="one" method="POST">
+		{% csrf_token %}
+		<button type="submit" style="z-index:-10000;" name="one" value="Submit"><div id="btn2" class="menu_container_btn2"><img src=
+		{% if status.construction_flag == 0 %}
+			"{% static 'i10.jpg' %}"
+		{% else %}
+			"{% static 'i10a.jpg' %}"
+		{% endif %}
+		></div>
+		<div id="btn3" class="menu_container_btn3"><img src={% if status.economy_flag == 0 %} "{% static 'i11.jpg' %}"
+		{% elif status.economy_flag == 1 %} "{% static 'i11a.jpg' %}"
+		{% endif %}></div>
+		<div id="btn4" class="menu_container_btn4"><img src=
+		{% if status.military_flag == 0 %}
+			"{% static 'i12.jpg' %}"
+		{% elif status.military_flag == 1 %}
+			"{% static 'i12a.jpg' %}"
+		{% elif status.military_flag == 2 %}
+			"{% static 'i12b.jpg' %}"
+		{% else %}
+			"{% static 'i12c.jpg' %}"
+		{% endif %}
+		></div></button></form>
+		<div class="menu_container_footer_left"></div>
+		<div class="menu_container_footer_mid">
+			<div id="ressies1" class="menu_left_align">
+				Energy: {{status.energy|intcomma}}<br>
+				Minerals: {{status.minerals|intcomma}}
+			</div>
+			<div id="ressies2" class="menu_mid_align">
+				Crystals: {{status.crystals|intcomma}}<br>
+				Ectrolium: {{status.ectrolium|intcomma}}
+			</div>
+			<div id="ressies3" class="menu_right_align" >
+				FR: {{status.fleet_readiness}}%
+				AR: {{status.agent_readiness}}%
+				PR: {{status.psychic_readiness}}%
+			</div>
+
+		</div>
+		<div class="menu_container_footer_right"></div>
+	</div>
+
+	<!--Mobile Top Nav-->
+<div class="menu_container content-mobile">
+	<div class="menu_container_left"></div>
+	<div class="menu_container_header_left"></div>
+	<div class="menu_container_header_mid">
+		<div class="menu_left_mobile">FR: {{status.fleet_readiness}}%</div>
+		<div class="menu_cn1_mobile">AR: {{status.agent_readiness}}%</div>
+		<div class="menu_right_mobile">PR: {{status.psychic_readiness}}%</div>
+		</div>
+
+	<div class="menu_container_header_right"></div>
+	<a href="/headquarters"><div id="mobbtn" class="menu_container_btnmob">
+	{% if status.mail_flag == 1 %}
+	<img src=
+		"{% static 'i09a.jpg' %}"
+	{% else %}
+	<img src=
+		{% if status.military_flag == 1 %}
+			"{% static 'i12a.jpg' %}"
+		{% elif status.military_flag == 2 %}
+			"{% static 'i12b.jpg' %}"
+		{% elif status.military_flag == 3 %}
+			"{% static 'i12c.jpg' %}"
+		{% elif status.military_flag == 3 %}
+			"{% static 'i12c.jpg' %}"
+		{% elif status.construction_flag == 1 %}
+			"{% static 'i10a.jpg' %}"
+		{% elif status.economy_flag == 1 %} "{% static 'i11a.jpg' %}"
+		{% else %}
+			"{% static 'i09.jpg' %}"
+		{% endif %}
+	{% endif %}
+	>
+	
+	
+	</div></a>
+	<div class="menu_container_footer_leftmob"></div>
+	<div class="menu_container_footer_midmob">
+		<div id="nrg" class = "menu_leftmob1_align">
+			<img src="/static/pr0.gif" alt="Energy">  <span id="energy"></span>
+		</div>
+		<div class = "menu_leftmob2_align">
+			<img src="/static/pr1.gif" alt="Mineral">  <span id="minerals"></span>
+		</div>
+		<div class = "menu_rightmob1_align">
+			<img src="/static/pr2.gif" alt="Crystal">  <span id="crystals"></span>
+		</div>
+		<div class = "menu_rightmob2_align">
+			<img src="/static/pr3.gif" alt="Ectrolium">  <span id="ectrolium"></span>
+		</div>
+	</div>
+	<div class="menu_container_footer_right"></div>
+</div>
+	<div align="center">
+		Faction: <b>{{ status.user_name }}</b>
+    <br>
+      Empire : #{{status.empire.number}}
+      <br>Planets : <span id="hqplanets">{{status.num_planets}}</span>
+      <br>Home planet : {{status.home_planet.x}},{{status.home_planet.y}}:{{status.home_planet.i}}
+	<br><br>
+	<form action="" name="one" method="POST">
+			{% csrf_token %}
+			<button align="center" name ="one" >Continue to 10 Minutes</button></form>
+	</div>
+	{% else %}
+	
+	{% include "choose_empire_race.html" %}
+	
+	{% endif %}
+
+		
+	{% include "box_bottom.html" %}
+
+</div></div></div>
+
+<div class="front_news">
+	<div class="display_box_header">
+		<div class="display_box_header_left"></div>
+		<div class="display_box_header_center">
+			<div class="display_box_header_center_content">Fast Tick</div>
+		</div>
+		<div class="display_box_header_right"></div>
+	</div>
+	<div class="display_box_content" style =" margin: 0 auto;" >
+		<div class="display_box_content_left"></div>
+		<div class="display_box_content_center"  >
+
+	{% if status2.empire != None %}
+	
+	<div class="menu_containermob content-mobile">
+		<div class="content-mobile-menu">
+			<div class="mob_menu_left_align">Population: <span id="population2"></span></div></div>
+			<div class="mob_menu_mid_align">
+			{% if round2.is_running == False %}
+				{% if round2.tick_number == 0 %}
+				{% if round2.round_start != None %}
+				<span id="roundstart3"></span>
+				{% else%}
+				Pre Round Registration
+				{% endif %}
+				{% else %}
+				Round Over!
+				{% endif %}
+			{% else %}
+			Next tick: <span id="headerTime3"></span>
+			{% endif %}			
+			</span> </div>
+			<div id="mobnw" class="mob_menu_right_align">Networth: <span id="networth2"></span> </div>
+			<div class="mob_menu_right_align"> </div>
+	</div>
+
+	<div class="menu_container content-desktop">
+		<div class="menu_container_left"></div>
+		<div class="menu_container_header_left"></div>
+		<div class="menu_container_header_mid">
+			<div id="nw" class = "menu_left_align">
+				Networth: {{status2.networth|intcomma}}
+			</div>
+			<div class = "menu_mid_align">
+				{% if round2.is_running == False %}
+				{% if round2.tick_number == 0 %}
+				{% if round2.round_start != None %}
+				<span id="roundstart4"></span>
+				{% else%}
+				Pre Round Registration
+				{% endif %}
+				{% else %}
+				Round Over!
+				{% endif %}
+				{% else %}
+				Next tick: <span id="headerTime4"></span>
+				{% endif %}	
+			</div>
+			<div id="pop" class = "menu_right_align">
+				Population: {{status2.population|intcomma}}
+			</div>
+		</div>
+		<div class="menu_container_header_right"></div>
+		<form action="" name="onemsg" method="POST">
+			{% csrf_token %}
+		<button type="submit" style="z-index:-10000;" name="onemsg" value="Submit">
+		<div id="btn1" class="menu_container_btn1"><img src=
+		{% if status2.mail_flag == 0 %}
+			"{% static 'i09.jpg' %}"
+		{% else %}
+			"{% static 'i09a.jpg' %}"
+		{% endif %}
+		></div></button></form>
+		<form action="" name="one" method="POST">
+		{% csrf_token %}
+		<button type="submit" style="z-index:-10000;" name="one" value="Submit"><div id="btn2" class="menu_container_btn2"><img src=
+		{% if status2.construction_flag == 0 %}
+			"{% static 'i10.jpg' %}"
+		{% else %}
+			"{% static 'i10a.jpg' %}"
+		{% endif %}
+		></div>
+		<div id="btn3" class="menu_container_btn3"><img src={% if status2.economy_flag == 0 %} "{% static 'i11.jpg' %}"
+		{% elif status2.economy_flag == 1 %} "{% static 'i11a.jpg' %}"
+		{% endif %}></div>
+		<div id="btn4" class="menu_container_btn4"><img src=
+		{% if status2.military_flag == 0 %}
+			"{% static 'i12.jpg' %}"
+		{% elif status2.military_flag == 1 %}
+			"{% static 'i12a.jpg' %}"
+		{% elif status2.military_flag == 2 %}
+			"{% static 'i12b.jpg' %}"
+		{% else %}
+			"{% static 'i12c.jpg' %}"
+		{% endif %}
+		></div></button></form>
+		<div class="menu_container_footer_left"></div>
+		<div class="menu_container_footer_mid">
+			<div id="ressies1" class="menu_left_align">
+				Energy: {{status2.energy|intcomma}}<br>
+				Minerals: {{status2.minerals|intcomma}}
+			</div>
+			<div id="ressies2" class="menu_mid_align">
+				Crystals: {{status2.crystals|intcomma}}<br>
+				Ectrolium: {{status2.ectrolium|intcomma}}
+			</div>
+			<div id="ressies3" class="menu_right_align" >
+				FR: {{status2.fleet_readiness}}%
+				AR: {{status2.agent_readiness}}%
+				PR: {{status2.psychic_readiness}}%
+			</div>
+
+		</div>
+		<div class="menu_container_footer_right"></div>
+	</div>
+
+	<!--Mobile Top Nav-->
+<div class="menu_container content-mobile">
+	<div class="menu_container_left"></div>
+	<div class="menu_container_header_left"></div>
+	<div class="menu_container_header_mid">
+		<div class="menu_left_mobile">FR: {{status2.fleet_readiness}}%</div>
+		<div class="menu_cn1_mobile">AR: {{status2.agent_readiness}}%</div>
+		<div class="menu_right_mobile">PR: {{status2.psychic_readiness}}%</div>
+		</div>
+
+	<div class="menu_container_header_right"></div>
+	<a href="/headquarters"><div id="mobbtn" class="menu_container_btnmob">
+	{% if status2.mail_flag == 1 %}
+	<img src=
+		"{% static 'i09a.jpg' %}"
+	{% else %}
+	<img src=
+		{% if status2.military_flag == 1 %}
+			"{% static 'i12a.jpg' %}"
+		{% elif status2.military_flag == 2 %}
+			"{% static 'i12b.jpg' %}"
+		{% elif status2.military_flag == 3 %}
+			"{% static 'i12c.jpg' %}"
+		{% elif status2.military_flag == 3 %}
+			"{% static 'i12c.jpg' %}"
+		{% elif status2.construction_flag == 1 %}
+			"{% static 'i10a.jpg' %}"
+			{% elif status2.economy_flag == 1 %} "{% static 'i11a.jpg' %}"
+		{% else %}
+			"{% static 'i09.jpg' %}"
+		{% endif %}
+	{% endif %}
+	>
+	
+	
+	</div></a>
+	<div class="menu_container_footer_leftmob"></div>
+	<div class="menu_container_footer_midmob">
+		<div id="nrg" class = "menu_leftmob1_align">
+			<img src="/static/pr0.gif" alt="Energy">  <span id="energy2"></span>
+		</div>
+		<div class = "menu_leftmob2_align">
+			<img src="/static/pr1.gif" alt="Mineral">  <span id="minerals2"></span>
+		</div>
+		<div class = "menu_rightmob1_align">
+			<img src="/static/pr2.gif" alt="Crystal">  <span id="crystals2"></span>
+		</div>
+		<div class = "menu_rightmob2_align">
+			<img src="/static/pr3.gif" alt="Ectrolium">  <span id="ectrolium2"></span>
+		</div>
+	</div>
+	<div class="menu_container_footer_right"></div>
+</div>
+
+	<div align="center">
+      Faction: <b>{{ status2.user_name }}</b>
+    <br>
+      Empire : #{{status2.empire.number}}
+      <br>Planets : <span id="hqplanets">{{status2.num_planets}}</span>
+      <br>Home planet : {{status2.home_planet.x}},{{status2.home_planet.y}}:{{status2.home_planet.i}}
+	<br><br>
+	<form action="" name="ten" method="POST">
+			{% csrf_token %}
+			<button align="center" name ="ten" value="Continue to 30 Seconds">Continue to Fast Tick</button></form>
+	</div>
+	{% else %}
+	
+	{% include "choose_empire.html" %}
+	
+	{% endif %}
+
+	{% include "box_bottom.html" %}
+
+</div></div></div>
+
+	<script>
+	window.onload = function() {
+		{% if status.user_name != "" %}
+		formatResources({{status.energy}}, {{status.minerals}}, {{status.crystals}}, {{status.ectrolium}}, {{status.networth}}, {{status.population}});
+		{% endif %}
+		{% if status2.user_name != "" %}
+		formatResources2({{status2.energy}}, {{status2.minerals}}, {{status2.crystals}}, {{status2.ectrolium}}, {{status2.networth}}, {{status2.population}});
+		{% endif %}
+		startTime();
+	};
+
+	function numberFormatter(num) {
+		ans = num;
+		if(Math.abs(num) > 999999999999){
+			ans = Math.floor(Math.sign(num)*(Math.abs(num)/100000000000)) /10 + 't'
+		}
+		else if(Math.abs(num) > 999999999){
+			ans = Math.floor(Math.sign(num)*(Math.abs(num)/100000000)) /10 + 'b'
+		}
+		else if(Math.abs(num) > 999999){
+			ans = Math.floor(Math.sign(num)*(Math.abs(num)/100000)) /10 + 'm'
+		}
+		else if (Math.abs(num) > 999){
+			ans = Math.floor(Math.sign(num)*(Math.abs(num)/100)) /10 + 'k'
+		}
+		return ans;
+	}
+
+	function formatResources(energy, minerals, crystals, ectrolium, networth, population){
+		document.getElementById('energy').innerHTML = numberFormatter(energy);
+		document.getElementById('minerals').innerHTML = numberFormatter(minerals);
+		document.getElementById('crystals').innerHTML = numberFormatter(crystals);
+		document.getElementById('ectrolium').innerHTML = numberFormatter(ectrolium);
+		document.getElementById('networth').innerHTML = numberFormatter(networth);
+		document.getElementById('population').innerHTML = numberFormatter(population);
+	}
+
+function formatResources2(energy2, minerals2, crystals2, ectrolium2, networth2, population2){
+		document.getElementById('energy2').innerHTML = numberFormatter(energy2);
+		document.getElementById('minerals2').innerHTML = numberFormatter(minerals2);
+		document.getElementById('crystals2').innerHTML = numberFormatter(crystals2);
+		document.getElementById('ectrolium2').innerHTML = numberFormatter(ectrolium2);
+		document.getElementById('networth2').innerHTML = numberFormatter(networth2);
+		document.getElementById('population2').innerHTML = numberFormatter(population2);
+	}
+
+</script>
+
+<script>
+var countDownDate = new Date("{{fortime}} GMT+00:00").getTime();
+
+var x = setInterval(function() {
+
+  var now = new Date().getTime();
+
+  var distance = countDownDate - now;
+
+  var message = "Round Starts in: "
+
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  if(seconds < 0){
+	distance = now - countDownDate;
+	message = "Time Elasped: "}
+
+  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+	var timer = ''
+  if(days > 0){
+	timer = days + "d "
+	}
+  if(hours > 0){
+	timer += hours + "h "
+  }
+  if(minutes > 0){
+	timer += minutes + "m " 
+	}
+  timer += seconds + "s "
+  document.getElementById("roundstart").innerHTML = timer;
+  document.getElementById("roundstart2").innerHTML = message + timer;
+
+  // If the count down is finished, write some text
+  //if (distance < 0) {
+    //clearInterval(x);
+    //document.getElementById("roundstart").innerHTML = "Round Started!";
+  //}
+}, 1000);
+</script>
+
+<script>
+var countDownDate2 = new Date("{{formtime}} GMT+00:00").getTime();
+
+var x2 = setInterval(function() {
+
+  var now2 = new Date().getTime();
+
+  var distance2 = countDownDate2 - now2;
+
+  var message2 = "Round Starts in: "
+
+  var seconds2 = Math.floor((distance2 % (1000 * 60)) / 1000);
+  if(seconds2 < 0){
+	distance2 = now2 - countDownDate2;
+	message2 = "Time Elasped: "}
+
+  var days2 = Math.floor(distance2 / (1000 * 60 * 60 * 24));
+  var hours2 = Math.floor((distance2 % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  var minutes2 = Math.floor((distance2 % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds2 = Math.floor((distance2 % (1000 * 60)) / 1000);
+	var timer2 = ''
+  if(days2 > 0){
+	timer2 = days2 + "d "
+	}
+  if(hours2 > 0){
+	timer2 += hours2 + "h "
+  }
+  if(minutes2 > 0){
+	timer2 += minutes2 + "m " 
+	}
+  timer2 += seconds2 + "s "
+  document.getElementById("roundstart3").innerHTML = timer2;
+  document.getElementById("roundstart4").innerHTML = message2 + timer2;
+
+  // If the count down is finished, write some text
+  //if (distance < 0) {
+    //clearInterval(x);
+    //document.getElementById("roundstart").innerHTML = "Round Started!";
+  //}
+}, 1000);
+</script>
+
+</html>

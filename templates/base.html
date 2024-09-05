@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 {% load static %}
-
 {% load mathfilters %}
 
 <head>
@@ -16,7 +15,7 @@
 
 <!-- Add additional CSS in static file -->
 <script src="https://d3js.org/d3.v5.min.js"></script>
-<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
 
 <!-- Bootstrap stuff -->
 <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"> -->
@@ -27,6 +26,7 @@
 
 <!-- Our CSS should come after everything else -->
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
 
 <style type="text/css">
 body
@@ -39,10 +39,10 @@ body
 @media all and (max-width: 660px) {
 	.hide_pop {display: none;}
 	.content-desktop {display: none;}
-	.content-mobile-menu, .content-mobile {display: block;}
+	.content-mobile-menu, .content-mobile-menu .content-mobile {display: block;  width: fit-content;}
 	.left_menu_large_scrn {display:none;}
 	.right_side{
-	width: 100%;
+	width: fit-content;
 	}
 
 	.left_box, .right_box {
@@ -79,6 +79,8 @@ body
 
 @media all and (min-width: 838px){
 	.content-desktop {display: block;}
+	.content-footer {display: block; position: absolute;
+            bottom: 0px;}
 	.content-mobile, .content-mobile-menu {display: none;}
 
 }
@@ -90,94 +92,146 @@ body
 }
 
 .nav_top{
- position: absolute;
+ position: relative;
  width: 150px;
  height: 40px;
- left: 0px;
- top: 0px;
   content:url({% static 'files_004' %});
 }
 
 .nav_hq{
-  position: absolute;
+  position:relative;
   width: 150px;
   height: 20px;
-  left: 0px;
-  top: 40px;
     background-image:url({% static 'files_010' %});
 }
 
 .nav_body{
-  position: absolute;
+  position: relative;
   width: 150px;
-  height: 360px;
-  left: 0px;
-  top: 60px;
+  display: block;
+  overflow: auto;
     background-image:url({% static 'files_013' %});
 }
 
 .nav_bottom{
-  position: absolute;
+  position: relative;
   width: 150px;
   height: 20px;
-  top:420px;
     content:url({% static 'files_022' %});
 }
 
 .nav_footer{
-  position: absolute;
+  position: relative;
   width: 150px;
   height: 75px;
-  top:425px;
     content:url({% static 'files_014.jpg' %});
 }
 
-
 </style>
 
-<!-- Tick Timer Script -->
 <script>
+var countDownDate = new Date("{{round.round_start|date:'F d, y H:i:s'}} GMT+00:00").getTime();
+var x = setInterval(function() {
 
+  var now = new Date().getTime();
+
+  var distance = countDownDate - now;
+
+  var message = "Round Starts in: "
+
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  if(seconds < 0){
+	distance = now - countDownDate;
+	message = "Time Elasped: "}
+
+  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+	var timer = ''
+  if(days > 0){
+	timer = days + "d "
+	}
+  if(hours > 0){
+	timer += hours + "h "
+  }
+  if(minutes > 0){
+	timer += minutes + "m " 
+	}
+  timer += seconds + "s "
+  document.getElementById("roundstart").innerHTML = timer;
+  document.getElementById("roundstart2").innerHTML = message + timer;
+
+  // If the count down is finished, write some text
+  //if (distance < 0) {
+    //clearInterval(x);
+    //document.getElementById("roundstart").innerHTML = "Round Started!";
+  //}
+}, 1000);
+</script>
+
+{% if status.galsel == 1 %}
+<script>
 
  function startTime() {
   var today = new Date();
   var m = today.getMinutes();
   var s = today.getSeconds();
-  <!--m_left = 9 - (m % 10); -->
-  m_left = 0;
+  m_left = 9 - (m % 10);
   s_left = 59 - (s % 60);
-  //s_left = fixTimeDigits(s_left);
-  document.getElementById('headerTime1').innerHTML = s_left;
-  document.getElementById('headerTime2').innerHTML = s_left;
+  s_left = fixTimeDigits(s_left);
+  document.getElementById('headerTime1').innerHTML = m_left + ":" + s_left;
+  document.getElementById('headerTime2').innerHTML = m_left + ":" + s_left;
   m_left + ":" + s_left;
-  var t = setTimeout(startTime, 60);
+  var t = setTimeout(startTime, 600);
+
 }
 
-function fixTimeDigits(i) {
-  if (i < 10) {i = "0" + i};  // add zero in front of numbers < 10
-  return i;
+function fixTimeDigits(s_left) {
+  if (s_left < 10) {s_left = "0" + s_left};  // add zero in front of numbers < 10
+  return s_left;
 }
 
-window.onload = function(){
-startTime();
-};
-
-// Toggle check boxes, used on various pages
-	function toggleForm(form_name) {
-
-		var selectElements = document.forms[form_name].elements;
+function toggleForm(form_name) {
+		var selectElements = document.querySelectorAll('input[type=checkbox]');
 		for(var i = 0; i < selectElements.length; i++) {
-			if(selectElements[i].type == "checkbox") {
-				selectElements[i].checked = !selectElements[i].checked;
-			}
+			selectElements[i].checked = !selectElements[i].checked;
 		}
 	}
 
 function changeslider(newValue,field) {
 	window.document.getElementById(field).value=newValue;
 }
-</script>
 
+
+</script>
+{% elif status.galsel == 2 %}
+<script>
+
+ function startTime() {
+  var today = new Date();
+  var s = today.getSeconds();
+  s_left = 59 - (s % 60);
+  //s_left = fixTimeDigits(s_left);
+  document.getElementById('headerTime1').innerHTML = s_left;
+  document.getElementById('headerTime2').innerHTML = s_left;
+  var t = setTimeout(startTime, 60);
+
+}
+
+function toggleForm(form_name) {
+		var selectElements = document.querySelectorAll('input[type=checkbox]');
+		for(var i = 0; i < selectElements.length; i++) {
+			selectElements[i].checked = !selectElements[i].checked;
+		}
+	}
+
+function changeslider(newValue,field) {
+	window.document.getElementById(field).value=newValue;
+}
+
+</script>
+{% endif %}
 
 </head>
 
@@ -192,7 +246,6 @@ onload="startTime();">
 {% if user.is_authenticated %}
 
 
-
 <div class="parent_container">
 <div class="content-wrap">
 		<div class="left_menu_large_scrn"> <!-- Hide on mobile -->
@@ -201,6 +254,7 @@ onload="startTime();">
         <div class="nav_hq">
 		<div class="nav_head">
           	<b><font size="2" face="Tahoma">
+			{% if status.galsel == 1 %}
           	<a href="/headquarters">Headquarters</a></font></b>
         	</div>
 	</div>
@@ -210,15 +264,21 @@ onload="startTime();">
                         <a href="/council">Council</a><br>
                         <a href="/units">Units</a><br>
                         <a href="/planets">Planets</a><br>
+                        {% if status.empire.numplayers > 1 %}
+                        -<a href="/offer">Offer</a><br>
+                        {% endif %}
                         <a href="/empire{{status.empire_id}}">Empire</a><br>
-                        <!---<a href="/famaid">Send aid</a><br>
-                        -<a href="/famgetaid">Receive aid</a><br>-->
+						{% if status.empire.numplayers > 1 %}
+                        -<a href="/famaid">Send aid</a><br>
+                        -<a href="/famgetaid">Receive aid</a><br>
+						{% endif %}
                         -<a href="/famnews">News</a><br>
                         -<a href="/relations">Relations</a><br>
                         <a href="/fleets">Fleets</a><br>
-                        <a href="/map">Map</a><br>
-			 -<a href="/map_settings">Map settings</a><br>
+                        <a href="/map">Full Map</a>&nbsp; <a href="/guide/map"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a><br>
+						-<a href="/map_settings">Map settings</a><br>
                         -<a href="/scouting">Scouting</a><br>
+						-<a href="/smap">Base Map</a><br>
                         <a href="/research">Research</a><br>
                         <a href="/specops">Operations</a><br></font>
             		<img src="/static/files_017" height="15">
@@ -227,18 +287,54 @@ onload="startTime();">
                         <a href="/ranking">Faction Rank</a><br>
                         <a href="/empire_ranking">Empire Rank</a><br>
                         <a href="/account{{status.id}}">Account</a>
-                        <br>
-                        <!--<a href="/logout">Logout</a>-->
-                        <br>
-                        <!---<form action="search?2fix" method="POST"><input type="text" name="search" size="8"><br>
-                        <input type="submit" size="2" value="OK"></form><br> -->
-						
-                        <a href="https://discord.gg/8Pkpqtd?2fix" target="_blank">Discord</a><br>
-                        <a href="/guide">Guide</a><br>
-                        <a href="/static/guide/index.html">Starfury guide</a><br>
-                        <a href="https://web.facebook.com/groups/803616616363658?2fix" target="_blank">Facebook</a><br></font></b>
+			{% elif status.galsel == 2 %}
+          	<a href="/galtwo/headquarters">Headquarters</a></font></b>
         	</div>
 	</div>
+        <div class="nav_body">
+		<div class="nav_navi">
+          	<b><font size="2" face="Tahoma">
+                        <a href="/galtwo/council">Council</a><br>
+                        <a href="/galtwo/units">Units</a><br>
+                        <a href="/galtwo/planets">Planets</a><br>
+                        <a href="/galtwo/empire{{status.empire_id}}">Empire</a><br>
+                        -<a href="/galtwo/famnews">News</a><br>
+                        -<a href="/galtwo/relations">Relations</a><br>
+                        <a href="/galtwo/fleets">Fleets</a><br>
+                        <a href="/galtwo/map">Full Map</a>&nbsp; <a href="/guide/map"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a><br>
+						-<a href="/galtwo/map_settings">Map settings</a><br>
+                        -<a href="/galtwo/scouting">Scouting</a><br>
+						-<a href="/galtwo/smap">Base Map</a><br>
+                        <a href="/galtwo/research">Research</a><br>
+                        <a href="/galtwo/specops">Operations</a><br></font>
+            		<img src="/static/files_017" height="15">
+            		<font size="2" face="Tahoma">
+        				<a href="/galtwo/messages">Messages</a><br>
+                        <a href="/galtwo/ranking">Faction Rank</a><br>
+                        <a href="/galtwo/empire_ranking">Empire Rank</a><br>
+                        <a href="/galtwo/account{{status.id}}">Account</a>			
+			{% endif %}			
+                        <img src="/static/files_017" height="15"><br>
+                        <a href="/portal">Portal</a>
+                        <img src="/static/files_017" height="15"><br>						
+                        <a href="https://discord.com/invite/U5FHwaEeCN" target="_blank">Discord</a><br>
+                        <a href="/guide">Guide</a><br></font></b>
+                        
+            {% if status.galsel == 1 %}
+					<img src="/static/files_017" height="15">
+					<form action="/search" method="POST">{% csrf_token %}
+					<input type="text" name="u_inp" size="10"> <br>
+					<input type="submit" value="Search"></form>
+			{% elif status.galsel == 2 %}
+					<img src="/static/files_017" height="15">
+					<form action="/galtwo/search" method="POST">{% csrf_token %}
+					<input type="text" name="u_inp" size="10"> <br>
+					<input type="submit" value="Search"></form>
+			{% endif %}		
+			
+        	</div>
+	</div>
+
 	<div class="nav_bottom"></div>
 	<div class="nav_footer"></div>
 
@@ -252,17 +348,16 @@ onload="startTime();">
 		{% block content %}
 		{% endblock %}
 	{% include "box_bottom.html" %}
-  </div>
-</div>
 
-{% include "footer.html" %}
+
 
 {% else %}
 
 YOU SHOULD NEVER BE ABLE TO GET TO THIS PAGE!! THE VIEW REQUIRES AUTHENTICATION!
 
 {% endif %}
-
+<br><br><br>
+{% include "footer.html" %}
 </div>
 
 </body>

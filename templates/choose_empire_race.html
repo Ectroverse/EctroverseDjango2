@@ -1,8 +1,4 @@
-{% extends "front_page.html" %}
-
 {% load static %}
-
-{% block content %}
 
 <!-- script to show empire password if an empire has one and to hide it if it has none -->
 <script>
@@ -21,26 +17,13 @@ function showEmpirePass() {
 </script>
 
 
-
 {% if error %}
 	<p align = "center" > {{error}} </p>
 {% else %}
 	<br>
 {% endif %}
 
-
-<div class="display_box" style="width:220px;" >
-	<div class="display_box_header">
-		<div class="display_box_header_left"></div>
-		<div class="display_box_header_center">
-			<div class="display_box_header_center_content">Login</div>
-		</div>
-		<div class="display_box_header_right"></div>
-	</div>
-	<div class="display_box_content" style =" margin: 0 auto;" >
-		<div class="display_box_content_left"></div>
-		<div class="display_box_content_center"  >
-				
+			<b><u>Register for the 10 Minutes Galaxy</u></b>	<br><br>	
 			<form method="post" name="empire_race_choice" action="{% url 'choose_empire_race' %}" style =" margin: 0 5px;">
 			  {% csrf_token %}
 			  
@@ -75,18 +58,7 @@ function showEmpirePass() {
 			  <input type="submit" value="Select" style="margin-top: 10px">
 			</form> 
 
-		</div>
-		<div class="display_box_content_right"></div>
-	</div>
-
-	<div class="display_box_footer">
-		<div class="display_box_footer_left"></div>
-		<div class="display_box_footer_center"></div>
-		<div class="display_box_footer_right"></div>
-	</div>
-</div>
   
-{% endblock %}
 
   
 

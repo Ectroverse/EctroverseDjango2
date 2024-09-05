@@ -4,7 +4,16 @@
 
 {% block content %}
 
-<style>
+<style type="text/css">
+
+.row1{}
+
+.row2{
+display: table-row;
+background-color: rgb(25,38,51);
+}
+
+
 
   .hall_of_fame_table {
     margin: 0 auto; 
@@ -34,7 +43,7 @@
 	</tr>	
 	{% for player in players%}
 	
-	<tr><td>{{player.user}}</td>
+	<tr class="{% cycle 'row2' 'row1' %}"><td>{{player.user}}</td>
 		<td>{{player.planets}}</td>
 		<td>{{player.networth}}</td>
 		<td>{{player.empire}}</td>

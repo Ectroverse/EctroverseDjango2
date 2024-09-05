@@ -1,6 +1,6 @@
 import numpy as np
 from .constants import *
-from .models import *
+from app.models import *
 
 # This is where longer formulas should go, 1-3 liners can go inside process_tick.py
 
@@ -172,8 +172,12 @@ def specopSolarCalc(user_id):
     return 1
 
 # I would move this function into the Portal class in buidings.py, but then we would have to instantiate one every time we wanted to run this calculation...
-def battlePortalCalc(x, y, portal_xy_list, research_portals):
+def battlePortalCalc(x, y, portal_xy_list, research_portals, status):
     cover = 0
+    if Specops.objects.filter(user_to=status.user, name='Vortex Portal').exists():
+                for vort in Specops.objects.filter(user_to=status.user, name='Vortex Portal'):
+                    vort_por = Planet.objects.filter(id=vort.planet.id).values_list('x', 'y')
+                    portal_xy_list = portal_xy_list | vort_por
     for portal in portal_xy_list:
         d = np.sqrt((x-portal[0])**2 + (y-portal[1])**2)
         cover += np.max((0, 1.0 - np.sqrt(d/(7.0*(1.0 + 0.01*research_portals)))))
@@ -183,7 +187,7 @@ def planet_size_distribution():
     # The idea here is to make most the planets small, and a tiny fraction of them WAY bigger,
     # so they are exciting (especially to new people)
     # while still capping the size to 500 for visualization sake
-    return int(min(600, 150 + 50*np.random.chisquare(1.25)))
+    return int(min(800, 200 + 50*np.random.chisquare(1.25)))
 
 
 def x_move_calc(speed, x, current_position_x, y, current_position_y):

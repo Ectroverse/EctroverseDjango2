@@ -22,13 +22,13 @@ Message from your leader:<br>
 	{% if relation.relation_type == 'AO' %}
 	<tr>
 	<td><img src="{% static '/news/ally_offered.gif' %}"></td>
-	<td>You offered an empire {{relation.empire2.name_with_id}} an alliance!</td>
+	<td>You offered {{relation.empire2.name_with_id}} an alliance!</td>
 	</tr>
 	{% endif %}
 	{% if relation.relation_type == 'A' %}
 	<tr>
 	<td><img src="{% static '/news/ally_made.gif' %}"></td>
-	<td>You have an alliance with empire {{relation.empire2.name_with_id}}!</td>
+	<td>You have an alliance with {{relation.empire2.name_with_id}}!</td>
 	</tr>
 	{% endif %}
 	{% if relation.relation_type == 'W' %}
@@ -42,10 +42,10 @@ Message from your leader:<br>
 		<tr>
 		<td><img src="{% static '/news/nap_offered.gif' %}"></td>
 		{% if relation.relation_length > 0 %}
-		<td>You offered an empire {{relation.empire2.name_with_id}} a {{relation.relation_length}} galactic weeks
+		<td>You offered {{relation.empire2.name_with_id}} a {{relation.relation_length}} galactic weeks
 		non - agression pact!</td>
 		{% else %}
-		<td>You offered an empire {{relation.empire2.name_with_id}} a permanent
+		<td>You offered {{relation.empire2.name_with_id}} a permanent
 		non - agression pact!</td>
 		{% endif %}
 		</tr>
@@ -55,7 +55,10 @@ Message from your leader:<br>
 		<td><img src="{% static '/news/nap_made.gif' %}"></td>
 		{% if relation.relation_length > 0 %}
 		<td>You have a {{relation.relation_length}} galactic weeks non - agression pact 
-		with {{relation.empire2.name_with_id}} !</td>
+		with {{relation.empire2.name_with_id}} ! {% if status.empire_role == "PM" %}<form action="" id="cancel_nap" method="post">
+			{% csrf_token %}
+			<input type="submit" name="cancel" value="Cancel"></a>
+			<input type="hidden" name="can_nap" value="{{relation.id}}"></form>{% endif %}</td>
 		{% else %}
 		<td>You have a permanent non - agression pact with {{relation.empire2.name_with_id}} !</td>
 		{% endif %}
@@ -64,23 +67,37 @@ Message from your leader:<br>
 	{% if relation.relation_type == 'NC' %}
 		<tr>
 		<td><img src="{% static '/news/nap_cancelled.gif' %}"></td>
-		<td>Non-agression pact with  {{relation.empire2.name_with_id}} was canceled!
+		<td>Non-agression pact with {{relation.empire2.name_with_id}} was canceled!
 			It will last for another {{relation.relation_remaining_time}} galactic weeks!</td>
 			</tr>
 	{% endif %}
+	{% if relation.relation_type == 'CO' %}
+		<tr>
+		<td><img src="{% static '/news/nap_offered.gif' %}"></td>
+		<td>You offered {{relation.empire2.name_with_id}} a {{relation.relation_length}} galactic weeks
+		Ceasefire!</td>
+		</tr>
+	{% endif %}
+	{% if relation.relation_type == 'C' %}
+		<tr>
+		<td><img src="{% static '/news/nap_made.gif' %}"></td>
+		<td>Your Ceasefire with {{relation.empire2.name_with_id}} ends in {{relation.relation_remaining_time}} galactic weeks!</td>
+		</tr>
+	{% endif %}
+
 {% endfor %}
 <tr></tr>
 {% for relation in relations_to_empire %}
 	{% if relation.relation_type == 'AO' %}
 	<tr>
 	<td><img src="{% static '/news/ally_offered.gif' %}"></td>
-	<td>Empire {{relation.empire1.name_with_id}} has offered you an alliance!</td>
+	<td>{{relation.empire1.name_with_id}} has offered you an alliance!</td>
 	</tr>
 	{% endif %}
 	{% if relation.relation_type == 'W' %}
 	<tr>
 	<td><img src="{% static '/news/war_declared.gif' %}"></td>
-	<td>Empire {{relation.empire1.name_with_id}} has declared war!</td>
+	<td>{{relation.empire1.name_with_id}} has declared war!</td>
 	<td>It will last for another {{relation.relation_remaining_time}} galactic weeks!</td>
 	</tr>
 	{% endif %}
@@ -88,12 +105,53 @@ Message from your leader:<br>
 		<tr>
 		<td><img src="{% static '/news/nap_offered.gif' %}"></td>
 		{% if relation.relation_length > 0 %}
-		<td>An empire {{relation.empire1.name_with_id}} has offered a {{relation.relation_length}} galactic weeks
-		non - agression pact!</td>
+		<td>{{relation.empire1.name_with_id}} has offered a {{relation.relation_length}} galactic weeks
+		non - agression pact! {% if status.empire_role == "PM" %}<form action="" id="accept_nap" method="post">
+			{% csrf_token %}
+			<input type="submit" name="accept" value="Accept"></a>
+			<input type="hidden" name="acc_nap" value="{{relation.id}}"></form>{% endif %}</td>
 		{% else %}
-		<td>An empire {{relation.empire1.name_with_id}} has offered a permanent
+		<td>{{relation.empire1.name_with_id}} has offered a permanent
 		non - agression pact!</td>
 		{% endif %}
+		</tr>
+	{% endif %}
+	{% if relation.relation_type == 'N' %}
+		<tr>
+		<td><img src="{% static '/news/nap_made.gif' %}"></td>
+		{% if relation.relation_length > 0 %}
+		<td>You have a {{relation.relation_length}} galactic weeks non - agression pact 
+		with {{relation.empire1.name_with_id}}! {% if status.empire_role == "PM" %}<form action="" id="cancel_nap" method="post">
+			{% csrf_token %}
+			<input type="submit" name="cancel" value="Cancel"></a>
+			<input type="hidden" name="can_nap" value="{{relation.id}}"></form>{% endif %}</td>
+		{% else %}
+		<td>You have a permanent non - agression pact with {{relation.empire2.name_with_id}}! </td>
+		{% endif %}
+		</tr>
+	{% endif %}
+	{% if relation.relation_type == 'NC' %}
+		<tr>
+		<td><img src="{% static '/news/nap_cancelled.gif' %}"></td>
+		<td>Non-agression pact with  {{relation.empire1.name_with_id}} was canceled!
+			It will last for another {{relation.relation_remaining_time}} galactic weeks!</td>
+			</tr>
+	{% endif %}
+	{% if relation.relation_type == 'CO' %}
+		<tr>
+		<td><img src="{% static '/news/nap_offered.gif' %}"></td>
+		<td>{{relation.empire1.name_with_id}} have offered a {{relation.relation_length}} galactic weeks
+		Ceasefire! {% if status.empire_role == "PM" %}<form action="" id="accept_cf" method="post">
+			{% csrf_token %}
+			<input type="submit" name="acceptcf" value="Accept"></a>
+			<input type="hidden" name="acc_cf" value="{{relation.id}}"></form>{% endif %}</td>
+
+		</tr>
+	{% endif %}
+	{% if relation.relation_type == 'C' %}
+		<tr>
+		<td><img src="{% static '/news/nap_made.gif' %}"></td>
+		<td>Your Ceasefire with {{relation.empire1.name_with_id}} ends in {{relation.relation_remaining_time}} galactic weeks!</td>
 		</tr>
 	{% endif %}
 {% endfor %}

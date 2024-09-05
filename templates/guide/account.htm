@@ -1,0 +1,73 @@
+{% extends "gbase.html" %}
+
+{% block content %}
+
+<head>
+<title>Ectroverse Guide</title>
+
+<style>
+#content-desktop {display: block;}
+#content-mobile {display: none;}
+
+@media screen and (max-width: 837px) {
+
+#content-desktop {display: none;}
+#content-mobile {display: block;}
+
+}
+
+
+</style>
+
+</head>
+          <table border="0" cellspacing="0" cellpadding="0" align="center">
+            <tbody>
+              <tr>
+                <td>User name : <b>Good Empire</b><br>
+                  Faction name : <b>Good Empire</b><br>
+                  Faction race : <b>Variable</b><br>
+                  Tag : <b>Variable</b><br>
+                  Tag points : <b>Variable</b><br>
+                  Account ID : <b>Variable</b><br>
+                  <br>
+                  Change Faction name<br>
+                  <i>Only available when time hasn't started, yet.</i><br>
+                  <form action="">
+                    <input size="32" value="Good Empire" name="newname"><input type="button" value="Change">
+                  </form>
+                  <form action="">
+                    Faction race - <a href="/races">See races</a><br>
+                    <i>Only available when time hasn't started, yet.</i><br>
+                    <select name="race">
+                      <option value="0" selected>Harks
+                      <option value="1">Manticarias
+                      <option value="2">Foohons
+                      <option value="3">Spacebornes
+                      <option value="4">Dreamweavers</option>
+                    </select><input type="button" value="Change">
+                  </form>
+                  <br><i>Only available when time hasn't started, yet.</i><br>
+				  <input type="button" value="Rejoin"><br><br>
+                  Change your password - plain and simple, changes the pass.<br>
+              </tr>
+            </tbody>
+          </table>
+
+        <br>
+        <p>&nbsp;</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<table cellSpacing="0" cellPadding="0" width="90%" align="center" border="0">
+  <tbody>
+    <tr>
+      Hall of Fame
+    </tr>
+	<tr>
+		<br><i>A record of previous rounds</i><br>
+	</tr>
+  </tbody>
+</table>
+
+{% endblock %}

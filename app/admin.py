@@ -6,14 +6,14 @@ from django.db import models
 
 # admin.site.register(UserStatus)
 # admin.site.register(Planet)
-admin.site.register(Construction)
+# admin.site.register(Construction)
 # admin.site.register(Fleet)
 admin.site.register(UnitConstruction)
 admin.site.register(RoundStatus)
 #admin.site.register(Empire)
 admin.site.register(Relations)
-admin.site.register(Messages)
-admin.site.register(News)
+#admin.site.register(Messages)
+#admin.site.register(News)
 admin.site.register(Bot)
 #admin.site.register(botattack)
 admin.site.register(HallOfFame)
@@ -40,9 +40,20 @@ class UserStatusAdmin(admin.ModelAdmin):
     list_display = ["id","user","user_name"]
 admin.site.register(UserStatus, UserStatusAdmin)
 
+class MessagesAdmin(admin.ModelAdmin):
+    list_display = ["user1","user2","message"]
+admin.site.register(Messages, MessagesAdmin)
+
+class NewsAdmin(admin.ModelAdmin):
+    list_display = ["id","planet","user1","news_type"]
+admin.site.register(News, NewsAdmin)
+
+class ConstructionAdmin(admin.ModelAdmin):
+    list_display = ["user"]
+admin.site.register(Construction, ConstructionAdmin)
 
 class PlanetAdmin(admin.ModelAdmin):
-    list_display = ["id","x","y","i","artefact", "owner", "home_planet"]
+    list_display = ["id","x","y","i","owner", "home_planet"]
 admin.site.register(Planet, PlanetAdmin)
 
 class botattackAdmin(admin.ModelAdmin):
@@ -58,8 +69,12 @@ class MapSettingsAdmin(admin.ModelAdmin):
 admin.site.register(MapSettings, MapSettingsAdmin)
 
 class ScoutingAdmin(admin.ModelAdmin):
-    list_display = ["user", "planet"]
+    list_display = ["user", "planet", "empire"]
 admin.site.register(Scouting, ScoutingAdmin)
+
+class SensingAdmin(admin.ModelAdmin):
+    list_display = ["system", "empire"]
+admin.site.register(Sensing, SensingAdmin)
 
 class ArtefactsAdmin(admin.ModelAdmin):
     list_display = ["name", "description"]

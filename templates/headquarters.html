@@ -21,16 +21,33 @@
   <div class="row">
     <div class="col-sm-2"></div>
     <div class="col-sm-8">
+
+{% if status.galsel == 1 %}	
 {% if round.artetimer == 0 %}
 <b style="color: red" size="14">Round has finished, congratulations {{artis.empire_holding.name_with_id}}! New round registration will begin soon.</b>
 <br>
 <br>
 <br>
-{% elif round.artetimer < 1440 %}
+{% elif round.artetimer < 144 %}
 <b style="color: red" size="14">Artefacts held by {{artis.empire_holding.name_with_id}}. Round will end in {{round.artetimer}} Weeks!</b>
 <br>
 <br>
 {% endif %}
+{% elif status.galsel == 2 %}
+{% if round.artetimer == 0 %}
+<b style="color: red" size="14">Round has finished, congratulations {{artis.empire_holding.name_with_id}}! New round registration will begin soon.</b>
+<br>
+<br>
+<br>	
+{% elif round.artetimer < 1440 %}
+<b style="color: red" size="14">Artefacts held by {{artis.empire_holding.name_with_id}}. Round will end in {{round.artetimer}} Weeks!</b>
+<br>
+<br>
+{% endif %}{% endif %}
+
+{% if msg != '' %}
+{{msg}}<br><br>{% endif %}
+
       Current date : Week <span id="hqweeks">{{week}}</span>, year <span id="hqyears">{{year}}</span>
       <br><br>User <b>{{ user.username }}</b>
       <br>Faction <b>{{ status.user_name }}</b>
@@ -73,7 +90,7 @@
       <b>Message from your Prime Minister</b>
       <br>{{status.empire.pm_message}}
       <br><br>
-      {% if fresh_news %}
+      {% if fresh_news %}	
         {% include "news.html" with news=fresh_news %}
       {% else %}
         <b>No fresh reports</b>

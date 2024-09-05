@@ -1,0 +1,106 @@
+{% extends "gbase.html" %}
+
+{% block content %}
+{% load multifor %}
+
+<head>
+<title>Ectroverse Guide</title>
+
+<style>
+#content-desktop {display: block;}
+#content-mobile {display: none;}
+
+@media screen and (max-width: 837px) {
+
+#content-desktop {display: none;}
+#content-mobile {display: block;}
+
+}
+
+.row1{}
+
+.row2{
+display: table-row;
+background-color: rgb(25,38,51);
+}
+</style>
+
+</head>
+<table cellSpacing="0" cellPadding="0" width="90%" align="center" border="0">
+  <tbody>
+    <tr>
+        <p align="center">(Note: Due to complexity and ever-changing nature of
+        the battle formulas I decided to exclude them from the guide as they
+        won't be much help anyway and you have to know just how big the enemy's
+        fleet is and what bonuses he has to use them correctly.)&nbsp;</p>
+        <p align="center"><font size="5"><b>Battle</b></font></p>
+        <p align="left">In EctroVerse there are 4 main stages during a battle.
+        The battle is played out according to a precise algorithm, so there is
+        nothing random in the outcome of the battle, here is a brief description
+        of each of the 4 stages:</p>
+        <p align="left"><b><font size="4">Phase 1: The long range air battle</font></b></p>
+        <p align="left">The first stage is a Cruiser
+        and Phantom versus Cruiser and Phantom stage. Here if you are attacking your cruisers will try
+        to take out any defending Cruisers on the planet. If you are defending
+        you defending Cruisers and Phantoms will try to take out the attacking Cruisers,
+        Phantoms as
+        well as the attacking Carriers. If you
+        are attacking and the enemy defenses are overwhelming, then your forces
+        will flee and no other stage of the battle would be fought. If you are
+        defending, your forces can flee in the first stage but come back again
+        in any of the next 3 stages.</p>
+        <p align="left"><b><font size="4">Phase 2: Close range air battle</font></b></p>
+        <p align="left">Here your Cruisers and Phantoms close in on the enemy defenses and
+        your Fighters come to help as well. Here
+        if you are attacking your primary goal is to take out as many enemy
+        Cruisers, Fighters and Phantoms as you can, while if you are on the defending side
+        you will try to take out the attacking Cruisers, Phantoms, Fighters, Transports
+        and Bombers. Carriers do not take any
+        part in this stage of the battle as they have already let go of all the
+        ships based on them. If you are attacking and the defending forces are
+        overwhelming in this stage of combat you will retreat and the later
+        stages would not be fought. If you are defending, your forces can flee
+        here, but still fight the 3rd and 4th stages.</p>
+        <p align="left"><font size="4"><b>Phase 3: Air vs. Ground</b></font></p>
+        <p align="left">Here Bombers, Cruisers and Phantoms go after the defending Goliaths
+        and Phantoms,
+        while those try to take out any Cruisers, Bombers and Phantoms, as well as prevent
+        any Transports from landing on the planet. f you are attacking and the
+        defending forces are overwhelming in this stage of combat you will
+        retreat and the last stage would not be fought. If you are defending,
+        your forces can flee here, but still fight the last stage.</p>
+        <p align="left"><b><font size="4">Phase</font></b><font size="4"><b> 4: Ground vs. Ground</b></font></p>
+        <p align="left">In this stage any of the attacking forces (Soldiers,
+        Droids, Goliaths, Phantoms)
+        that made it to the ground would engage the whatever defending forces
+        (Soldiers, Droids, Goliaths, Phantoms) there are. If any of the sides flee in this
+        stage of&nbsp; the battle, it would be over and the opposing side would
+        win. </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+Unit Breakdown 
+{% for unit in units %}
+{% if unit != "Exploration Ships" %}
+<table width="100%">
+<td colspan="100">{{unit}}</td>
+{% for key,val in u_helper.items %}
+{% if key == unit %}
+{% for k,v in val.items %}
+{% if k != "Upkeep" %}
+<tr class="{% cycle 'row2' 'row1' %}">				  
+<td width="50%">{{k}}</td>
+<td width="50%">{{v}}</td>
+</tr>
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+</table>
+{% endif %}
+{% endfor %}
+{% endblock %}

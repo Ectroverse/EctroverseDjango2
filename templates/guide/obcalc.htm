@@ -1,0 +1,33 @@
+{% extends "gbase.html" %}
+
+{% block content %}
+
+<head>
+<title>Ectroverse Guide</title>
+
+<style>
+#content-desktop {display: block;}
+#content-mobile {display: none;}
+
+@media screen and (max-width: 837px) {
+
+#content-desktop {display: none;}
+#content-mobile {display: block;}
+
+}
+
+
+</style>
+
+</head>
+<br><br>
+<table align="center">
+<tbody>
+<tr><td>No. times fully built</td><td>OB %</td></tr>
+{% for key, val in ob.items %}
+<tr><td>{{key}}</td><td>{{val}}%</td></tr>
+{% endfor %}
+</tbody>
+</table><br>
+
+{% endblock %}

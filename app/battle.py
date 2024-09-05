@@ -1,9 +1,10 @@
 from django.db.models import Q, Sum
 from .models import *
 from app.constants import *
-from app.helper_functions import generate_fleet_order, find_nearest_portal, join_main_fleet
+from .helper_functions import generate_fleet_order, find_nearest_portal, join_main_fleet
 import numpy as np
-from app.models import *
+from .models import *
+from .calculations import *
 from datetime import datetime
 import copy
 import math
@@ -38,40 +39,44 @@ def battleReadinessLoss(user1, user2, planet):
     nap = False
 
     relations_from_empire = Relations.objects.filter(empire1=empire1)
-    relations_to_empire = Relations.objects.filter(empire2=empire2)
+    relations_to_empire = Relations.objects.filter(empire2=empire1)
 
     for rel in relations_from_empire:
-        if rel.relation_type == 'W' and rel.empire2 == empire2:
-            war = True
-        if rel.relation_type == 'A' and rel.empire2 == empire2:
-            ally = True
-        if rel.relation_type == 'NC' or rel.relation_type == 'PC' or rel.relation_type == 'N' and rel.empire2 == empire2:
-            nap = True
+        if rel.empire2 == empire2:
+            if rel.relation_type == 'W':
+                war = True
+            if rel.relation_type == 'A':
+                ally = True
+            if rel.relation_type == 'NC' or rel.relation_type == 'PC' or rel.relation_type == 'N' or rel.relation_type == 'C':
+                nap = True
 
     for rel in relations_to_empire:
-        if rel.relation_type == 'W' and rel.empire2 == empire1:
-            war = True
-        if rel.relation_type == 'A' and rel.empire2 == empire1:
-            ally = True
-        if rel.relation_type == 'NC' or rel.relation_type == 'PC' or rel.relation_type == 'N' and rel.empire2 == empire1:
-            nap = True
+        if rel.empire1 == empire2:
+            if rel.relation_type == 'W':
+                war = True
+            if rel.relation_type == 'A':
+                ally = True
+            if rel.relation_type == 'NC' or rel.relation_type == 'PC' or rel.relation_type == 'N' or rel.relation_type == 'C':
+                nap = True
 
     if empire1.id == empire2.id or ally or war:
         fa /= 3
 
     if Specops.objects.filter(name="Planetary Beacon", planet=planet).exists():
-        fa = 1
+        fa = fa
     else:
-        spec_ops = Specops.objects.filter(user_to=user2.user, name="Dark Web")
-        for specop in spec_ops:
-            fa *= 1 + specop.specop_strength / 100
+        if empire1.id != empire2.id:
+            spec_ops = Specops.objects.filter(user_to=user2.user, name="Dark Web")
+            for specop in spec_ops:
+                fa *= 1 + specop.specop_strength / 100
 
     if Specops.objects.filter(user_to=user2.user, name="Enlightenment", extra_effect="BadFR").exists():
         en = Specops.objects.get(user_to=user2.user, name="Enlightenment", extra_effect="BadFR")
         fa /= (1 + en.specop_strength / 100)
 
-    if nap:
-        fa = max(50, fa)
+    if nap == True:
+        if fa < 50:
+            fa = 50
 
     # add personal and fam news
     # dont forget to delete anempty fleet!
@@ -132,73 +137,203 @@ def calc_lost_units_in_transports(attacking_fleet, transports_losses):
 
     return lost_units
 
-def defenders_fleet_update(defender, defending_fleets, attacked_planet):
+def defenders_fleet_update(defender, battle_report, attacked_planet):
     main_fleet = Fleet.objects.get(owner=defender.id, main_fleet=True)
-    stationed_fleet = Fleet.objects.filter(owner=defender.id, on_planet=True,\
+    stationed_fleet = Fleet.objects.filter(owner=defender.id, command_order=8,\
                                         x=attacked_planet.x, y=attacked_planet.y, i=attacked_planet.i).first()
+    
+    bomb = 0
+    figs = 0
+    trans = 0
+    cruis = 0
+    carr = 0
+    sold = 0
+    droi = 0
+    gols = 0
+    phants = 0
+    
+    if battle_report["p1"]["phase"]:
+        for unit, losses in battle_report["p1"]["def_loss"].items():
+            if losses > 0:
+                if unit == "Bombers":
+                    bomb += losses
+                if unit == "Fighters":
+                    figs += losses
+                if unit == "Transports":
+                    trans += losses
+                if unit == "Cruisers":
+                    cruis += losses
+                if unit == "Carriers":
+                    carr += losses
+                if unit == "Soldiers":
+                    sold += losses
+                if unit == "Droids":
+                    droi += losses    
+                if unit == "Goliaths":
+                    gols += losses
+                if unit == "Phantoms":
+                    phants += losses
+  
+                
+
+    if battle_report["p2"]["phase"]:
+        for unit, losses in battle_report["p2"]["def_loss"].items():
+            if losses > 0:
+                if unit == "Bombers":
+                    bomb += losses
+                if unit == "Fighters":
+                    figs += losses
+                if unit == "Transports":
+                    trans += losses
+                if unit == "Cruisers":
+                    cruis += losses
+                if unit == "Carriers":
+                    carr += losses
+                if unit == "Soldiers":
+                    sold += losses
+                if unit == "Droids":
+                    droi += losses    
+                if unit == "Goliaths":
+                    gols += losses
+                if unit == "Phantoms":
+                    phants += losses
+                
+
+    if battle_report["p3"]["phase"]:
+        for unit, losses in battle_report["p3"]["def_loss"].items():
+            if losses > 0:
+                if unit == "Bombers":
+                    bomb += losses
+                if unit == "Fighters":
+                    figs += losses
+                if unit == "Transports":
+                    trans += losses
+                if unit == "Cruisers":
+                    cruis += losses
+                if unit == "Carriers":
+                    carr += losses
+                if unit == "Soldiers":
+                    sold += losses
+                if unit == "Droids":
+                    droi += losses    
+                if unit == "Goliaths":
+                    gols += losses
+                if unit == "Phantoms":
+                    phants += losses 
+               
+    
+    if battle_report["p4"]["phase"]:
+        for unit, losses in battle_report["p4"]["def_loss"].items():
+            if losses > 0:
+                if unit == "Bombers":
+                    bomb += losses
+                if unit == "Fighters":
+                    figs += losses
+                if unit == "Transports":
+                    trans += losses
+                if unit == "Cruisers":
+                    cruis += losses
+                if unit == "Carriers":
+                    carr += losses
+                if unit == "Soldiers":
+                    sold += losses
+                if unit == "Droids":
+                    droi += losses    
+                if unit == "Goliaths":
+                    gols += losses
+                if unit == "Phantoms":
+                    phants += losses
+    
     if stationed_fleet:
         # stationed fleet can only be 1, since it will all merge on that planet
         #bombers
-        mf = main_fleet.bomber / max(main_fleet.bomber + stationed_fleet.bomber,1)
-        mf_loss = math.ceil(defending_fleets["bomber"] * mf)
-        main_fleet.bomber -= mf_loss
-        stationed_fleet.bomber -= (defending_fleets["bomber"] - mf_loss)
+        if bomb > 0:
+            mf = min(1, stationed_fleet.bomber / main_fleet.bomber)
+            if mf == 0:
+                mf = 1
+            st_bomb = round(bomb * mf)
+            stationed_fleet.bomber -= st_bomb
+            main_fleet.bomber -= (bomb - st_bomb)
         #fighters
-        mf = main_fleet.fighter / max(main_fleet.fighter + stationed_fleet.fighter,1)
-        mf_loss = math.ceil(defending_fleets["fighter"] * mf)
-        main_fleet.fighter -= mf_loss
-        stationed_fleet.fighter -= (defending_fleets["fighter"] - mf_loss)
+        if figs > 0:
+            mf = 1
+            if main_fleet.fighter > 0:   
+                mf = min(1, stationed_fleet.fighter / main_fleet.fighter)
+            st_figs = round(figs * mf)
+            stationed_fleet.fighter -= st_figs
+            main_fleet.fighter -= (figs - st_figs)
         #transports
-        mf = main_fleet.transport / max(main_fleet.transport + stationed_fleet.transport,1)
-        mf_loss = math.ceil(defending_fleets["transport"] * mf)
-        main_fleet.transport -= mf_loss
-        stationed_fleet.transport -= (defending_fleets["transport"] - mf_loss)
+        if trans > 0:
+            mf = min(1, stationed_fleet.transport/ main_fleet.transport)
+            st_trans = round(trans * mf)
+            stationed_fleet.transport -= st_trans
+            main_fleet.transport -= (trans - st_trans)
         #cruisers
-        mf = main_fleet.cruiser / max(main_fleet.cruiser + stationed_fleet.cruiser,1)
-        mf_loss = math.ceil(defending_fleets["cruiser"] * mf)
-        main_fleet.cruiser -= mf_loss
-        stationed_fleet.cruiser -= (defending_fleets["cruiser"] - mf_loss)
+        if cruis > 0:
+            mf = 1
+            if main_fleet.cruiser > 0:
+                mf = min(1, stationed_fleet.cruiser/ main_fleet.cruiser)
+            st_cruis = round(cruis * mf)
+            stationed_fleet.cruiser -= st_cruis
+            main_fleet.cruiser -=  (cruis - st_cruis)
         #carriers
-        mf = main_fleet.carrier / max(main_fleet.carrier + stationed_fleet.carrier,1)
-        mf_loss = math.ceil(defending_fleets["carrier"] * mf)
-        main_fleet.carrier -= mf_loss
-        stationed_fleet.carrier -= (defending_fleets["carrier"] - mf_loss)
+        if carr > 0:
+            mf = min(1, stationed_fleet.carrier/ main_fleet.carrier)
+            if mf == 0:
+                mf = 1
+            st_carr = round(carr * mf)
+            stationed_fleet.carrier -= st_carr
+            main_fleet.carrier -=  (carr - st_carr)
         # soldiers
-        mf = main_fleet.soldier / max(main_fleet.soldier + stationed_fleet.soldier,1)
-        mf_loss = math.ceil(defending_fleets["soldier"] * mf)
-        main_fleet.soldier -= mf_loss
-        stationed_fleet.soldier -= (defending_fleets["soldier"] - mf_loss)
+        if sold > 0:
+            mf = 1
+            if main_fleet.soldier > 0:
+                mf = min(1, stationed_fleet.soldier/ main_fleet.soldier)
+            st_sold = round(sold * mf)
+            stationed_fleet.soldier -= st_sold
+            main_fleet.soldier -=  (sold - st_sold)
         # droids
-        mf = main_fleet.droid / max(main_fleet.droid + stationed_fleet.droid,1)
-        mf_loss = math.ceil(defending_fleets["droid"] * mf)
-        main_fleet.droid -= mf_loss
-        stationed_fleet.droid -= (defending_fleets["droid"] - mf_loss)
+        if droi > 0:
+            mf = 1
+            if main_fleet.droid > 0:
+                mf = min(1, stationed_fleet.droid/ main_fleet.droid)
+            st_droi = round(droi * mf)
+            stationed_fleet.droid -= st_droi
+            main_fleet.droid -=  (droi - st_droi)
         # goliaths
-        mf = main_fleet.goliath / max(main_fleet.goliath + stationed_fleet.goliath,1)
-        mf_loss = math.ceil(defending_fleets["goliath"] * mf)
-        main_fleet.goliath -= mf_loss
-        stationed_fleet.goliath -= (defending_fleets["goliath"] - mf_loss)
+        if gols > 0:
+            mf = 1
+            if main_fleet.goliath > 0:
+                mf = min(1, stationed_fleet.goliath/ main_fleet.goliath)
+            st_gols = round(gols * mf)
+            stationed_fleet.goliath -= st_gols
+            main_fleet.goliath -=  (gols - st_gols)
         # phantoms
-        mf = main_fleet.phantom / max(main_fleet.phantom + stationed_fleet.phantom,1)
-        mf_loss = math.ceil(defending_fleets["phantom"] * mf)
-        main_fleet.phantom -= mf_loss
-        stationed_fleet.phantom -= (defending_fleets["phantom"] - mf_loss)
+        if phants > 0:
+            mf = 1
+            if main_fleet.phantom > 0:
+                mf = min(1, stationed_fleet.phantom/ main_fleet.phantom)
+            st_phants = round(phants * mf)
+            stationed_fleet.phantom -= st_phants
+            main_fleet.phantom -=  (phants - st_phants)
         stationed_fleet.save()
     else:
-        main_fleet.bomber = defending_fleets["bomber"]
-        main_fleet.fighter = defending_fleets["fighter"]
-        main_fleet.transport = defending_fleets["transport"]
-        main_fleet.cruiser = defending_fleets["cruiser"]
-        main_fleet.carrier = defending_fleets["carrier"]
-        main_fleet.soldier = defending_fleets["soldier"]
-        main_fleet.droid = defending_fleets["droid"]
-        main_fleet.goliath = defending_fleets["goliath"]
-        main_fleet.phantom = defending_fleets["phantom"]
+        main_fleet.bomber -= bomb
+        main_fleet.fighter -= figs
+        main_fleet.transport -= trans
+        main_fleet.cruiser -= cruis
+        main_fleet.carrier -= carr
+        main_fleet.soldier -= sold
+        main_fleet.droid -= droi
+        main_fleet.goliath -= gols
+        main_fleet.phantom -= phants
 
     main_fleet.save()
 
 
-def generate_news(battle_report, attacker, defender, attacked_planet):
+
+
+def generate_news(battle_report, attacker, defender, attacked_planet, main_defender_fleet, defending_fleets):
     # SA = 'SA', _('Successfull Attack')
     # UA = 'UA', _('Unsuccessfull Attack')
     # SD = 'SD', _('Successfull Defence')
@@ -248,11 +383,16 @@ def generate_news(battle_report, attacker, defender, attacked_planet):
     
     defender_fleet_msg = ""
 
+    necro = Artefacts.objects.get(name="Scroll of the Necromancer")
+
     if battle_report["p1"]["phase"]:
         defender_fleet_msg += "Phase 1 losses: "
         for unit, losses in battle_report["p1"]["def_loss"].items():
             if losses > 0:
                 defender_fleet_msg += str(unit) + ": " + str(losses) + " "
+                if necro.empire_holding == defender.empire and unit != "Necromancers":
+                    necro.effect1 += losses
+                    necro.save()
         if battle_report["p1"]["def_flee"]:
             defender_fleet_msg += "Defending forces preferred not to directly engage in stage 1!"
 
@@ -261,6 +401,9 @@ def generate_news(battle_report, attacker, defender, attacked_planet):
         for unit, losses in battle_report["p2"]["def_loss"].items():
             if losses > 0:
                 defender_fleet_msg += str(unit) + ": " + str(losses) + " "
+                if necro.empire_holding == defender.empire and unit != "Necromancers":
+                    necro.effect1 += losses
+                    necro.save()
         if battle_report["p2"]["def_flee"]:
             defender_fleet_msg += "Defending forces preferred not to directly engage in stage 2!"
 
@@ -269,6 +412,10 @@ def generate_news(battle_report, attacker, defender, attacked_planet):
         for unit, losses in battle_report["p3"]["def_loss"].items():
             if losses > 0:
                 defender_fleet_msg += str(unit) + ": " + str(losses) + " "
+                if necro.empire_holding == defender.empire and unit != "Necromancers":
+                    if unit != "Planet population":
+                        necro.effect1 += losses
+                        necro.save()
         if battle_report["p3"]["def_flee"]:
             defender_fleet_msg += "Defending forces preferred not to directly engage in stage 3!"
     
@@ -277,12 +424,38 @@ def generate_news(battle_report, attacker, defender, attacked_planet):
         for unit, losses in battle_report["p4"]["def_loss"].items():
             if losses > 0 and unit not in resources:
                 defender_fleet_msg += str(unit) + ": " + str(losses) + " "
+                if necro.empire_holding == defender.empire and unit != "Necromancers":
+                    if unit != "Planet population":
+                        necro.effect1 += losses
+                        necro.save()
+            if ironside.empire_holding == attacker.empire:
+                if losses > 0 and unit in resources:
+                    if unit == "Energy":
+                        defender_fleet_msg += "\n" + str(losses) + " " + str(unit) + ","
+                    elif unit != "Ectrolium":
+                        defender_fleet_msg += " " + str(losses) + " " + str(unit) + ","
+                    else: 
+                         defender_fleet_msg += " " + str(losses) + " " + str(unit) + " was stolen!"
         if battle_report["p4"]["def_flee"]:
-            defender_fleet_msg += "Defending forces preferred not to directly engage in stage 4!"
-    if ironside.empire_holding == attacker.empire:
-        for unit, losses in battle_report["p4"]["def_loss"].items():
-            if losses > 0 and unit in resources:
-                defender_fleet_msg += str(unit) + ": " + str(losses) + " was stolen!"
+            defender_fleet_msg += "\nDefending forces preferred not to directly engage in stage 4!"
+        
+    def_fleet_msg = 'Main Fleet'
+    
+    def_fleet_msg += "\nBomber: " + str(main_defender_fleet.bomber)
+    def_fleet_msg += "\nFighter: " + str(main_defender_fleet.fighter)
+    def_fleet_msg += "\nTransport: " + str(main_defender_fleet.transport)
+    def_fleet_msg += "\nCruiser: " + str(main_defender_fleet.cruiser)
+    def_fleet_msg += "\nCarrier: " + str(main_defender_fleet.carrier)
+    def_fleet_msg += "\nSoldier: " + str(main_defender_fleet.soldier)
+    def_fleet_msg += "\nDroid: " + str(main_defender_fleet.droid)
+    def_fleet_msg += "\nGoliath: " + str(main_defender_fleet.goliath)
+    def_fleet_msg += "\nPhantom: " + str(main_defender_fleet.phantom)
+    
+    def_fleet_msg += '\n Defending Fleet'
+    
+    for unit, losses in defending_fleets.items():
+        def_fleet_msg += "\n" + str(unit) + ": " + str(losses)
+    
         
     News.objects.create(user1=User.objects.get(id=attacker.id),
                         user2=User.objects.get(id=defender.id),
@@ -304,6 +477,7 @@ def generate_news(battle_report, attacker, defender, attacked_planet):
                         empire2=attacker.empire,
                         fleet1=defender_fleet_msg,
                         fleet2=attack_fleet_msg,
+                        extra_info=def_fleet_msg,
                         news_type=news_type_defender,
                         date_and_time=datetime.now(),
                         planet=attacked_planet,
@@ -317,17 +491,11 @@ def attack_planet(attacking_fleet):
     attacker = UserStatus.objects.get(id=attacking_fleet.owner.id)
     attacked_planet = Planet.objects.get(x=attacking_fleet.x, y=attacking_fleet.y, i=attacking_fleet.i)
     defender = UserStatus.objects.get(id=attacked_planet.owner.id)
-    # turns out we need to first multiply main fleet by the coverage, grr
-    # defending_fleets = Fleet.objects.filter(Q(owner=defender.id), Q(main_fleet=True) | \
-    #                                         Q(on_planet=True, x=attacking_fleet.x, y=attacking_fleet.y,
-    #                                           i=attacking_fleet.i)). \
-    #     aggregate(Sum('bomber'), Sum('fighter'), Sum('transport'), Sum('cruiser'), Sum('carrier'), Sum('soldier'), \
-    #               Sum('droid'), Sum('goliath'), Sum('phantom'), Sum('wizard'), Sum('agent'), Sum('ghost'),
-    #               Sum('exploration'))
 
     main_defender_fleet = Fleet.objects.get(owner=defender.id, main_fleet=True)
-    stationed_defender_fleet = Fleet.objects.filter(owner=defender.id, on_planet=True,\
+    stationed_defender_fleet = Fleet.objects.filter(owner=defender.id, command_order=8,\
                                         x=attacked_planet.x, y=attacked_planet.y, i=attacked_planet.i).first()
+    
     defending_fleets = {"bomber":0,
                         "fighter": 0,
                         "transport": 0,
@@ -336,21 +504,33 @@ def attack_planet(attacking_fleet):
                         "soldier": 0,
                         "droid": 0,
                         "goliath": 0,
-                        "phantom": 0,
-                        "wizard": 0,
-                        "agent": 0,
-                        "ghost": 0,
-                        "exploration": 0
+                        "phantom": 0
                         }
     # portal coverage
+    
+    portal_xy_list = Planet.objects.filter(portal=True, owner=defender.user).values_list('x', 'y')
+    if Specops.objects.filter(user_to=defender.user, name='Vortex Portal').exists():
+        for vort in Specops.objects.filter(user_to=defender.user, name='Vortex Portal'):
+            vort_por = Planet.objects.filter(id=vort.planet.id).values_list('x', 'y')
+            portal_xy_list = portal_xy_list | vort_por
+    
+    p_protection = min(100, int(100.0 * battlePortalCalc(attacking_fleet.x, attacking_fleet.y, portal_xy_list, defender.research_percent_portals, defender)))
+    
+    if Specops.objects.filter(planet=attacked_planet, user_to=defender.user, name='Portal Force Field').exists():
+        for op in Specops.objects.filter(planet=attacked_planet, user_to=defender.user, name='Portal Force Field'):
+            ffstrength = op.specop_strength
+            p_protection = max(0, (p_protection-ffstrength))
+    
     if stationed_defender_fleet:
         for key in defending_fleets.keys():
-            defending_fleets[key] = main_defender_fleet.__dict__[key] + \
-                                stationed_defender_fleet.__dict__[key]
+            defending_fleets[key] = round(main_defender_fleet.__dict__[key] * p_protection / 100)
+            defending_fleets[key] += stationed_defender_fleet.__dict__[key]
+            
     else:
         for key in defending_fleets.keys():
-            defending_fleets[key] = main_defender_fleet.__dict__[key] 
+            defending_fleets[key] = round(main_defender_fleet.__dict__[key] * p_protection / 100)
 
+    
     attstats = {}
     defstats = {}
     battle_report = {}
@@ -393,9 +573,39 @@ def attack_planet(attacking_fleet):
     attfactor = race_info_list[attacker.get_race_display()].get("military_attack", 1.0) / \
                 race_info_list[defender.get_race_display()].get("military_defence", 1.0) * fa
     deffactor = race_info_list[defender.get_race_display()].get("military_attack", 1.0) / \
-                race_info_list[attacker.get_race_display()].get("military_defence", 1.0) / fa
-    deffactor = deffactor * (attacked_planet.protection / 100)
-    attacker.fleet_readiness -= battleReadinessLoss(attacker, defender, attacked_planet)
+                race_info_list[attacker.get_race_display()].get("military_defence", 1.0) / fa            
+    
+    tgeneral = Artefacts.objects.get(name="The General")
+    if defender.empire == tgeneral.empire_holding and tgeneral.ticks_left == 0:
+        gsystem = System.objects.get(id=tgeneral.effect1)
+        gdist = max(abs(gsystem.x-attacked_planet.x), abs(gsystem.y-attacked_planet.y))
+        if gdist == 0:
+            attfactor /= 1.15
+            deffactor *= 1.15
+        elif gdist == 1:
+            attfactor /= 1.125
+            deffactor *= 1.125
+        elif gdist == 2:
+            attfactor /= 1.1
+            deffactor *= 1.1
+        elif gdist == 3:
+            attfactor /= 1.075
+            deffactor *= 1.075
+        elif gdist == 4:
+            attfactor /= 1.05
+            deffactor *= 1.05
+        elif gdist == 5:
+            attfactor /= 1.025
+            deffactor *= 1.025
+    
+    arte = Artefacts.objects.get(name="Double 0")
+    if defender.empire == arte.empire_holding:
+        deffactor *= 0.85
+    
+    fr = battleReadinessLoss(attacker, defender, attacked_planet)
+    if attacked_planet.artefact != None and fr > 20:
+        fr = 20
+    attacker.fleet_readiness -= fr
     attacker.save()
 
     if Specops.objects.filter(name="Planetary Beacon", planet=attacked_planet).exists():
@@ -416,6 +626,11 @@ def attack_planet(attacking_fleet):
     	strength = sh.specop_strength
     	hpshield += strength
     shields = (shield_absorb * attacked_planet.shield_networks) + hpshield
+    
+    snetwork = Artefacts.objects.get(name="Shield Network")
+    if defender.empire == snetwork.empire_holding:
+        shields = hpshield
+        shields += ((shield_absorb * defender.total_shield_networks) * 0.33)
 
     # phase1
     attacker_flee, defender_flee, \
@@ -428,9 +643,9 @@ def attack_planet(attacking_fleet):
     battle_report["p1"]["def_loss"] = def_loss
 
     if attacker_flee:
-        defenders_fleet_update(defender, defending_fleets, attacked_planet)
+        defenders_fleet_update(defender, battle_report, attacked_planet)
         battle_report["won"] = "D"
-        generate_news(battle_report, attacker, defender, attacked_planet)
+        generate_news(battle_report, attacker, defender, attacked_planet, main_defender_fleet, defending_fleets)
         return battle_report
 
     # phase2
@@ -444,9 +659,9 @@ def attack_planet(attacking_fleet):
     battle_report["p2"]["def_loss"] = def_loss
 
     if attacker_flee:
-        defenders_fleet_update(defender, defending_fleets, attacked_planet)
+        defenders_fleet_update(defender, battle_report, attacked_planet)
         battle_report["won"] = "D"
-        generate_news(battle_report, attacker, defender, attacked_planet)
+        generate_news(battle_report, attacker, defender, attacked_planet, main_defender_fleet, defending_fleets)
         return battle_report
 
     # phase3
@@ -460,9 +675,9 @@ def attack_planet(attacking_fleet):
     battle_report["p3"]["def_loss"] = def_loss
 
     if attacker_flee:
-        defenders_fleet_update(defender, defending_fleets, attacked_planet)
+        defenders_fleet_update(defender, battle_report, attacked_planet)
         battle_report["won"] = "D"
-        generate_news(battle_report, attacker, defender, attacked_planet)
+        generate_news(battle_report, attacker, defender, attacked_planet, main_defender_fleet, defending_fleets)
         return battle_report
 
     # phase4
@@ -476,11 +691,11 @@ def attack_planet(attacking_fleet):
     battle_report["p4"]["def_loss"] = def_loss
 
     # spread losses among main fleet and stationed for the defender
-    defenders_fleet_update(defender, defending_fleets, attacked_planet)
+    defenders_fleet_update(defender, battle_report, attacked_planet)
 
     if attacker_flee:
         battle_report["won"] = "D"
-        generate_news(battle_report, attacker, defender, attacked_planet)
+        generate_news(battle_report, attacker, defender, attacked_planet, main_defender_fleet, defending_fleets)
         return battle_report
         attacking_fleet.command_order = attacker.post_attack_order
         if attacker.post_attack_order == 5:
@@ -490,7 +705,7 @@ def attack_planet(attacking_fleet):
                 request.session['error'] = "You need at least one portal for fleet to return to main fleet!"
                 return fleets(request)
             speed = race_info_list[attacker.get_race_display()]["travel_speed"]
-            portal = find_nearest_portal(attacking_fleet.current_position_x, attacking_fleet.current_position_y, portal_planets)
+            portal = find_nearest_portal(attacking_fleet.current_position_x, attacking_fleet.current_position_y, portal_planets. attacker)
             generate_fleet_order(attacking_fleet, portal.x, portal.y, speed, attacker.post_attack_order, portal.i)
                 # do instant join of fleets allready present in systems with portals
             main_fleet = Fleet.objects.get(owner=attacker.id, main_fleet=True)
@@ -506,16 +721,19 @@ def attack_planet(attacking_fleet):
         attacker_size = int(attacker.num_planets)
         defender_size = int(defender.num_planets)
         if defender_size / attacker_size > 0.6:
-            attacked_planet.solar_collectors *= 0.9
-            attacked_planet.fission_reactors *= 0.9
-            attacked_planet.mineral_plants *= 0.9
-            attacked_planet.crystal_labs *= 0.9
-            attacked_planet.refinement_stations *= 0.9
-            attacked_planet.cities *= 0.9
-            attacked_planet.research_centers *= 0.9
-            attacked_planet.defense_sats *= 0.9
-            attacked_planet.shield_networks *= 0.9
-            attacked_planet.total_buildings = 0            
+            attacked_planet.solar_collectors = round(attacked_planet.solar_collectors * 9 / 10)
+            attacked_planet.fission_reactors = round(attacked_planet.fission_reactors * 9 / 10)
+            attacked_planet.mineral_plants = round(attacked_planet.mineral_plants * 9 / 10)
+            attacked_planet.crystal_labs = round(attacked_planet.crystal_labs * 9 / 10)
+            attacked_planet.refinement_stations = round(attacked_planet.refinement_stations * 9 / 10)
+            attacked_planet.cities = round(attacked_planet.cities * 9 / 10)
+            attacked_planet.research_centers = round(attacked_planet.research_centers * 9 / 10)
+            attacked_planet.defense_sats = round(attacked_planet.defense_sats * 9 / 10)
+            attacked_planet.shield_networks = round(attacked_planet.shield_networks * 9 / 10)
+            totbuild = (attacked_planet.solar_collectors + attacked_planet.fission_reactors + attacked_planet.mineral_plants + attacked_planet.crystal_labs + attacked_planet.refinement_stations + attacked_planet.cities + attacked_planet.research_centers + attacked_planet.defense_sats + attacked_planet.shield_networks)
+            attacked_planet.total_buildings = totbuild
+            attacked_planet.overbuilt = calc_overbuild(attacked_planet.size, totbuild - (attacked_planet.defense_sats + attacked_planet.shield_networks))
+            attacked_planet.overbuilt_percent = (attacked_planet.overbuilt - 1.0) * 100             
         else:
             attacked_planet.solar_collectors = 0
             attacked_planet.fission_reactors = 0
@@ -527,7 +745,10 @@ def attack_planet(attacking_fleet):
             attacked_planet.defense_sats = 0
             attacked_planet.shield_networks = 0
             attacked_planet.total_buildings = 0
+            attacked_planet.overbuilt = 0
+            attacked_planet.overbuilt_percent = 0
         attacked_planet.portal = False
+        attacked_planet.portal_under_construction = False
         attacked_planet.buildings_under_construction = 0
         attacked_planet.protection = 0
         attacked_planet.save()
@@ -537,14 +758,30 @@ def attack_planet(attacking_fleet):
         if attacked_planet.artefact is not None:
             attacked_planet.artefact.empire_holding = attacker.empire
             attacked_planet.artefact.save()
-        scouting = Scouting.objects.filter(user=User.objects.get(id=attacker.id), planet=attacked_planet).first()
+        scouting = Scouting.objects.filter(empire=attacker.empire, planet=attacked_planet).first()
         if scouting is None:
-            Scouting.objects.create(user= User.objects.get(id=attacker.id),
+            Scouting.objects.create(user= attacker.user,
+                                empire=attacker.empire,
                                 planet = attacked_planet,
                                 scout = '1')
         else:
             scouting.scout = 1.0
-            scouting.save
+            scouting.save()
+            
+        offered = News.objects.filter(news_type='E', user1=defender.user, extra_info="1")
+        offering = News.objects.filter(news_type='E', user2=defender.user, extra_info="1")
+        for o in offered:
+            o.delete()
+        for o in offering:
+            o.delete()
+        
+        pshield = Specops.objects.filter(name="Planetary Shielding", planet=attacked_planet)
+        for sh in pshield:
+            sh.delete()
+            
+        beac = Specops.objects.filter(name="Planetary Beacon", planet=attacked_planet)
+        for pb in beac:
+            pb.delete()
         
         attacking_fleet.command_order = attacker.post_attack_order
         if attacker.post_attack_order == 5:
@@ -554,13 +791,13 @@ def attack_planet(attacking_fleet):
                 request.session['error'] = "You need at least one portal for fleet to return to main fleet!"
                 return fleets(request)
             speed = race_info_list[attacker.get_race_display()]["travel_speed"]
-            portal = find_nearest_portal(attacking_fleet.current_position_x, attacking_fleet.current_position_y, portal_planets)
+            portal = find_nearest_portal(attacking_fleet.current_position_x, attacking_fleet.current_position_y, portal_planets, attacker)
             generate_fleet_order(attacking_fleet, portal.x, portal.y, speed, attacker.post_attack_order, portal.i)
                 # do instant join of fleets allready present in systems with portals
             main_fleet = Fleet.objects.get(owner=attacker.id, main_fleet=True)
             fleets_id3 = Fleet.objects.filter(id=attacking_fleet.id, ticks_remaining=0)
             join_main_fleet(main_fleet, fleets_id3)
-    generate_news(battle_report, attacker, defender, attacked_planet)
+    generate_news(battle_report, attacker, defender, attacked_planet, main_defender_fleet, defending_fleets)
     return battle_report
 
 
@@ -585,14 +822,14 @@ def phase1(attacking_fleet,
     
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        attdam += necro.effect1 * 1
+        attdam += necro.effect1 * 30
     
     defdam = defending_fleets["cruiser"] * defstats["Cruisers"][0] + \
              defending_fleets["phantom"] * defstats["Phantoms"][0] + \
              sats_attack * attacked_planet.defense_sats 
     
     if necro.empire_holding == defender.empire:
-        defdam += necro.effect1 * 1
+        defdam += necro.effect1 * 30
     
     if Specops.objects.filter(user_to=attacker.user, name="War Illusions").exists():
         spec_ops = Specops.objects.filter(user_to=attacker.user, name="War Illusions")
@@ -624,7 +861,7 @@ def phase1(attacking_fleet,
         attdam *= 0.10
         # results[3] |= 0x100;
     # attacker flees, same logic as above
-    if (attdam >= 1.0) and ((defdam / attdam) * 100.0 >= defender.long_range_attack_percent):
+    if (attdam >= 1.0) and ((defdam / attdam) * 100.0 >= attacker.long_range_attack_percent):
         defdam *= 0.20
         attdam *= 0.10
         attacker_flee = True
@@ -639,7 +876,7 @@ def phase1(attacking_fleet,
     hpnecro = 0
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        hpnecro = necro.effect1 * 30
+        hpnecro = necro.effect1 * 100
     
     hptotal = hpcarrier + hpcruiser + hpphantom + hpnecro
     
@@ -653,9 +890,9 @@ def phase1(attacking_fleet,
         damcarrier = hpcarrier / hptotal
         damcruiser = hpcruiser / hptotal
         damphantom = hpphantom / hptotal     
+        if hpnecro >=1:
+            damnecro = hpnecro / hptotal
     
-    if hpnecro >=1:
-        damnecro = hpnecro / hptotal
     
     # calc attacking/defending cruiser ratio, transfer the damage from carriers to cruisers and phantoms
     fa = 0.0
@@ -670,7 +907,7 @@ def phase1(attacking_fleet,
         damcarrier *= fa
         damcruiser *= fa
         damphantom *= fa
-        damnecro += fa
+        damnecro *= fa
 
     if damcarrier > hpcarrier:
         damcruiser += damcarrier - hpcarrier
@@ -683,7 +920,7 @@ def phase1(attacking_fleet,
     
     neckilled = 0
     if necro.empire_holding == attacker.empire:
-        neckilled = round(min(necro.effect1, damnecro * 100.0 / 30))
+        neckilled = round(min(necro.effect1, damnecro / 100.0))
         necro.effect1 -= neckilled
         necro.save()
     
@@ -704,7 +941,7 @@ def phase1(attacking_fleet,
     
     hpnecro = 0
     if necro.empire_holding == defender.empire:
-        hpnecro = necro.effect1 * 30 
+        hpnecro = necro.effect1 * 100
     
     hptotal = hpcruiser + hpphantom + hpsats + hpnecro
     
@@ -746,7 +983,7 @@ def phase1(attacking_fleet,
     
     neckilled = 0
     if necro.empire_holding == defender.empire:
-        neckilled = round(min(necro.effect1, damnecro * 100.0 / 30))
+        neckilled = round(min(necro.effect1, damnecro / 100.0))
         necro.effect1 -= neckilled
         necro.save()
     
@@ -788,7 +1025,7 @@ def phase2(attacking_fleet,
     
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        attdam += necro.effect1 * 1
+        attdam += necro.effect1 * 30
     
     defdam = defending_fleets["cruiser"] * defstats["Cruisers"][0] + \
              defending_fleets["phantom"] * defstats["Phantoms"][0] + \
@@ -796,7 +1033,7 @@ def phase2(attacking_fleet,
              sats_attack * attacked_planet.defense_sats
 
     if necro.empire_holding == defender.empire:
-        defdam += necro.effect1 * 1
+        defdam += necro.effect1 * 30
 
     attdam = attdam * attfactor * ((1.0 + 0.005 * attacker.research_percent_military) / \
                                    (1.0 + 0.005 * defender.research_percent_military))
@@ -817,7 +1054,7 @@ def phase2(attacking_fleet,
         defdam *= 0.15
         attdam *= 0.10
     # attacker flees, same logic as above
-    if (attdam >= 1.0) and (defdam / attdam) * 100.0 >= defender.air_vs_air_percent:
+    if (attdam >= 1.0) and (defdam / attdam) * 100.0 >= attacker.air_vs_air_percent:
         defdam *= 0.50
         attdam *= 0.25
         attacker_flee = True
@@ -834,7 +1071,7 @@ def phase2(attacking_fleet,
     hpnecro = 0
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        hpnecro = necro.effect1 * 30
+        hpnecro = necro.effect1 * 100
     
     hptotal = hptransport + hpcruiser + hpbomber + hpfighter + hpphantom + hpnecro
 
@@ -902,7 +1139,7 @@ def phase2(attacking_fleet,
     
     neckilled = 0
     if necro.empire_holding == attacker.empire:
-        neckilled = round(min(necro.effect1, damnecro * 100.0 / 30))
+        neckilled = round(min(necro.effect1, damnecro / 100.0))
         necro.effect1 -= neckilled
         necro.save()
     
@@ -926,7 +1163,7 @@ def phase2(attacking_fleet,
 
     hpnecro = 0
     if necro.empire_holding == defender.empire:
-        hpnecro = necro.effect1 * 30 
+        hpnecro = necro.effect1 * 100 
 
     hptotal = hpcruiser + hpphantom + hpsats + hpfighter + hpnecro
     damcruiser = 0
@@ -968,11 +1205,11 @@ def phase2(attacking_fleet,
     if damsats > hpsats:
         damcruiser += damsats - hpsats
     if damnecro > hpnecro:
-        damphantom += damnnecro - hpnecro
+        damphantom += damnecro - hpnecro
     
     neckilled = 0
     if necro.empire_holding == defender.empire:
-        neckilled = round(min(necro.effect1, damnecro * 100.0 / 30))
+        neckilled = round(min(necro.effect1, damnecro / 100.0))
         necro.effect1 -= neckilled
         necro.save()
     
@@ -1016,7 +1253,7 @@ def phase3(attacking_fleet,
 
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        attdam += necro.effect1 * 1
+        attdam += necro.effect1 * 30
 
     defdam = defending_fleets["goliath"] * defstats["Goliaths"][0] + \
              defending_fleets["phantom"] * defstats["Phantoms"][2]
@@ -1026,7 +1263,7 @@ def phase3(attacking_fleet,
         defdam += viruspop
         
     if necro.empire_holding == defender.empire:
-        defdam += necro.effect1 * 1    
+        defdam += necro.effect1 * 30    
         
     if defdam > 0:
         if virus.empire_holding == defender.empire:
@@ -1057,7 +1294,7 @@ def phase3(attacking_fleet,
         defdam *= 0.15
         attdam *= 0.10
     # attacker flees, same logic as above
-    if (attdam >= 1.0) and (defdam / attdam) * 100.0 >= defender.ground_vs_air_percent:
+    if (attdam >= 1.0) and (defdam / attdam) * 100.0 >= attacker.ground_vs_air_percent:
         defdam *= 0.30
         attdam *= 0.15
         attacker_flee = True
@@ -1074,7 +1311,7 @@ def phase3(attacking_fleet,
     hpnecro = 0
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        hpnecro = necro.effect1 * 30
+        hpnecro = necro.effect1 * 100
     
     hptotal = hptransport + hpcruiser + hpbomber + hpphantom + hpnecro
 
@@ -1130,7 +1367,7 @@ def phase3(attacking_fleet,
 
     neckilled = 0
     if necro.empire_holding == attacker.empire:
-        neckilled = round(min(necro.effect1, damnecro * 100.0 / 30))
+        neckilled = round(min(necro.effect1, damnecro / 100.0))
         necro.effect1 -= neckilled
         necro.save()
 
@@ -1158,7 +1395,7 @@ def phase3(attacking_fleet,
     
     hpnecro = 0
     if necro.empire_holding == defender.empire:
-        hpnecro = necro.effect1 * 30 
+        hpnecro = necro.effect1 * 100 
     
     hptotal = hpcruiser + hpphantom + hppop + hpnecro
 
@@ -1187,7 +1424,7 @@ def phase3(attacking_fleet,
     if dampop > hppop:    
         damphantom += dampop - hppop
     if damnecro > hpnecro:
-        damphantom += damnnecro - hpnecro
+        damphantom += damnecro - hpnecro
     
     if virus.empire_holding == defender.empire:
         popkilled = round(min(attacked_planet.current_population, dampop * 100.0 / defstats["Goliaths"][3]))
@@ -1197,12 +1434,9 @@ def phase3(attacking_fleet,
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     neckilled = 0
     if necro.empire_holding == defender.empire:
-        neckilled = round(min(necro.effect1, damnecro * 100.0 / 30))
+        neckilled = round(min(necro.effect1, damnecro / 100.0))
         necro.effect1 -= neckilled
         necro.save()
-        if popkilled >= 1:
-            necro.effect1 += popkilled
-            necro.save()
         
     defender_losses = {"Bombers": 0, "Fighters": 0,"Transports": 0,
                        "Cruisers": 0, "Carriers": 0, "Soldiers": 0, "Droids": 0,
@@ -1255,7 +1489,7 @@ def phase4(attacking_fleet,
     
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        attdam += necro.effect1 * 1
+        attdam += necro.effect1 * 30
     
     defdam = defending_fleets["soldier"] * defstats["Soldiers"][2] + \
              defending_fleets["droid"] * defstats["Droids"][2] + \
@@ -1270,7 +1504,7 @@ def phase4(attacking_fleet,
     defdam += viruspop
 
     if necro.empire_holding == defender.empire:
-        defdam += necro.effect1 * 1
+        defdam += necro.effect1 * 30
 
     bomber_modifier = attacking_fleet.bomber * defstats["Bombers"][2] + \
                       attacking_fleet.cruiser *  defstats["Cruisers"][2]
@@ -1316,7 +1550,7 @@ def phase4(attacking_fleet,
         defdam *= 0.15
         attdam *= 0.10
     # attacker flees, same logic as above
-    if (attdam >= 1.0) and (defdam / attdam) * 100.0 >= defender.ground_vs_ground_percent:
+    if (attdam >= 1.0) and (defdam / attdam) * 100.0 >= attacker.ground_vs_ground_percent:
         defdam *= 0.10
         attdam *= 0.20
         attacker_flee = True
@@ -1330,7 +1564,7 @@ def phase4(attacking_fleet,
     hpnecro = 0
     
     if necro.empire_holding == attacker.empire:
-        hpnecro = necro.effect1 * 30
+        hpnecro = necro.effect1 * 100
     
     hptotal = hpsoldier + hpdroid + hpgoliath + hpphantom
     
@@ -1382,7 +1616,7 @@ def phase4(attacking_fleet,
     
     neckilled = 0
     if necro.empire_holding == attacker.empire:
-        neckilled = round(min(necro.effect1, damnecro * 100.0 / 30))
+        neckilled = round(min(necro.effect1, damnecro / 100.0))
         necro.effect1 -= neckilled
         necro.save()
     
@@ -1410,7 +1644,7 @@ def phase4(attacking_fleet,
     hpnecro = 0
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == defender.empire:
-        hpnecro = necro.effect1 * 30  
+        hpnecro = necro.effect1 * 100  
     
     hptotal = hpsoldier + hpdroid + hpgoliath + hpphantom + hppop + hpnecro
 
@@ -1462,7 +1696,7 @@ def phase4(attacking_fleet,
     if damphantom > hpphantom:
         damdroid += damphantom - hpphantom
     if damnecro > hpnecro:
-        damphantom += damnnecro - hpnecro
+        damphantom += damnecro - hpnecro
         
     virus = Artefacts.objects.get(name="t-Veronica")
     if virus.empire_holding == defender.empire:
@@ -1472,12 +1706,9 @@ def phase4(attacking_fleet,
     
     neckilled = 0
     if necro.empire_holding == defender.empire:
-        neckilled = round(min(necro.effect1, damnecro * 100.0 / 30))
+        neckilled = round(min(necro.effect1, damnecro / 100.0))
         necro.effect1 -= neckilled
-        necro.save()
-        if popkilled >= 1:
-            necro.effect1 += popkilled
-            necro.save()        
+        necro.save()       
     
     defender_losses = {"Bombers": 0, "Fighters": 0,"Transports": 0,
                        "Cruisers": 0, "Carriers": 0,

@@ -8,24 +8,40 @@
 {{msg}}
 {% endif %}
 
-<style>
+<style type="text/css">
+
+.row1{}
+
+.row2{
+display: table-row;
+background-color: rgb(25,38,51);
+}
 
   .hall_of_fame_table {
     margin: 0 auto; 
-	margin-bottom: 10px;
+	margin-bottom: 30px;
+	border-spacing: 8px;
   }
 
 </style>
 
 Account ID: {{player.user.id}}
 <br>
+{% if player.id == 27 %}
+		<img src="/static/scriv.png"><br>
+	{% endif %}
 Faction name: {{player.user_name}}
 <br>
 Faction race: {{player.get_race_display}}
 <br>
+{% if status.galsel == 1 %}
 Faction empire: <a href="/empire{{player.empire.id}}">{{player.empire.name_with_id}}</a>
+{% elif status.galsel == 2 %}
+Faction empire: <a href="/galtwo/empire{{player.empire.id}}">{{player.empire.name_with_id}}</a>
+{% endif %}
 <br>
 Tag Points: {{player.tag_points}}
+
 <br>
 {% if player.user.id == 1 %}
 <b><font style="color:Yellow;">Administrator</font></b>
@@ -33,6 +49,22 @@ Tag Points: {{player.tag_points}}
 <font style="color:Red;">BOT</font>
 {% else %}
 Tag: {{player.tag}}
+{% endif %}
+{% if player.user.id != status.user.id %}
+<br><br>
+{% if status.galsel == 1 %}
+<a href="/tmap{{player.id}}">Highlight planets on Map</a>
+<br><br>
+<form action="/map_settings" method="POST">
+{% elif status.galsel == 2 %}
+<a href="/galtwo/tmap{{player.id}}">Highlight planets on Map</a>
+<br><br>
+<form action="/galtwo/map_settings" method="POST">
+{% endif %}
+{% csrf_token %}
+<input type="hidden" name="add_user" value="{{ player.id }}">
+<input type="submit" value="Add {{ player.user_name }} to map settings">
+</form>
 {% endif %}
 <br><br>
 
@@ -44,30 +76,69 @@ User e-mail : {{player.user.email}}
 Tag points : {{player.tag_points}}
 <br>
 <a href="/password">Change Password</a>
+<br>
+{% if ground.tick_number < 1 %}
+<br><br>
+<b>Pre Round Options</b>
+<br>
+<form action="" method="POST" name="Usern">
+{% csrf_token %}
+	<br>Change Username:<br><input type="text" name="Uname" size="20" value="{{status.user_name}}">
+	<br><input type="submit" value="Change">
+	</form>
+	<br>Choose your race:<br>
+	<form action="" method="POST" name="Usern">
+	{% csrf_token %}
+				<select name="chose_race">
+				{% for r in races %}
+				<option value="{{r.0}}"> {{r.1}}</option>
+				{% endfor %}
+				</select>
+				<br><input type="submit" value="Change">
+
+</form>
+<br><br>
 <form action="" method="POST">
 {% csrf_token %}
 <input type="submit" name = "Rejoin" value="Rejoin"></form>
 </form>
+{% endif %}
 {% else %}
+{% if status.galsel == 1 %}
 <a href="/compose_message{{player.user.id}}">Send Message</a>
+{% elif status.galsel == 2 %}
+<a href="/galtwo/compose_message{{player.user.id}}">Send Message</a>
+{% endif %}
 <br>
 
 {% endif %}
 <br>
+<table class="hall_of_fame_table">
+	<tr><td><b><u>Round</u></b></td>
+	<td><b><u>Name</u></b></td>
+	<td><u><b>Planets</u></b></td>
+	<td><u><b>Networth</u></b></td>
+	<td><u><b>Empire</u></b></td>
+	<td><u><b>Race</u></b></td>
+	<td><u><b>Artefacts</u></b></td>
+	</tr>	
 {% for p in hof %}
-	<u>Round # {{p.round}}<br></u>
-	<table class="hall_of_fame_table">
-	<tr><td><b>Name:</b> {{p.user}}</td></tr>
-	<tr><td><b>Planets:</b> {{p.planets}}</td></tr>
-	<tr><td><b>Networth:</b> {{p.networth}}</td></tr>
-	<tr><td><b>Empire:</b> {{p.empire}}</td></tr>
-	<tr><td><b>Race:</b> {{p.race}}</td></tr>
-	<tr><td><b>Artefacts:</b> {{p.artefacts}}</td></tr>
+
 	
+	<tr class="{% cycle 'row2' 'row1' %}">
+	<td>{{p.round}}</td>
+	<td>{{p.user}}</td>
+	<td>{{p.planets}}</td>
+	<td>{{p.networth}}</td>
+	<td>{{p.empire}}</td>
+	<td>{{p.race}}</td>
+	<td>{{p.artefacts}}</td>
+	</tr>	
+
+	{% endfor %}
 	</table>
+
 	<br>
-	
-{% endfor %}
 
 {% endblock %}
 

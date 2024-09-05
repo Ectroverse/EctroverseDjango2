@@ -239,7 +239,7 @@ public class UpdateFleets {
 	}
 	
 	public void updateMoovingFleets(LinkedList<Planet> portals, int militaryFlag, HashMap<String, Double> race_info) throws Exception{
-		String fleetsQuery = " SELECT * FROM app_fleet WHERE main_fleet = false AND ticks_remaining != 0 AND owner_id = " + userID;
+		String fleetsQuery = " SELECT * FROM app_fleet WHERE main_fleet = false AND owner_id = " + userID;
 		ResultSet resultSet = statement.executeQuery(fleetsQuery);
 		
 		
@@ -265,16 +265,18 @@ public class UpdateFleets {
 
 			double cur_x = HelperFunctions.x_move_calc(speed, x, current_position_x, y, current_position_y);
 			double cur_y = HelperFunctions.y_move_calc(speed, x, current_position_x, y, current_position_y);
-			--ticks_rem;
+			if (ticks_rem > 0){
+			--ticks_rem;}
 				
-			if (ticks_rem == 0){
+			if (ticks_rem < 1){
 				//ramake to a batch update
 				if (resultSet.getInt("command_order") == 5){ //return to main fleet
 
 					for(int i = 0; i < unit_names.length; i++){
 						returnFleets[i] += resultSet.getLong(unit_names[i]);
+						if(i == 8){returnFleets[i] *= 0.8;}
 						totalReturnedFleets += returnFleets[i];
-					}		
+					}			
 					
 					//delete fleets that have merged main
 					fleetsDeleteUpdateStatement.setInt(1, fleet_id);
@@ -328,9 +330,9 @@ public class UpdateFleets {
 				fleetsDeleteUpdateStatement.addBatch();
 				addNews.createfleetExplorationNews(userID, empireID, true, planetID);
 
-				statement2.execute("DELETE FROM app_scouting WHERE user_id = " +userID+" AND planet_id = " +planetID+ ";");
-				statement2.execute("INSERT INTO app_scouting ( user_id, planet_id, scout)" +
-								" SELECT  " + userID +  " , " + planetID + " , '1.0'" + ";");
+				statement2.execute("DELETE FROM app_scouting WHERE empire_id = " +empireID+" AND planet_id = " +planetID+ ";");
+				statement2.execute("INSERT INTO app_scouting ( user_id, planet_id, scout, empire_id)" +
+								" SELECT  " + userID +  " , " + planetID + " , '1.0' ," + empireID + ";");
 						
 				
 				if (militaryFlag != 1) //if not attacked - it has highest priority
@@ -338,13 +340,13 @@ public class UpdateFleets {
 			}
 			else{ //planet is allready taken
 				addNews.createfleetExplorationNews(userID, empireID, false, planetID);
-				statement2.execute("UPDATE app_fleet SET ticks_remaining = 0 WHERE id = " + fleet.getInt("id") +  ";");
+				statement2.execute("UPDATE app_fleet SET ticks_remaining = 0, command_order = 2 WHERE id = " + fleet.getInt("id") +  ";");
 				userStatusUpdateStatement.setInt(58, 1);
 			}
 		}
 		else {
 			//planet doesnt exist for some reason
-			statement2.execute("UPDATE app_fleet SET ticks_remaining = 0 WHERE id = " + fleet.getInt("id") +  ";");
+			statement2.execute("UPDATE app_fleet SET ticks_remaining = 0, command_order = 2 WHERE id = " + fleet.getInt("id") +  ";");
 		}
 	}
 	
@@ -452,12 +454,13 @@ public class UpdateFleets {
 	}
 	
 	public void executeFleetsUpdate() throws Exception{
+		fleetPhantomsUpdateStatement.executeBatch();
+		fleetsDecayStatement.executeBatch();
 		fleetsUpdateStatement.executeBatch();
 		fleetMergeUpdateStatement.executeBatch();
 		fleetStationUpdateStatement.executeBatch();
-		fleetPhantomsUpdateStatement.executeBatch();
 		fleetsDeleteUpdateStatement.executeBatch();
-		fleetsDecayStatement.executeBatch();
+		
 	}
 
 }

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% load static %}
-
+{% load mathfilters %}
 {% block content %}
 
 <style>
@@ -14,78 +14,115 @@
 #content-mobile {display: block;}
 
 }
+</style>
+<style>
+#logo-holder {position:relative;}
+#logo-holder .unitimage {
+    height: 70;
+    width: 70;
+}
+#logo-holder .unitinfo {
+    width: 70;
+}
+#logo-holder .unitinfo {transition: opacity 0.5s ease-in-out;}
+#logo-holder .unitinfo {position:absolute; top:0; left:0; opacity:0;}
+
+
+#logo-holder:hover .unitimage {opacity:0; }
+#logo-holder:hover .unitinfo {opacity:1; overflow:visible;}
 
 </style>
 
-  <div id="content-mobile">
+<script>
+function maxunits() {
+	{% for unit in unit_dict %}
+	{% if unit.cost != None %}
+		if (document.getElementById('u{{unit.i}}').checked) {
+			document.getElementById('{{unit.i}}').value = {{unit.maxunit}};
+		}
+		else document.getElementById('{{unit.i}}').value = 0;
+	{% endif %}
+	{% endfor %}
+}
+</script>
+<script>
+
+function costunits() {
+		document.getElementById("totcost").style.display = 'block';
+		var solar = 0
+		var min = 0
+		var cry = 0
+		var ect = 0
+		{% for unit in unit_dict %}
+		{% if unit.cost != None %}
+		var x = document.getElementById('{{unit.i}}').value;
+		{% endif %}
+		if( parseInt(x) > 0){
+		{% for resource in unit.cost %}
+		{% if resource.value > 0 and resource.name != "Time"%}
+		var y = parseInt(x) * {{resource.value}}
+		if(y>0){
+		{% if resource.name == "Energy" %}
+		solar += parseInt(y);		{% endif %}
+		{% if resource.name == "Mineral" %}
+		min += parseInt(y);		{% endif %}
+		{% if resource.name == "Crystal" %}
+		cry += parseInt(y);	{% endif %}
+		{% if resource.name == "Ectrolium" %}
+		ect += parseInt(y);{% endif %}	}	
+		{% endif %}
+		{% endfor %}}
+		
+		if(solar > {{status.energy}}){document.getElementById("solar").style.color = 'red';}
+		else{document.getElementById("solar").style.color = 'green';}
+		if(min > {{status.minerals}}){document.getElementById("min").style.color = 'red';}
+		else{document.getElementById("min").style.color = 'green';}
+		if(cry > {{status.crystals}}){document.getElementById("crys").style.color = 'red';}
+		else{document.getElementById("crys").style.color = 'green';}
+		if(ect > {{status.ectrolium}}){document.getElementById("ect").style.color = 'red';}
+		else{document.getElementById("ect").style.color = 'green';}
+		document.getElementById('solar').value = solar;
+		document.getElementById('min').value = min;
+		document.getElementById('crys').value = cry;
+		document.getElementById('ect').value = ect;
+		
+		{% endfor %}
+		
+}
+</script>
+<div id="totcost" style="position:fixed; right:0; bottom:0; background-color:#0b1119; color:white; z-index: 99; width: 100%">
+
+  <td ><b>Energy: <input type="text" id="solar" value="0" readonly style=" border:none; background-color:#0b1119;"></b></td>
+  <td ><b>Mineral: <input type="text" id="min" value="0" readonly style=" border:none; background-color:#0b1119;"></b></td>
+  <td ><b>Crystal: <input type="text" id="crys" value="0" readonly style=" border:none; background-color:#0b1119;"></b></td>
+  <td ><b>Ectrolium: <input type="text" id="ect" value="0" readonly style=" border:none; background-color:#0b1119;"></b></td>
+</div>
+
   {% if msg %}
       <br>
       {{msg|safe}}
       <br>
   {% endif %}
-  <form action="/units" method="POST">
-  {% csrf_token %}
-  <div class="divTable">
-    <div class="divTableBody"
-    <div class="divRow">
-      <div class="divColumn">Units</div>
-      <div class="divColumn">Cost</div>
-      <div class="divColumn">Owned</div>
-      <div class="divColumn">Build</div>
-    </div>
-    {% for unit in unit_dict %}
-      {% if unit.cost == None %}
-        <div class="divRow">
-          <div class="divColumn"><font color="#FFFFFF">{{unit.label}}</font><br>
-            <img src="{% static '/units/'|add:unit.label|add:'.png' %}" width="50" height="50" title ="{{unit.label}}" style="padding-top :5px;"></div>
-          <div class="divColumn"><font color="#FF0000">Unavailable<br>Tech too low</font></div>
-          <div class="divColumn">{{unit.owned}}</div>
-          <div class="divColumn">&nbsp;</div>
-        </div>
-      {% else %}
-        <div class="divRow">
-          <div class="divColumn"><font color="#FFFFFF">{{unit.label}}</font><br>
-            <img src="{% static '/units/'|add:unit.label|add:'.png' %}" width="50" height="50" title ="{{unit.label}}" style="padding-top :5px;"></div>
-            <div class="divColumn">
-            {% for resource in unit.cost %}
-              {% if resource.value > 0 %}
-                {{resource.value}} {{resource.name}} <br>
-              {% endif %}
-            {% endfor %}
-            {% if unit.penalty > 0 %}
-                <font color="#FF2020">Tech : +{{unit.penalty}}% costs</font><br>
-            {% endif %}</div>
-            <div class="divColumn">{{unit.owned}}</div>
-          <div class="divColumn"><input type="text" pattern="[0-9]+" maxlength="9" name="{{unit.i}}" size="5"></div>
-        </div>
-        {% endif %}
-
-    {% endfor %}
-    </div>
-    <button type="submit" formmethod="POST">Build</button>
-  </form>
-  </div>
-
-
-  <div id="content-desktop">
-  {% if msg %}
-      <br>
-      {{msg|safe}}
-      <br>
-  {% endif %}
-    <form action="/units" method="POST">
+  
+<br><a href="/guide/units">Full Unit Stats</a><br>
+	{% if status.galsel == 1 %}
+<form action="/units" method="POST">
+{% elif status.galsel == 2 %}
+<form action="/galtwo/units" method="POST">
+{% endif %}
+    
   {% csrf_token %}
   <table cellspacing="6" cellpadding="0" width="90%" border="0" align="center">
   <br>
-  <b>Build Units<b>
+  <b>Build Units</b>
   <br>
 
   <tr>
-  <td ></td>
   <td ><b>Unit</b></td>
   <td ><b>Cost</b></td>
   <td ><b>Owned</b></td>
   <td ><b>Build</b></td>
+  <td id="bcost"><b>Max Build</b></td>
 
 
   </tr>
@@ -95,15 +132,42 @@
   {% for unit in unit_dict %}
       {% if unit.cost == None %}
           <tr>
-  		<td><img src="{% static '/units/'|add:unit.label|add:'.png' %}" width="70" height="70" title ="{{unit.label}}"></td>
-          <td style="padding:10px" valign="top"><font color="#FFFFFF">{{unit.label}}</font></td>
+  		<td>{{unit.label}}<br><div id="logo-holder">
+				<img class="unitimage" src="{% static '/units/'|add:unit.label|add:'.png' %}" width="70vw" height="70vw" title ="{{unit.label}}" />
+				{% for key,val in u_helper.items %}
+				<div class="unitinfo" style="background-color:white; color:#0b1119; z-index:9;">
+					{% for k,v in val.items %}
+					{% if key == unit.label %}
+					
+					  <b>{{k}}</b><br>{{v}}<br>
+					
+					{% endif %}
+					{% endfor %}
+					{% endfor %}
+				</div> 
+			</div></td>
           <td style="padding:10px" valign="top" nowrap><font color="#FF0000">Unavailable<br>Tech too low</font></td>
           <td style="padding:10px" valign="top">&nbsp;</td>
           </tr>
   	{% else %}
           <tr>
-  		<td><img src="{% static '/units/'|add:unit.label|add:'.png' %}" width="70" height="70" title ="{{unit.label}}"></td>
-          <td style="padding:10px" valign="top"><font color="#FFFFFF">{{unit.label}}</font></td>
+  		<td>{{unit.label}}<br><div id="logo-holder">
+				<img class="unitimage" src="{% static '/units/'|add:unit.label|add:'.png' %}" width="70vw" height="70vw" title ="{{unit.label}}" />
+				{% for key,val in u_helper.items %}
+				<div class="unitinfo" style="background-color:white; color:#0b1119; z-index:9;">
+					<table align="center" cellspacing="1">
+					<tr>
+					{% for k,v in val.items %}
+					{% if key == unit.label %}
+					
+					  <b>{{k}}</b><br>{{v}}<br>
+					
+					{% endif %}
+					{% endfor %}
+					</table>
+					{% endfor %}
+				</div> 
+			</div></td>
           <td style="padding:10px" valign="top" nowrap>
           {% for resource in unit.cost %}
               {% if resource.value > 0 %}
@@ -115,17 +179,19 @@
           {% endif %}
           </td>
           <td style="padding:10px" valign="top"><font color="#FFFFFF">{{unit.owned}}</font></td>
-          <td style="padding:10px" valign="top" align="center"><input type="text" pattern="[0-9]+" maxlength="9" name="{{unit.i}}" size="12"></td>
-      {% endif %}
-
+          <td style="padding:10px" valign="top" align="center">
+		  <input id="{{unit.i}}" type="text" name="{{unit.i}}" size="10" value="0" onchange="costunits()"></td>
+			<td><input type="checkbox" id="u{{unit.i}}" onchange="maxunits(); costunits();"> {{unit.maxunit}}
+		  </td>
+	  {% endif %}
+			
   {% endfor %}
-
+		
   </table>
   <br>
 <button type="submit" formmethod="POST">Build</button>
 </form>
-  </div>
-  <br>
+  <br><br><br><br>
 
 
 

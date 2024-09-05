@@ -6,9 +6,8 @@
 
 {% load mathfilters %}
 
-{% if top_msg %}
-	{{top_msg}}<br>
-{% endif %}
+{% if msg != '' %}
+{{msg}}<br><br>{% endif %}
 
 {% if planet.id|mod:10 == 1 %}
 <img src= "/static/map/p00.png">
@@ -36,13 +35,27 @@
 
 <br>
 Planet {{planet.x}},{{planet.y}}:{{planet.i}}
+<br><br>
+Distance from nearest Portal: {{travel_time}} weeks
 <br>
 <br>
-<a href="/system{{system}}">View System</a>
 
-{% if status.user.username == 'admin' %}
-<br><br>Planet id: {{planet.id}}
+<div class ="left_box" >
+<div style="width: 50%; margin:0 auto; text-align: center; margin-bottom:10px;">
+{% if status.galsel == 1 %}
+<a href="/system{{system}}">View System</a>
+{% elif status.galsel == 2 %}
+<a href="/galtwo/system{{system}}">View System</a>
 {% endif %}
+</div></div>
+<div class ="right_box" >
+<div style="width: 50%; margin:0 auto; text-align: center; margin-bottom:10px;">
+{% if status.galsel == 1 %}
+<a href="/systmap{{system}}">View System on Map</a>
+{% elif status.galsel == 2 %}
+<a href="/galtwo/systmap{{system}}">View System on Map</a>
+{% endif %}
+</div></div>
 
 <br>
 <br>
@@ -51,29 +64,63 @@ Planet {{planet.x}},{{planet.y}}:{{planet.i}}
 {% if planet.owner == None %}
     {% if planet.home_planet %}
         No one owns this planet, but it is part of a home system and unavailable for exploration
-    {% elif planet.nuked %}
-        This planet suffered a heavy nuclear blast, polution is too high to inhabit it!
-    {% else %}
-        No one owns this planet, it is free to explore. The exploration cost will be: {{exploration_cost}}%.
-        <br><br>
-
-		<form action="/fleets" id="explore_form" action="showMessage.jsp" method="post">
-			{% csrf_token %}
-			<input type="submit" value="Explore the planet">
-			<input type="hidden" name="explore_planet" value="{{planet.id}}">
-		</form>
-		<br>
+        <br><br><br>
+		{% if status.galsel == 1 %}
 			<form action="/specops" id="specops_form" action="showMessage.jsp" method="post">
 			{% csrf_token %}
 			<input type="submit" value="Special operation">
 			<input type="hidden" name="specop_planet" value="{{planet.id}}">
 			</form>
-    {% endif %}
+		{% elif status.galsel == 2 %}
+			<form action="/galtwo/specops" id="specops_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Special operation">
+			<input type="hidden" name="specop_planet" value="{{planet.id}}">
+			</form>{% endif %}
+    {% elif planet.nuked %}
+        This planet suffered a heavy nuclear blast, polution is too high to inhabit it!
+    {% else %}
+        No one owns this planet, it is free to explore. The exploration cost will be: {{exploration_cost}}%.
+        <br><br>
+        <div class ="left_box" >
+        <div style="width: 50%; margin:0 auto; text-align: center; margin-bottom:10px;">
+        <form action="" id="explore_planet" method="post">
+			{% csrf_token %}
+			<input type="submit" name="explore_planet" value="Explore Planet">
+			<input type="hidden" name="id_planet" value="{{planet.id}}">
+		</form>
+		</div></div>
+		<div class ="right_box" >
+        <div style="width: 50%; margin:0 auto; text-align: center; margin-bottom:10px;">
+		<form action="" id="hover_planet" method="post">
+			{% csrf_token %}
+			<input type="submit" name="hover_planet" value="Hover Planet">
+			<input type="hidden" name="id_planet" value="{{planet.id}}">
+		</form></td>
+		</div></div>
+		<br>
+		{% if status.galsel == 1 %}
+			<form action="/specops" id="specops_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Special operation">
+			<input type="hidden" name="specop_planet" value="{{planet.id}}">
+			</form>
+		{% elif status.galsel == 2 %}
+			<form action="/galtwo/specops" id="specops_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Special operation">
+			<input type="hidden" name="specop_planet" value="{{planet.id}}">
+			</form>{% endif %}
+	{% endif %}
+		
 {% elif planet.owner.id != status.user.id %}
-    This planet is owned by <a href="/player{{planet.owner.id}}">{{planet_owner_status.user_name}}</a> of
+{% if status.galsel == 1 %}
+    This planet is owned by <a href="/account{{planet.owner.id}}">{{planet_owner_status.user_name}}</a> of
     <a href="/empire{{planet_owner_status.empire.id}}">{{planet_owner_status.empire.name_with_id}}</a>, networth {{planet_owner_status.networth}}<br><br>
-    {% if ops in specops %}
+	{% if specops == "Webs" %}
     Planet is surrounded by a Dark Web!<br><br>
+	{% elif specops == "Beacon" %}
+	Planetary Beacon active, effects of Dark Webs have been removed!<br><br>
     {% endif %}
 	It will cost {{attack_cost}}% fleet readiness to attack this planet!<br><br>
 			<form action="/fleets" id="attack_form" action="showMessage.jsp" method="post">
@@ -87,16 +134,37 @@ Planet {{planet.x}},{{planet.y}}:{{planet.i}}
 			<input type="submit" value="Special operation">
 			<input type="hidden" name="specop_planet" value="{{planet.id}}">
 			</form>
+{% elif status.galsel == 2 %}
+    This planet is owned by <a href="/galtwo/account{{planet.owner.id}}">{{planet_owner_status.user_name}}</a> of
+    <a href="/galtwo/empire{{planet_owner_status.empire.id}}">{{planet_owner_status.empire.name_with_id}}</a>, networth {{planet_owner_status.networth}}<br><br>
+	{% if specops == "Webs" %}
+    Planet is surrounded by a Dark Web!<br><br>
+	{% elif specops == "Beacon" %}
+	Planetary Beacon active, effects of Dark Webs have been removed!<br><br>
+    {% endif %}
+	It will cost {{attack_cost}}% fleet readiness to attack this planet!<br><br>
+			<form action="/galtwo/fleets" id="attack_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Attack this planet">
+			<input type="hidden" name="attack_planet" value="{{planet.id}}">
+			</form>
+			<br> 
+			<form action="/galtwo/specops" id="specops_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Special operation">
+			<input type="hidden" name="specop_planet" value="{{planet.id}}">
+			</form>
+	{% endif %}
+    
 <!--if( planetd.surrender == id )
-	httpPrintf( cnt, "<br><br>%s offered you this planet <a href="%s&amp;id=%d">accept offer?</a>", main2d.faction, URLAppend( cnt, "pltake" ), plnid );
--->
+	httpPrintf( cnt, "<br><br>%s offered you this planet <a href="%s&amp;id=%d">accept offer?</a>", main2d.faction, URLAppend( cnt, "pltake" ), plnid );-->
 {% elif planet.owner.id == status.user.id %}
 
 
 This planet is yours
 <br><br>
 {% if planet.artefact %}
-<img src="{{planet.artefact.image}}" alt="{{planet.artefact.name}}" title="Artefact"></td><br>
+<img src="{{planet.artefact.image}}" alt="{{planet.artefact.name}}" title="Artefact" width="25px" height="25px"></td><br>
 An old and powerfull artefact: {{ planet.artefact.name }} is present on this planet!<br>
 The artefact changes reality in the following way: {{ planet.artefact.description }}
 {% endif %}
@@ -134,18 +202,37 @@ Population: {{planet.current_population}}/{{planet.max_population}}
 
   httpPrintf( cnt,"</SCRIPT>\n");
   -->
-  
+{% if status.galsel == 1 %}  
   <br><a href="/build{{planet.id}}">Build on this planet</a><br><br>
-  <a href="/station{{planet.id}}">Station on this planet</a><br><br>
+  <form action="/fleets" id="attack_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Station Fleet">
+			<input type="hidden" name="attack_planet" value="{{planet.id}}">
+			</form>
   <a href="/raze{{planet.id}}">Raze buildings</a><br><br>
   
 <form action="/razeall{{planet.id}}/" method="post" onsubmit="return confirm('Are you sure you want to raze all?');">
 {% csrf_token %}
+<button type="submit">Raze All</button></form>
+{% elif status.galsel == 2 %}  
+  <br><a href="/galtwo/build{{planet.id}}">Build on this planet</a><br><br>
+  <form action="/galtwo/fleets" id="attack_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Station Fleet">
+			<input type="hidden" name="attack_planet" value="{{planet.id}}">
+			</form>
+  <a href="/galtwo/raze{{planet.id}}">Raze buildings</a><br><br>
+  
+<form action="/razeall{{planet.id}}/" method="post" onsubmit="return confirm('Are you sure you want to raze all?');">
+{% csrf_token %}
 <button type="submit">Raze All</button>
-</form>
 
-<!-- Offer planet to member of own empire -->
-<!--{% if not planet.home_planet %}
+
+</form>
+{% endif %}
+<br>
+<!--Offer planet to member of own empire
+{% if not planet.home_planet %}
     <br><form action="/offer{{planet.id}}" method="POST">Offer this planet to :
     <input type="hidden" value="%d" name="id">
     <select name="plgive">
@@ -156,11 +243,32 @@ Population: {{planet.current_population}}/{{planet.max_population}}
     <input type="submit" value="Confirm"></form>
 {% endif %}-->
 
+{% if status.empire.numplayers > 1 and planet.home_planet == False%}
+<label>Offer Planet</label>
+{% if msg == '' %}
+{% if offd_to != '' %}
+<b>Currently offering to {{offd_to}}</b><br><br>
+{% endif %}{% endif %}
 
-  
+<form action="" id="offer_planet" method="post">
+			{% csrf_token %}<select name="player">
+			{% for player in player_list %}
+		{% if player.id != status.id %}
+			<option value="{{player.id}}"> {{player.user_name}}
+			
+		{% endif %}
+	{% endfor %}</select><select name="offer">
+			<option value="1" selected>Yes
+			<option value="2">No
+			
+	</select>
+<input type="submit" name="offer_planet" value="Change">
+	<br>
 
-<table width="50%"><tr><td width="45%" align="center" valign="top"><b>Buildings</b><br><br>
-{% if planet.solar_collectors > 0 %}<tr><td>Solar Collectors: {{planet.solar_collectors}}</td></tr>{% endif %}
+{% endif %}  
+<div class ="left_box" >
+<div style="width: 50%; margin:0 auto; text-align: left;"><tr><td width="45%" align="center" valign="top"><b>Buildings</b>
+<table>{% if planet.solar_collectors > 0 %}<tr><td>Solar Collectors: {{planet.solar_collectors}}</td></tr>{% endif %}
 {% if planet.fission_reactors > 0 %}<tr><td>Fission Reactors: {{planet.fission_reactors}}</td></tr>{% endif %}
 {% if planet.mineral_plants > 0 %}<tr><td>Mineral Plants: {{planet.mineral_plants}}</td></tr>{% endif %}
 {% if planet.crystal_labs > 0 %}<tr><td>Crystal Laboratories: {{planet.crystal_labs}}</td></tr>{% endif %}
@@ -183,23 +291,19 @@ Population: {{planet.current_population}}/{{planet.max_population}}
 	{% endfor %}
 {% endif %}
    
-<!--
-  httpString( cnt, "</td><td width="45%" align="center" valign="top"><b>Units</b><br><br>" );
-  for( a = b = 0 ; a < CMD_UNIT_NUMUSED ; a++ )
-  {
-   if( planetd.unit[a] )
-   {
-    httpPrintf( cnt, "%lld %s<br>", (long long)planetd.unit[a], cmdUnitName[a] );
-    b = 1;
-   }
-  }
-  if( b )
-   httpPrintf( cnt, "<a href="%s&amp;id=%d&unstation=1">Unstation fleet</a>", URLAppend( cnt, "planet" ), plnid );
--->
-</td></tr></table>
 
-
-
+</td></tr></table></div></div>
+<div class ="right_box" >
+		<div style="width: 50%; margin:0 auto; text-align: left;">
+			<td align="center" valign="top">
+			<b>Units</b><br><table>
+			{% for unit in stationed %}
+			    <tr><td>
+			    {{unit.name}} </td>
+				<td>{{unit.value}}</td>
+				</tr>
+			{% endfor %}
+			</table></div></div>
 {% else %}
 THERE SHOULD BE NO WAY TO GET HERE!!!!!!!!!!!!!!!!!!!!!!!!!
 debug info: planet.owner.id: {{planet.owner.id}} and status.user.id: {{status.user.id}}

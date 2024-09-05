@@ -1,0 +1,72 @@
+{% extends "gbase.html" %}
+
+{% block content %}
+
+<head>
+<title>Ectroverse Guide</title>
+
+<style>
+#content-desktop {display: block;}
+#content-mobile {display: none;}
+
+@media screen and (max-width: 837px) {
+
+#content-desktop {display: none;}
+#content-mobile {display: block;}
+
+}
+
+
+</style>
+
+</head>
+<p align="left">Empire is a key to your success in EctroVerse, as you can help
+your empire members and in return your empire members can help you. If your
+empire is successful there is a good chance that you will also be
+successful.&nbsp; The leader of the empire is shows in <font color="Green"><b>Green</b></font>, while all the other are in the normal game color.
+Empire members are
+sorted by the number of planets they have from highest to lowest.</p>
+<table cellSpacing="0" cellPadding="0" width="90%" align="center" border="0">
+  <tbody>
+    <tr>
+
+<p align="center"><b><font size="5">Empire</font></b></p>
+<p align="center">Family #11 (<a href="systems"><font color="#00FF00">3,3</font></a>)</p>
+<p align="center"> <a href="fam_func"><font color="#00FF00">Change Vote</font></a>
+<a href="fam_func">Prime Minister Options</a>&nbsp;</font></p>
+
+
+  <table align="center">
+    <tr>
+      <td align="center" height="19"><b>Family members</b></td>
+      <td align="center" height="19">Race</td>
+      <td align="center" height="19">Planets</td>
+      <td align="center" height="19">Networth</td>
+    </tr>
+    <tr>
+      <td height="11"><b><a href="player"><font color="Green">Empire Leader</font></a></b></td>
+      <td height="11"><a href="/races">Harks</a></td>
+      <td height="11" align="center">26</td>
+      <td height="11" align="center">325000</td>
+    </tr>
+    <tr>
+      <td height="19"><b><a href="player"><font color="Blue">Your Empire</font></a></b></td>
+      <td height="11"><a href="/races">Manticarias</a></td>
+      <td height="19" align="center">25</td>
+      <td height="19" align="center">316000</td>
+    </tr>
+    <tr>
+      <td height="19"><font color="#CCFFFF"><b><a href="player">Empire Member
+        1</a></b></font></td>
+        <td height="11"><a href="/races">Foohons</a></td>
+      <td height="19" align="center">14</td>
+      <td height="19" align="center">263152</td>
+    </tr>
+   
+
+
+    </tr>
+  </tbody>
+</table>
+
+{% endblock %}

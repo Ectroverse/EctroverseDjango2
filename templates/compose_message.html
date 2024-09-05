@@ -12,8 +12,14 @@
 <br>
 <table align="center">
 <tr>
+{% if status.galsel == 1 %}
 <td ><a href="/messages">Inbox</a></td>
 <td style=" border-left:solid 40px transparent"><a href="/outbox">Outbox</a></td>
+{% elif status.galsel == 2 %}
+<td ><a href="/galtwo/messages">Inbox</a></td>
+<td style=" border-left:solid 40px transparent"><a href="/galtwo/outbox">Outbox</a></td>
+{% endif %}
+
 </tr>
 </table>
 <br>

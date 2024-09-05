@@ -13,7 +13,11 @@
 	<tr><td>Name</td><td>Energy</td><td>Minerals</td><td>Crystals</td><td>Ectrolium</td></tr>
 	{% for player in player_list %}
 		{% if player.id != status.id %}
-		<tr><td>{{player.user_name}}</td><td>{{player.energy}}</td><td>{{player.minerals}}</td><td>{{player.crystals}}</td><td>{{player.ectrolium}}</td></tr>
+		<tr><td>{{player.user_name}}</td><td>{{player.energy}}<br>{% if player.energy_income > 0 %}<font color="#00FF00">{% else %}<font color="#FF0000">{% endif %}{{player.energy_income}}</font></td>
+		<td>{{player.minerals}}<br>{% if player.mineral_income > 0 %}<font color="#00FF00">{% else %}<font color="#FF0000">{% endif %}{{player.mineral_income}}</font></td>
+		<td>{{player.crystals}}<br>{% if player.crystal_income > 0 %}<font color="#00FF00">{% else %}<font color="#FF0000">{% endif %}{{player.crystal_income}}</font></td>
+		<td>{{player.ectrolium}}<br>{% if player.ectrolium_income > 0 %}<font color="#00FF00">{% else %}<font color="#FF0000">{% endif %}{{player.ectrolium_income}}</font></td></tr>
+		<tr><td></td><td></td>
 		{% endif %}
 	{% endfor %}
 	<table>

@@ -1,0 +1,81 @@
+{% extends "gbase.html" %}
+
+{% block content %}
+
+{% load static %}
+
+<head>
+<title>Ectroverse Guide</title>
+
+<style>
+#content-desktop {display: block;}
+#content-mobile {display: none;}
+
+@media screen and (max-width: 837px) {
+
+#content-desktop {display: none;}
+#content-mobile {display: block;}
+
+}
+
+</style>
+
+</head>
+
+<p align="center">Relations</p>
+<p align="left">Below is an example of the relations page you may see. 
+A yellow image means that one of the sides has offered some form of peace, a NAP (Non-Aggresion Pact), CF (Ceasefire) or Ally/ Alliance.
+Green is when one of these offers of peace has been accepted by both sides.
+Red is War and as such, only needs to be declared by either party.</p>
+<p align="left">As Prime Minister of your Empire, if a NAP or CF has been offered, you will have the option to accept it from this page. Likewise, as Prime Minister,
+you will be given the option to cancel any NAPs/ Alliances</p>
+<p><b><u>Notice:</u></b> With the game still in some form of development and a lower player base, alliances are yet to be completed.</p>
+
+<br><p align="center">Message from your leader:</p>
+<p align="center">Prime Ministers message will appear here!</p>
+<br>
+<table id="table_left_text" align="center" style= "border-spacing: 10px; border-collapse: separate;" } >
+
+	<tr>
+	<td><img src="{% static '/news/ally_offered.gif' %}"></td>
+	<td>You offered Empire #0 an alliance!</td>
+	</tr>
+	<tr>
+	<td><img src="{% static '/news/ally_made.gif' %}"></td>
+	<td>You have an alliance with Empire #0!</td>
+	</tr>
+
+	<tr>
+	<td><img src="{% static '/news/war_declared.gif' %}"></td>
+	<td>You have declared war on Empire 0! -
+	It will last for another 144 galactic weeks!</td>
+	</tr>
+		<tr>
+		<td><img src="{% static '/news/nap_offered.gif' %}"></td>
+		<td>Empire #0 have offered a 72 galactic weeks
+		NAP! <input type="submit" name="acceptcf" value="Accept"></a></td>
+		</tr>
+		<tr>
+		<td><img src="{% static '/news/nap_made.gif' %}"></td>
+		<td>You have a 288 galactic weeks non - agression pact 
+		with Empire #0 ! 
+			<input type="submit" name="cancel" value="Cancel"></a>
+		</tr>
+		<tr>
+		<td><img src="{% static '/news/nap_cancelled.gif' %}"></td>
+		<td>Non-agression pact with Empire#0 was canceled!
+			It will last for another 101 galactic weeks!</td>
+			</tr>
+
+		<tr>
+		<td><img src="{% static '/news/nap_offered.gif' %}"></td>
+		<td>You offered Empire #0 a 72 galactic weeks
+		Ceasefire!</td>
+		</tr>
+		<tr>
+		<td><img src="{% static '/news/nap_made.gif' %}"></td>
+		<td>Your Ceasefire with Empire #0 ends in 69 galactic weeks!</td>
+		</tr>
+
+</table>
+{% endblock %}

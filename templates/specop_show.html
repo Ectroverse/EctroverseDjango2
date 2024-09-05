@@ -30,6 +30,9 @@ tr.border_bottom td {
 		<tr><td>minerals: {{target_player.minerals}}</td></tr>
 		<tr><td>crystals: {{target_player.crystals}}</td></tr>
 		<tr><td>ectrolium: {{target_player.ectrolium}}</td></tr>
+		<tr><td>Fleet Readiness: {{target_player.fleet_readiness}}</td></tr>
+		<tr><td>Agent Readiness: {{target_player.agent_readiness}}</td></tr>
+		<tr><td>Psychic Readiness: {{target_player.psychic_readiness}}</td></tr>
 		<tr><td></td></tr>
 		<tr><td><b>Buildings</b></td></tr>
 		<tr><td>total solar collectors: {{target_player.total_solar_collectors}}</td></tr>
@@ -71,8 +74,11 @@ tr.border_bottom td {
 			{% for planet in planets %}
 			<tr>
 
-			<td><a href="/planet{{planet.id}}">{{planet.x}},{{planet.y}}:{{planet.i}}
+			{% if status.galsel == 1 %}<td><a href="/planet{{planet.id}}">{{planet.x}},{{planet.y}}:{{planet.i}}
 			</a></td>
+			{% elif status.galsel == 2 %}<td><a href="/galtwo/planet{{planet.id}}">{{planet.x}},{{planet.y}}:{{planet.i}}
+			</a></td>
+			{% endif %}
 			<td>{{planet.size}}</td>
 			<td>{{planet.total_buildings}}
 
@@ -101,7 +107,7 @@ tr.border_bottom td {
 			{% endif %}
 
 			{% if planet.artefact is not None %}
-				<img src="{{planet.artefact.image}}" alt="{{planet.artefact.name}}" title="Artefact"></td>
+				<img src="{{planet.artefact.image}}" alt="{{planet.artefact.name}}" title="Artefact" width="16px" height="16px"></td>
 			{% else %}
 
 			{% if planet.bonus_solar %}

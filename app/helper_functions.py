@@ -29,11 +29,11 @@ def give_first_planet(user, status, planet):
     status.total_crystal_labs = starting_crystal_labs
     status.total_cities = starting_cities
     status.total_portals = 1
-    status.total_buildings = 200
+    status.total_buildings = 201
     status.home_planet = planet
     status.num_planets = 1
     status.save()
-    Scouting.objects.create(user=status.user, planet=planet, scout=1.0 )
+    Scouting.objects.create(user=status.user, planet=planet, scout=1.0, empire=status.empire )
     MapSettings.objects.create(user=status.user, map_setting="YP", color_settings="B")
     MapSettings.objects.create(user=status.user, map_setting="YR", color_settings="Y")
     MapSettings.objects.create(user=status.user, map_setting="UE", color_settings="G")
@@ -45,13 +45,16 @@ def give_first_fleet(main_fleet):
         setattr(main_fleet, unit, starting_fleet[i])
     main_fleet.save()
 
-def find_nearest_portal(x, y, portal_list):
+def find_nearest_portal(x, y, portal_list, status):
     # print("find_nearest_portal",x,y,portal_list)
+    if Specops.objects.filter(user_to=status.user, name='Vortex Portal').exists():
+        for vort in Specops.objects.filter(user_to=status.user, name='Vortex Portal'):
+            vort_por = Planet.objects.filter(id=vort.planet.id)
+            portal_list = portal_list | vort_por
     min_dist = (portal_list[0].x- x)**2+ (portal_list[0].y -y)**2;
     portal = portal_list[0]
     for p in portal_list:
         dist = (p.x-x)**2 + (p.y-y)**2
-        print(p.x,p.y, dist)
         if dist < min_dist:
             min_dist = dist
             portal = p
@@ -76,14 +79,17 @@ def find_bounding_circle(systems):
 # option value="5" Join main fleet
 def generate_fleet_order(fleet, target_x, target_y, speed, order_type, *args):
     # args[0] - planet number
-    fleet.x = target_x
-    fleet.y = target_y
+    
     if args:
         fleet.i = args[0]
         planet = Planet.objects.filter(x=target_x, y=target_y, i=args[0]).first()
         if planet is not None:
             fleet.target_planet = planet
         # print(fleet.current_position_x,fleet.current_position_y)
+    else:
+        planet = Planet.objects.filter(x=target_x, y=target_y, i=0).first()
+        if planet is not None:
+            fleet.target_planet = planet
     min_dist = np.sqrt((fleet.current_position_x - float(target_x)) ** 2 +
                        (fleet.current_position_y - float(target_y)) ** 2)
     speed_boost_enlightement = 1
@@ -91,14 +97,13 @@ def generate_fleet_order(fleet, target_x, target_y, speed, order_type, *args):
         en = Specops.objects.get(user_to=fleet.owner, name="Enlightenment", extra_effect="Speed")
         speed_boost_enlightement = (1 + en.specop_strength / 100)
     speed *= speed_boost_enlightement
-    frace = UserStatus.objects.get(user=fleet.owner)
-    if frace.race == "SB" and fleet.x + 2 >= fleet.current_position_x >= fleet.x - 2 and fleet.y + 2 >= fleet.current_position_y >= fleet.y - 2:
-        fleet.ticks_remaining = 0
-    elif fleet.x + 1 >= fleet.current_position_x >= fleet.x - 1 and fleet.y + 1 >= fleet.current_position_y >= fleet.y - 1:
-        fleet.ticks_remaining = 0    
-    else:
-        fleet.ticks_remaining = int(np.ceil((min_dist / speed) - 0.001))  # due to rounding and
-    # floating points the fleet travel time becomes more than it should, hence the subtraction
+    ticks_remaining = max(0,int(np.floor(min_dist / speed)))
+    fleet.x = target_x
+    fleet.y = target_y
+    fleet.ticks_remaining = ticks_remaining
+    #if ticks_remaining < 1:
+        #fleet.current_position_x = target_x
+        #fleet.current_position_y = target_y
     fleet.command_order = order_type
     fleet.save()
 
@@ -151,7 +156,7 @@ def station_fleets(request, fleets, status):
         elif planet.id in sf_dict:
             stationed_fleet = sf_dict[planet.id]
             for unit in unit_info["unit_list"]:
-                setattr(stationed_fleet, unit, getattr(stationed_fleet, unit) + getattr(f, unit))
+                setattr(stationed_fleet, unit, getattr(stationed_fleet, unit))
             stationed_fleet.command_order=8
             f.delete()
             stationed_fleet.save()
@@ -189,6 +194,11 @@ def join_main_fleet(main_fleet, fleets):
         fl.delete()
     main_fleet.save()
 
+def join_bot_fleet(main_fleet, fl):
+    for unit in unit_info["unit_list"]:
+        setattr(main_fleet, unit, getattr(main_fleet, unit) + getattr(fl, unit))
+    fl.delete()
+    main_fleet.save()
 
 def split_fleets(fleets, split_pct):
     for fl in fleets:
@@ -237,10 +247,15 @@ def explore_planets(fleets):
                                     is_empire_news=True,
                                     tick_number = RoundStatus.objects.get().tick_number,
                                     planet = planet)
-                if not Scouting.objects.filter(planet = planet).exists():
+                if not Scouting.objects.filter(planet = planet, empire=status.empire).exists():
                     Scouting.objects.create(user= fl.owner,
                                             planet = planet,
+                                            empire = status.empire,
                                             scout = '1')
+                else:
+                    sc = Scouting.objects.get(planet = planet, empire=status.empire)
+                    sc.scout = 1
+                    sc.save()
             else:
                 fl.command_order = 2
                 fl.save()
@@ -259,7 +274,11 @@ def explore_planets(fleets):
 def calc_exploration_cost(status):
     expo_ship_nr = Fleet.objects.filter(owner = status.user, main_fleet = False, exploration = 1).count()
     pl_number = Planet.objects.filter(owner = status.user).count()
-    return (pl_number + expo_ship_nr + 40) >> 2
+    exp_cost = (pl_number + expo_ship_nr + 40) >> 2
+    art = Artefacts.objects.get(name="Genghis Effect")
+    if status.empire == art.empire_holding:
+        exp_cost *= 0.75
+    return exp_cost
 
 
 def get_userstatus_from_id_or_name(d):
@@ -296,14 +315,14 @@ def send_agents_ghosts(status, agents, ghost, x, y, i, specop):
     portal_planets = Planet.objects.filter(owner=status.user, portal=True)
     if not portal_planets:
         return "You need at least one portal to send the fleet from!"
-    best_portal_planet = find_nearest_portal(x, y, portal_planets)
+    best_portal_planet = find_nearest_portal(x, y, portal_planets, status)
     min_dist = np.sqrt((best_portal_planet.x - x) ** 2 + (best_portal_planet.y - y) ** 2)
     speed_boost_enlightement = 1
     if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed").exists():
         en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
         speed_boost_enlightement *= (1 + en.specop_strength / 100)
     speed = race_info_list[status.get_race_display()]["travel_speed"]* speed_boost_enlightement
-    fleet_time = int(np.ceil(min_dist / speed))
+    fleet_time = max(0,int(np.floor(min_dist / speed)))
     agent_fleet = Fleet.objects.create(owner=status.user,
                          command_order=6,
                          target_planet=planet,
@@ -319,19 +338,14 @@ def send_agents_ghosts(status, agents, ghost, x, y, i, specop):
     main_fleet.agent -= agents
     main_fleet.save()
     msg = ""
-    race = status.race
-    if race == "SB" and best_portal_planet.x + 2 >= x >= best_portal_planet.x - 2 and best_portal_planet.y + 2 >= y >= best_portal_planet.y - 2:
+    rstatus = RoundStatus.objects.get(id=1)
+    if fleet_time < 1 and rstatus.is_running == True:
 	    if agents > 0:
 	        msg = perform_operation(agent_fleet)
 	        main_fleet.agent += agent_fleet.agent
 	        main_fleet.save()
 	        agent_fleet.delete()
-    elif best_portal_planet.x + 1 >= x >= best_portal_planet.x - 1 and best_portal_planet.y + 1 >= y >= best_portal_planet.y - 1:
-    	if agents > 0:
-            msg = perform_operation(agent_fleet)
-            main_fleet.agent += agent_fleet.agent
-            main_fleet.save()
-            agent_fleet.delete()
+
     return msg
     
 def send_ghosts(status, agents, ghost, x, y, i, specop):
@@ -345,14 +359,14 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     portal_planets = Planet.objects.filter(owner=status.user, portal=True)
     if not portal_planets:
         return "You need at least one portal to send the fleet from!"
-    best_portal_planet = find_nearest_portal(x, y, portal_planets)
+    best_portal_planet = find_nearest_portal(x, y, portal_planets, status)
     min_dist = np.sqrt((best_portal_planet.x - x) ** 2 + (best_portal_planet.y - y) ** 2)
     speed_boost_enlightement = 1
     if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed").exists():
         en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
         speed_boost_enlightement *= (1 + en.specop_strength / 100)
     speed = race_info_list[status.get_race_display()]["travel_speed"]* speed_boost_enlightement
-    fleet_time = int(np.ceil(min_dist / speed))
+    fleet_time = max(0,int(np.floor((min_dist / speed))))
     ghost_fleet = Fleet.objects.create(owner=status.user,
                          command_order=7,
                          target_planet=planet,
@@ -368,19 +382,13 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     main_fleet.ghost -= ghost
     main_fleet.save()
     msg = ""
-    race = status.race
-    if race == "SB" and best_portal_planet.x + 2 >= x >= best_portal_planet.x - 2 and best_portal_planet.y + 2 >= y >= best_portal_planet.y - 2:
+    if fleet_time < 1:
         if ghost > 0:
             msg =perform_incantation(ghost_fleet)
             main_fleet.ghost += ghost_fleet.ghost
             main_fleet.save()
             ghost_fleet.delete()
-    elif best_portal_planet.x + 1 >= x >= best_portal_planet.x - 1 and best_portal_planet.y + 1 >= y >= best_portal_planet.y - 1:
-        if ghost > 0:
-            msg =perform_incantation(ghost_fleet)
-            main_fleet.ghost += ghost_fleet.ghost
-            main_fleet.save()
-            ghost_fleet.delete()
+
     return msg
 
 def build_on_planet(status, planet, building_list_dict):
@@ -401,63 +409,88 @@ def build_on_planet(status, planet, building_list_dict):
             num = None
         if num:
             num = int(num)
-            # calc_building_cost was designed to give the View what it needed, so pull out just the values and multiply by num
-            total_resource_cost, penalty = building.calc_cost(num, status.research_percent_construction,
-                                                              status.research_percent_tech, status)
+            if num >= 1:
+                # calc_building_cost was designed to give the View what it needed, so pull out just the values and multiply by num
+                arte = Artefacts.objects.get(name="Advanced Robotics")
+                if arte.empire_holding == status.empire:
+                    tech = status.research_percent_tech * 2
+                else:
+                    tech = status.research_percent_tech
+                artesn = Artefacts.objects.get(name="Shield Network")
+                if artesn.empire_holding == status.empire:
+                    if building.building_index == 8:
+                        tech = 140
+                total_resource_cost, penalty = building.calc_cost(num, status.research_percent_construction,
+                                                                  tech, status)
 
-            if not total_resource_cost:
-                msg += 'Not enough tech research to build ' + building.label + '<br>'
-                continue
+                if not total_resource_cost:
+                    msg += 'Not enough tech research to build ' + building.label + '<br>'
+                    continue
+                
+                pportal = 0
+                if planet.portal:
+                    pportal = 1
+                    
+                total_buildings = planet.total_buildings - (planet.defense_sats + planet.shield_networks + pportal)
+                
+                total_resource_cost = ResourceSet(total_resource_cost)  # convert to more usable object
+                if isinstance(building, Portal):
+                    ob_factor = 1
+                else:
+                    ob_factor = calc_overbuild_multi(planet.size,
+                                                 total_buildings + planet.buildings_under_construction, num)
+                
+                total_resource_cost.apply_overbuild(
+                    ob_factor)  # can't just use planet.overbuilt, need to take into account how many buildings we are making
 
-            total_resource_cost = ResourceSet(total_resource_cost)  # convert to more usable object
-            ob_factor = calc_overbuild_multi(planet.size,
-                                             planet.total_buildings + planet.buildings_under_construction, num)
-            total_resource_cost.apply_overbuild(
-                ob_factor)  # can't just use planet.overbuilt, need to take into account how many buildings we are making
+                if not total_resource_cost.is_enough(status):
+                    msg += 'Not enough resources to build ' + building.label + '<br>'
+                    continue
 
-            if not total_resource_cost.is_enough(status):
-                msg += 'Not enough resources to build ' + building.label + '<br>'
-                continue
+                if isinstance(building, Portal) and planet.portal:
+                    msg += '<br>A portal is already on this planet!<br>'
+                    continue
 
-            if isinstance(building, Portal) and planet.portal:
-                msg += '<br>A portal is already on this planet!<br>'
-                continue
+                if isinstance(building, Portal) and planet.portal_under_construction:
+                    msg += '<br>A portal is already under construction on this planet!<br>'
+                    continue
+                
+                # Deduct resources
+                status.energy -= total_resource_cost.ene
+                status.minerals -= total_resource_cost.min
+                status.crystals -= total_resource_cost.cry
+                status.ectrolium -= total_resource_cost.ect
 
-            if isinstance(building, Portal) and planet.portal_under_construction:
-                msg += '<br>A portal is already under construction on this planet!<br>'
-                continue
+                ticks = total_resource_cost.time  # calculated ticks
 
-            # Deduct resources
-            status.energy -= total_resource_cost.ene
-            status.minerals -= total_resource_cost.min
-            status.crystals -= total_resource_cost.cry
-            status.ectrolium -= total_resource_cost.ect
+                # Create new construction job
+                msg += '<br>' + 'Building ' + str(num) + ' ' + building.label + '<br>'
+                msg += 'Total costs: <br>'
+                msg += 'Energy: ' + str(total_resource_cost.ene) + '<br>'
+                msg += 'Minerals: ' + str(total_resource_cost.min) + '<br>'
+                msg += 'Crystals: ' + str(total_resource_cost.cry) + '<br>'
+                msg += 'Ectrolium: ' + str(total_resource_cost.ect) + '<br>'
 
-            ticks = total_resource_cost.time  # calculated ticks
-
-            # Create new construction job
-            msg += '<br>' + 'Building ' + str(num) + ' ' + building.label + '<br>'
-            msg += 'Total costs: <br>'
-            msg += 'Energy: ' + str(total_resource_cost.ene) + '<br>'
-            msg += 'Minerals: ' + str(total_resource_cost.min) + '<br>'
-            msg += 'Crystals: ' + str(total_resource_cost.cry) + '<br>'
-            msg += 'Ectrolium: ' + str(total_resource_cost.ect) + '<br>'
-
-            Construction.objects.create(user=status.user,
-                                        planet=planet,
-                                        n=num,
-                                        building_type=building.short_label,
-                                        ticks_remaining=ticks,
-                                        energy_cost=total_resource_cost.ene,
-                                        mineral_cost=total_resource_cost.min,
-                                        crystal_cost=total_resource_cost.cry,
-                                        ectrolium_cost=total_resource_cost.ect)
-            planet.buildings_under_construction += num
-            if isinstance(building, Portal):
-                planet.portal_under_construction = True
+                Construction.objects.create(user=status.user,
+                                            planet=planet,
+                                            n=num,
+                                            building_type=building.short_label,
+                                            ticks_remaining=ticks,
+                                            energy_cost=total_resource_cost.ene,
+                                            mineral_cost=total_resource_cost.min,
+                                            crystal_cost=total_resource_cost.cry,
+                                            ectrolium_cost=total_resource_cost.ect)
+                planet.buildings_under_construction += num
+                if isinstance(building, Portal):
+                    planet.portal_under_construction = True
 
     # Any time we add buildings we need to update planet's overbuild factor
-    planet.overbuilt = calc_overbuild(planet.size, planet.total_buildings + planet.buildings_under_construction)
+    pportal = 0
+    if planet.portal:
+        pportal = 1
+        
+    total_buildings = planet.total_buildings - (planet.defense_sats + planet.shield_networks + pportal)
+    planet.overbuilt = calc_overbuild(planet.size, total_buildings + planet.buildings_under_construction)
     planet.overbuilt_percent = (planet.overbuilt - 1.0) * 100
     planet.save()
     status.save()  # update user's resources

@@ -1,10 +1,12 @@
-{% extends "base.html" %}
-
-{% load django_tables2 %}
+{% extends my_template %}
 
 {% load static %}
 
 {% block content %}
+
+{% if my_template == "front_page.html" %}
+
+{% include "box_top.html" with heading="Empire Rankings" minwidth="300px" textalign="center"  %}
 
 <style type="text/css">
 
@@ -17,16 +19,93 @@ background-color: rgb(25,38,51);
 
 </style>
 
+<table style="width:100%;">
+{% if empartis == round_arti_nr %}	
 {% if round.artetimer == 0 %}
 <b style="color: red" size="14">Round has finished, congratulations {{artis.empire_holding.name_with_id}}! New round registration will begin soon.</b>
 <br>
 <br>
 <br>
-{% elif round.artetimer < 1440 %}
+{% else %}
 <b style="color: red" size="14">Artefacts held by {{artis.empire_holding.name_with_id}}. Round will end in {{round.artetimer}} Weeks!</b>
 <br>
 <br>
 {% endif %}
+{% endif %}
+<tr>
+
+<td style="width:2%"><u></u></td>
+<td style="width:20%"><u></u></td>
+<td style="width:30%; text-align:left"><u>Empire</u></td>
+<td style="width:14%"><u>Planets</u></td>
+<td style="width:11%"><u>Players</u></td>
+<td style="width:23%"><u>Networth</u></td>
+
+</tr>
+{% for empire, values in table.items %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{ forloop.counter }}</td>
+<td style="text-align:right">
+
+
+{% if values.artefacts is not None %}
+	{% for a in values.artefacts %}
+	<img src="{{a.image}}" title="{{a.name}}" width="16" height="16">
+	{% endfor %}
+{% endif %}
+
+</td>
+<td style="text-align:left">
+    {{empire}}
+	
+{% for rel in relations %}
+{% if rel.empire1.name_with_id == empire or rel.empire2.name_with_id == empire %}
+<font color="Red"> @WAR</font>
+{% endif %}
+{% endfor %}
+</a></b></td>
+<td>{{values.planets}}</td>  
+<td>{{values.numplayers}}</td> 
+<td>{{values.nw}}</td> 
+</tr>
+{% endfor %}
+</table>
+
+<br>
+Artefacts found: <a href="/guide/arti"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a><br>
+{% for arti in artefacts_found %}
+<img src="{{arti.image}}" alt="{{arti.name}}" title="{{arti.name}}" width="16" height="16"></td> 
+{{arti.name}} -  {{ arti.description }}<br>
+{% endfor %}
+
+{% include "box_bottom.html" %}
+
+{% else %}
+
+<style type="text/css">
+
+.row1{}
+
+.row2{
+display: table-row;
+background-color: rgb(25,38,51);
+}
+
+</style>
+
+{% if empartis == round_arti_nr %}	
+{% if round.artetimer == 0 %}
+<b style="color: red" size="14">Round has finished, congratulations {{artis.empire_holding.name_with_id}}! New round registration will begin soon.</b>
+<br>
+<br>
+<br>
+{% else %}
+<b style="color: red" size="14">Artefacts held by {{artis.empire_holding.name_with_id}}. Round will end in {{round.artetimer}} Weeks!</b>
+<br>
+<br>
+{% endif %}
+{% endif %}
+
 <table style="width:100%;">
 <tr>
 
@@ -46,24 +125,31 @@ background-color: rgb(25,38,51);
 
 {% if values.artefacts is not None %}
 	{% for a in values.artefacts %}
-	<img src="{{a.image}}" title="{{a.name}}">
+	<img src="{{a.image}}" title="{{a.name}}" width="16" height="16">
 	{% endfor %}
 {% endif %}
 
 {% for a in all_artis %}
 
 {% if status.id == 1 and a.empire_holding.name_with_id == empire %}
-<img src="{{a.image}}" title="{{a.name}}">
+<img src="{{a.image}}" title="{{a.name}}" width="16" height="16">
 
 {% endif %}
 {% endfor %}
 
 </td>
 <td style="text-align:left">
+{% if status.galsel == 1 %}
     {% if empire == "Empire #0" %}<b><a href= "/empire{{values.empire_id}}" style="color:Yellow;">Administration #0
     {% elif empire == status.empire.name_with_id %}<b><a href= "/empire{{values.empire_id}}" style="color:#0293FF;">{{empire}}
     {% else %} <b><a href = "/empire{{values.empire_id}}" >{{empire}}
     {% endif %}
+{% elif status.galsel == 2 %}
+    {% if empire == "Empire #0" %}<b><a href= "/galtwo/empire{{values.empire_id}}" style="color:Yellow;">Administration #0
+    {% elif empire == status.empire.name_with_id %}<b><a href= "/galtwo/empire{{values.empire_id}}" style="color:#0293FF;">{{empire}}
+    {% else %} <b><a href = "/galtwo/empire{{values.empire_id}}" >{{empire}}
+    {% endif %}
+{% endif %}
 {% for rel in relations %}
 {% if rel.empire1.name_with_id == empire or rel.empire2.name_with_id == empire %}
 <font color="Red"> @WAR</font>
@@ -78,10 +164,11 @@ background-color: rgb(25,38,51);
 </table>
 
 <br>
-Artefacts found:<br>
+Artefacts found: <a href="/guide/arti"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a><br>
 {% for arti in artefacts_found %}
-<img src="{{arti.image}}" alt="{{arti.name}}" title="{{arti.name}}"></td> 
+<img src="{{arti.image}}" alt="{{arti.name}}" title="{{arti.name}}" width="16" height="16"></td> 
 {{arti.name}} -  {{ arti.description }}<br>
 {% endfor %}
+{% endif %}
 {% endblock %}
 

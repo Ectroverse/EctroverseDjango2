@@ -1,486 +1,1734 @@
-{% extends my_template %}
+{% extends "gbase.html" %}
 
 {% load static %}
 
 {% block content %}
 
-{% if my_template == "front_page.html" %}
+{% load multifor %}
 
-<div class="display_box" style="width:85%" >
-	<div class="display_box_header">
-		<div class="display_box_header_left"></div>
-		<div class="display_box_header_center">
-			<div class="display_box_header_center_content">Races</div>
-		</div>
-		<div class="display_box_header_right"></div>
-	</div>
-	<div class="display_box_content" style =" margin: 0 auto;" >
-		<div class="display_box_content_left"></div>
-		<div class="display_box_content_center"  >
-{% endif %}
+<head>
+<style>
+.row1{}
 
-<table class="Harks" style="width:100%">
-	<caption><strong><font size=10>Harks</font></strong></caption>
-	<thead>
-		<tr>
-			<th style="width:20%"><u>Race Specials</u></th>
-			<th style="width:20%"><u>Research</u></th>
-			<th style="width:20%"><u>Operations</u></th>
-			<th style="width:20%"><u>Spells</u></th>
-			<th style="width:20%"><u>*Incantations*</u></th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>Population Growth: -20%</td>
-			<td>Military: +20% | Maximum: 250%</td>
-			<td>Observe Planet</td>
-			<td>Irradicate Ectrolium</td>
-			<td>Portal Force Field</td>
-		</tr>
-		<tr>
-			<td>Attack: +40%</td>
-			<td>Construction: +20%</td>
-			<td>Network Infiltration</td>
-			<td>Incandescence</td>
-			<td>Vortex Portal</td>
-		</tr>
-		<tr>
-			<td>Defence: -10%</td>
-			<td>Technology: +20%</td>
-			<td>Infiltration</td>
-			<td>Black Mist</td>
-			<td>Energy Surge</td>
-		</tr>
-		<tr>
-			<td>Travel Speed: 40%</td>
-			<td>Energy: +20%</td>
-			<td>Bio Infection</td>
-			<td>War Illusions</td>
-			<td>Call to Arms</td>
-		</tr>
-		<tr>
-			<td>Fighters: +20%</td>
-			<td>Population: +20%</td>
-			<td>Military Sabotage</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Energy Production: -10%</td>
-			<td>Culture: -40%</td>
-			<td>Nuke Planet</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Crystal Production: +25%</td>
-			<td>Operations: +20%</td>
-			<td>Diplomatic Espionage</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Portals: +20%</td>
-			<td>Bribe Officials</td>
-			<td></td>
-			<td></td>
-		</tr>
-	</tbody>
-</table>
-<table class="Manticarias" style="width:100%">
-	<br>
-	<caption><strong><font size=10>Manticarias</font></strong></caption>
-	<thead>
-		<tr>
-			<th style="width:20%"><u>Race Specials</u></th>
-			<th style="width:20%"><u>Research</u></th>
-			<th style="width:20%"><u>Operations</u></th>
-			<th style="width:20%"><u>Spells</u></th>
-			<th style="width:20%"><u>*Incantations*</u></th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>Population Growth: -10%</td>
-			<td>Military: -10%</td>
-			<td>Spy Target</td>
-			<td>Dark Web</td>
-			<td>Planetary Shielding</td>
-		</tr>
-		<tr>
-			<td>Attack: -30%</td>
-			<td>Construction: -10%</td>
-			<td>Observe Planet</td>
-			<td>Black Mist</td>
-			<td>Mind Control</td>
-		</tr>
-		<tr>
-			<td>Defence: +10%</td>
-			<td>Technology: -10%</td>
-			<td>Hack Mainframe</td>
-			<td>War Illusions</td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Psychics: +40%</td>
-			<td>Energy: -10%</td>
-			<td></td>
-			<td>Psychic Assault</td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Ghost Ships: +20%</td>
-			<td>Population: -10%</td>
-			<td></td>
-			<td>Phantoms</td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Energy Production: +40%</td>
-			<td>Culture: +80%</td>
-			<td></td>
-			<td>Enlightment</td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Solar Collectors: +25%</td>
-			<td>Operations: -10%</td>
-			<td></td>
-			<td>Grow Planets Size</td>
-			<td></td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Portals: -10%</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-	</tbody>
-</table>
-<table class="Foohons" style="width:100%">
-	<caption><strong><font size=10>Foohons</font></strong></caption>
-	<thead>
-		<tr>
-			<th style="width:20%"><u>Race Specials</u></th>
-			<th style="width:20%"><u>Research</u></th>
-			<th style="width:20%"><u>Operations</u></th>
-			<th style="width:20%"><u>Spells</u></th>
-			<th style="width:20%"><u>*Incantations*</u></th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>Population Growth: -20%</td>
-			<td>Military: +50%</td>
-			<td>Observe Planet</td>
-			<td>Irradicate Ectrolium</td>
-			<td>Sense Artefact</td>
-		</tr>
-		<tr>
-			<td>Attack: +20%</td>
-			<td>Construction: +50%</td>
-			<td>Spy Target</td>
-			<td>Dark Web</td>
-			<td>Survey System</td>
-		</tr>
-		<tr>
-			<td>Defence: +10%</td>
-			<td>Technology: +50%</td>
-			<td>Infiltration</td>
-			<td>Incandescence</td>
-			<td>Vortex Portal</td>
-		</tr>
-		<tr>
-			<td>Ghost Ships: +10%</td>
-			<td>Energy: +50%</td>
-			<td>Military Sabotage</td>
-			<td>Psychic Assault</td>
-			<td>Mind Control</td>
-		</tr>
-		<tr>
-			<td>Energy Production: -20%</td>
-			<td>Population: +50%</td>
-			<td>High Infiltration</td>
-			<td>Enlightment</td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Ectrolium Production: +20%</td>
-			<td>Culture: +50%</td>
-			<td>Planetary Beacon</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Population: 6000 = 1 Research Point Per Week</td>
-			<td>Operations: +50%</td>
-			<td>Maps Theft</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Portals: +50%</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-	</tbody>
-</table>
-<table class="Spacebornes" style="width:100%">
-	<caption><strong><font size=10>Spacebornes</font></strong></caption>
-	<thead>
-		<tr>
-			<th style="width:20%"><u>Race Specials</u></th>
-			<th style="width:20%"><u>Research</u></th>
-			<th style="width:20%"><u>Operations</u></th>
-			<th style="width:20%"><u>Spells</u></th>
-			<th style="width:20%"><u>*Incantations*</u></th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>Population Growth: +20%</td>
-			<td>Military: +10%</td>
-			<td>Observe Planet</td>
-			<td>Irradicate Ectrolium</td>
-			<td>Survey System</td>
-		</tr>
-		<tr>
-			<td>Defence: +20%</td>
-			<td>Construction: +10%</td>
-			<td>Spy Target</td>
-			<td>Incandescence</td>
-			<td>Planetary Shielding</td>
-		</tr>
-		<tr>
-			<td>Travel Speed: +80%</td>
-			<td>Technology: -40%</td>
-			<td>Network Infiltration</td>
-			<td>Black Mist</td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Soldiers: +10%</td>
-			<td>Energy: +10% | Maximum: 250%</td>
-			<td>Bio Infection</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Droids: +10%</td>
-			<td>Population: +10%</td>
-			<td>Hack Mainframe</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Psychics: -30%</td>
-			<td>Culture: +10%</td>
-			<td>Nuke Planet</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Agents: +30%</td>
-			<td>Operations: +10%</td>
-			<td>Planetary Beacon</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Energy Production: +30%</td>
-			<td>Portals: +10%</td>
-			<td>Diplomatic Espionage</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td></td>
-			<td></td>
-			<td>Bribe Officials</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td></td>
-			<td></td>
-			<td>Maps Theft</td>
-			<td></td>
-			<td></td>
-		</tr>
-	</tbody>
-</table>
-<table class="Dreamweavers" style="width:100%">
-	<caption><strong><font size=10>Dreamweavers</font></strong></caption>
-	<thead>
-		<tr>
-			<th style="width:20%"><u>Race Specials</u></th>
-			<th style="width:20%"><u>Research</u></th>
-			<th style="width:20%"><u>Operations</u></th>
-			<th style="width:20%"><u>Spells</u></th>
-			<th style="width:20%"><u>*Incantations*</u></th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>Population Growth: +10%</td>
-			<td>Military: +40% | Maximum: 100%</td>
-			<td>Observe Planet</td>
-			<td>Irradicate Ectrolium</td>
-			<td>Sense Artefact</td>
-		</tr>
-		<tr>
-			<td>Defence: -30%</td>
-			<td>Construction: +40% | Maximum: 250%</td>
-			<td>Network Infiltration</td>
-			<td>Dark Web</td>
-			<td>Portal Force Field</td>
-		</tr>
-		<tr>
-			<td>Psychics: +50%</td>
-			<td>Technology: +180%</td>
-			<td>Bio Infection</td>
-			<td>Incandescence</td>
-			<td>Mind Control</td>
-		</tr>
-		<tr>
-			<td>Ghost Ships: +30%</td>
-			<td>Energy: +40%</td>
-			<td>Hack Mainframe</td>
-			<td>Black Mist</td>
-			<td>Energy Surge</td>
-		</tr>
-		<tr>
-			<td>Energy Production: -20%</td>
-			<td>Population: +40%</td>
-			<td>Military Sabotage</td>
-			<td>War Illusions</td>
-			<td></td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Culture: +40%</td>
-			<td></td>
-			<td>Psychic Assault</td>
-			<td></td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Operations: +40%</td>
-			<td></td>
-			<td>Phantoms</td>
-			<td></td>
-		</tr>
-		<tr>
-			<td></td>
-			<td>Portals: +40%</td>
-			<td></td>
-			<td>Enlightment</td>
-			<td></td>
-		</tr>
-		<tr>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td>Grow Planets Size</td>
-			<td></td>
-		</tr>
-	</tbody>
-</table>
-<table class="Wookies" style="width:100%">
-	<caption><strong><font size=10>Wookies</font></strong></caption>
-	<thead>
-		<tr>
-			<th style="width:20%"><u>Race Specials</u></th>
-			<th style="width:20%"><u>Research</u></th>
-			<th style="width:20%"><u>Operations</u></th>
-			<th style="width:20%"><u>Spells</u></th>
-			<th style="width:20%"><u>*Incantations*</u></th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>Population Growth: +20%</td>
-			<td>Construction: +100%</td>
-			<td>Observe Planet</td>
-			<td>Irradicate Ectrolium</td>
-			<td>Sense Artefact</td>
-		</tr>
-		<tr>
-			<td>Attack: -10%</td>
-			<td>Population: +100% | Maximum: 250%</td>
-			<td>Infiltration</td>
-			<td>Incandescence</td>
-			<td>Survey System</td>
-		</tr>
-		<tr>
-			<td>Defence: +30%</td>
-			<td>Portals: +100%</td>
-			<td>Nuke Planet</td>
-			<td>War Illusions</td>
-			<td>Portal Force Field</td>
-		</tr>
-		<tr>
-			<td>Travel Speed: +60%</td>
-			<td></td>
-			<td>Planetary Beacon</td>
-			<td>Grow Planets Size</td>
-			<td>Call to Arms</td>
-		</tr>
-		<tr>
-			<td>Cruisers: +15%</td>
-			<td></td>
-			<td>Diplomatic Espionage</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Ghost Ships: +15%</td>
-			<td></td>
-			<td>Bribe Officials</td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Mineral: +25%</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Crystal: +25%</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td>Interest: Energy and Resource reserves gain Interest!</td>
-			<td></td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-	</tbody>
+.row2{
+display: table-row;
+background-color: rgb(25,38,51);
+}
+
+th, td, tr {
+  padding: 5px;
+  text-align:center;
+}
+
+.hide {
+  display: none;
+}
+
+</style>
+
+
+<script>
+$(document).on('change', '.div-toggle', function() {
+  var target = $(this).data('target');
+  var show = $("option:selected", this).data('show');
+  $(target).children().addClass('hide');
+  $(show).removeClass('hide');
+  
+  var osel = document.getElementById("opt1").value;
+  var tsel = document.getElementById("opt2").value;
+  
+  var onePopulationGrowth = parseInt(-1);
+  var oneAttack = parseInt(-1);
+  var oneDefence = parseInt(-1);
+  var oneSpeed = parseInt(-1);
+  var oneFighters = parseInt(-1);
+  var oneEnergy = parseInt(-1);
+  var oneCrystal = parseInt(-1);
+  var onePsychics = parseInt(-1);
+  var oneGhostShips = parseInt(-1);
+  var oneSolars = parseInt(-1);
+  var oneEctrolium = parseInt(-1);
+  var onePopResearch = parseInt(-1);
+  var oneSoldiers = parseInt(-1);
+  var oneDroids = parseInt(-1);
+  var oneAgents = parseInt(-1);
+  var oneInterest = parseInt(-1);
+  var oneMineral = parseInt(-1);
+  var oneCruisers = parseInt(-1);
+  
+  var twPopulationGrowth = parseInt(-1);
+  var twAttack = parseInt(-1);
+  var twDefence = parseInt(-1);
+  var twSpeed = parseInt(-1);
+  var twFighters = parseInt(-1);
+  var twEnergy = parseInt(-1);
+  var twCrystal = parseInt(-1);
+  var twPsychics = parseInt(-1);
+  var twGhostShips = parseInt(-1);
+  var twSolars = parseInt(-1);
+  var twEctrolium = parseInt(-1);
+  var twPopResearch = parseInt(-1);
+  var twSoldiers = parseInt(-1);
+  var twDroids = parseInt(-1);
+  var twAgents = parseInt(-1);
+  var twInterest = parseInt(-1);
+  var twMineral = parseInt(-1);
+  var twCruisers = parseInt(-1);
+
+  var oneMilitaryRC = parseInt(-1);
+  var oneConstructionRC = parseInt(-1);
+  var oneTechRC = parseInt(-1);
+  var oneEnergyRC = parseInt(-1);
+  var onePopulationRC = parseInt(-1);
+  var oneCultureRC = parseInt(-1);
+  var oneOperationsRC = parseInt(-1);
+  var onePortalsRC = parseInt(-1);
+  var oneMilitaryMaxRC = parseInt(-1);
+  var oneConstructionMaxRC = parseInt(-1);
+  var oneEnergyMaxRC = parseInt(-1);
+  var onePopulationMaxRC = parseInt(-1);
+  var oneCultureMaxRC = parseInt(-1);
+  var oneOperationsMaxRC = parseInt(-1);
+  
+  var twMilitaryRC = parseInt(-1);
+  var twConstructionRC = parseInt(-1);
+  var twTechRC = parseInt(-1);
+  var twEnergyRC = parseInt(-1);
+  var twPopulationRC = parseInt(-1);
+  var twCultureRC = parseInt(-1);
+  var twOperationsRC = parseInt(-1);
+  var twPortalsRC = parseInt(-1);
+  var twMilitaryMaxRC = parseInt(-1);
+  var twConstructionMaxRC = parseInt(-1);
+  var twEnergyMaxRC = parseInt(-1);
+  var twPopulationMaxRC = parseInt(-1);
+  var twCultureMaxRC = parseInt(-1);
+  var twOperationsMaxRC = parseInt(-1);
+  
+  var oneSpyTarget = "n"
+  var oneObservePlanet = "n"
+  var oneNetworkInfiltration = "n"
+  var oneInfiltration = "n"
+  var oneDiplomaticEspionage = "n"
+  var oneBioInfection = "n"
+  var oneHackmainframe = "n"
+  var oneMilitarySabotage = "n"
+  var onePlanetaryBeacon = "n"
+  var oneNukePlanet = "n"
+  var oneBribeofficials = "n"
+  var oneMapstheft = "n"
+  var oneHighInfiltration = "n"
+  var oneSpoilResources = "n"
+  
+  var oneIrradiateEctrolium = "n"
+  var oneIncandescence = "n"
+  var oneDarkWeb = "n"
+  var oneBlackMist = "n"
+  var oneWarIllusions = "n"
+  var onePsychicAssault = "n"
+  var onePhantoms = "n"
+  var oneGrowPlanetsSize = "n"
+  var oneEnlightenment = "n"
+  
+  var oneSurveySystem = "n"
+  var oneSenseArtefact = "n"
+  var oneCalltoArms = "n"
+  var onePlanetaryShielding = "n"
+  var onePortalForceField = "n"
+  var oneVortexPortal = "n"
+  var oneMindControl = "n"
+  var oneEnergySurge = "n"
+  
+  var twSpyTarget = "n"
+  var twObservePlanet = "n"
+  var twNetworkInfiltration = "n"
+  var twInfiltration = "n"
+  var twDiplomaticEspionage = "n"
+  var twBioInfection = "n"
+  var twHackmainframe = "n"
+  var twMilitarySabotage = "n"
+  var twPlanetaryBeacon = "n"
+  var twNukePlanet = "n"
+  var twBribeofficials = "n"
+  var twMapstheft = "n"
+  var twHighInfiltration = "n"
+  var twSpoilResources = "n"
+  
+  var twIrradiateEctrolium = "n"
+  var twIncandescence = "n"
+  var twDarkWeb = "n"
+  var twBlackMist = "n"
+  var twWarIllusions = "n"
+  var twPsychicAssault = "n"
+  var twPhantoms = "n"
+  var twGrowPlanetsSize = "n"
+  var twEnlightenment = "n"
+  
+  var twSurveySystem = "n"
+  var twSenseArtefact = "n"
+  var twCalltoArms = "n"
+  var twPlanetaryShielding = "n"
+  var twPortalForceField = "n"
+  var twVortexPortal = "n"
+  var twMindControl = "n"
+  var twEnergySurge = "n"
+  
+    
+    if (tsel == "hark2")
+        { {% for_longest c,d in hark_research.items; a,b in hark_bonus.items; e in hark_ops; f in hark_spells; g in hark_incas %}
+            {% if a != None %}
+                tw{{a|cut:" "}} = {{b}};
+        {% endif %}
+        {% if c != None %}
+                tw{{c|cut:" "}}RC = {{d}};
+        {% endif %}
+        {% if e != "" %}
+                tw{{e|cut:" "}} = "{{e|cut:" "}}"
+        {% endif %}
+        {% if f != "" %}
+                tw{{f|cut:" "|cut:"'"}} = "{{f|cut:" "}}"
+        {% endif %}
+        {% if g != "" %}
+                tw{{g|cut:" "}} = "{{g|cut:" "}}"
+        {% endif %}
+        {% endfor %} }
+
+        
+    else if (tsel == "mant2")
+        { {% for_longest c,d in mant_research.items; a,b in mant_bonus.items; e in mant_ops; f in hark_spells; g in mant_incas %}
+            {% if a != None %}
+                tw{{a|cut:" "}} = {{b}};
+        {% endif %}
+        {% if c != None %}
+                tw{{c|cut:" "}}RC = {{d}};
+        {% endif %}
+        {% if e != "" %}
+                tw{{e|cut:" "}} = "{{e|cut:" "}}"
+        {% endif %}
+        {% if f != "" %}
+                tw{{f|cut:" "|cut:"'"}} = "{{f|cut:" "}}"
+        {% endif %}
+        {% if g != "" %}
+                tw{{g|cut:" "}} = "{{g|cut:" "}}"
+        {% endif %}
+        {% endfor %} }
+        
+    else if (tsel == "foos2")
+        { {% for_longest c,d in foos_research.items; a,b in foos_bonus.items; e in foos_ops; f in foos_spells; g in foos_incas %}
+            {% if a != None %}
+                tw{{a|cut:" "}} = {{b}};
+        {% endif %}
+        {% if c != None %}
+                tw{{c|cut:" "}}RC = {{d}};
+        {% endif %}
+        {% if e != "" %}
+                tw{{e|cut:" "}} = "{{e|cut:" "}}"
+        {% endif %}
+        {% if f != "" %}
+                tw{{f|cut:" "|cut:"'"}} = "{{f|cut:" "}}"
+        {% endif %}
+        {% if g != "" %}
+                tw{{g|cut:" "}} = "{{g|cut:" "}}"
+        {% endif %}
+        {% endfor %} }
+        
+    else if (tsel == "space2")
+        { {% for_longest c,d in space_research.items; a,b in space_bonus.items; e in space_ops; f in space_spells; g in space_incas %}
+            {% if a != None %}
+                tw{{a|cut:" "}} = {{b}};
+        {% endif %}
+        {% if c != None %}
+                tw{{c|cut:" "}}RC = {{d}};
+        {% endif %}
+        {% if e != "" %}
+                tw{{e|cut:" "}} = "{{e|cut:" "}}"
+        {% endif %}
+        {% if f != "" %}
+                tw{{f|cut:" "|cut:"'"}} = "{{f|cut:" "}}"
+        {% endif %}
+        {% if g != "" %}
+                tw{{g|cut:" "}} = "{{g|cut:" "}}"
+        {% endif %}
+        {% endfor %} }
+        
+    else if (tsel == "dweav2")
+        { {% for_longest c,d in dweav_research.items; a,b in dweav_bonus.items; e in dweav_ops; f in dweav_spells; g in dweav_incas %}
+            {% if a != None %}
+                tw{{a|cut:" "}} = {{b}};
+        {% endif %}
+        {% if c != None %}
+                tw{{c|cut:" "}}RC = {{d}};
+        {% endif %}
+        {% if e != "" %}
+                tw{{e|cut:" "}} = "{{e|cut:" "}}"
+        {% endif %}
+        {% if f != "" %}
+                tw{{f|cut:" "|cut:"'"}} = "{{f|cut:" "}}"
+        {% endif %}
+        {% if g != "" %}
+                tw{{g|cut:" "}} = "{{g|cut:" "}}"
+        {% endif %}
+        {% endfor %} }
+        
+    else if (tsel == "wkees2")
+        { {% for_longest c,d in wkees_research.items; a,b in wkees_bonus.items; e in wkees_ops; f in wkees_spells; g in wkees_incas %}
+            {% if a != None %}
+                tw{{a|cut:" "}} = {{b}};
+        {% endif %}
+        {% if c != None %}
+                tw{{c|cut:" "}}RC = {{d}};
+        {% endif %}
+        {% if e != "" %}
+                tw{{e|cut:" "}} = "{{e|cut:" "}}"
+        {% endif %}
+        {% if f != "" %}
+                tw{{f|cut:" "|cut:"'"}} = "{{f|cut:" "}}"
+        {% endif %}
+        {% if g != "" %}
+                tw{{g|cut:" "}} = "{{g|cut:" "}}"
+        {% endif %}
+        {% endfor %} }
+        
+    else if (tsel == "jacks2")
+        { {% for_longest c,d in jacks_research.items; a,b in jacks_bonus.items; e in jacks_ops; f in jacks_spells; g in jacks_incas %}
+            {% if a != None %}
+                tw{{a|cut:" "}} = {{b}};
+        {% endif %}
+        {% if c != None %}
+                tw{{c|cut:" "}}RC = {{d}};
+        {% endif %}
+        {% if e != "" %}
+                tw{{e|cut:" "}} = "{{e|cut:" "}}"
+        {% endif %}
+        {% if f != "" %}
+                tw{{f|cut:" "|cut:"'"}} = "{{f|cut:" "}}"
+        {% endif %}
+        {% if g != "" %}
+                tw{{g|cut:" "}} = "{{g|cut:" "}}"
+        {% endif %}
+        {% endfor %} }
+    
+    if (osel == "hark")
+        { {% for_longest c,d in hark_research.items; a,b in hark_bonus.items; e in hark_ops; f in hark_spells; g in hark_incas %}
+            {% if a != None %}
+                one{{a|cut:" "}} = {{b}};
+                oele = osel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}}
+                    else {
+                        document.getElementById(oele).style.color = 'green';}
+                }
+                else {
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}}){
+                            document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}
+                        else {
+                            document.getElementById(oele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{a|cut:" "}} > 0){
+                            document.getElementById(oele).style.color = 'green';}
+                        else if (one{{a|cut:" "}} < 0) {
+                            document.getElementById(oele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                one{{c|cut:" "}}RC = {{d}};
+                orcele = osel + "{{c|cut:" "}}RC";
+                if (tw{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC){
+                            document.getElementById(orcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC)
+                            {document.getElementById(orcele).style.color = 'green';}
+                        else {
+                            document.getElementById(orcele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{c|cut:" "}}RC > 0){
+                            document.getElementById(orcele).style.color = 'green';}
+                        else if (one{{c|cut:" "}}RC < 0) {
+                            document.getElementById(orcele).style.color = 'red';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                one{{e|cut:" "}} = "{{e|cut:" "}}"
+                oopele = osel + "{{e|cut:" "}}"
+                if (tw{{e|cut:" "}} == "n"){
+                    document.getElementById(oopele).style.color = 'green';}
+                else {
+                    document.getElementById(oopele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                one{{f|cut:" "}} = "{{f|cut:" "}}"
+                ospele = osel + "{{f|cut:" "|cut:"'"}}"
+                if (tw{{f|cut:" "}} == "n"){
+                    document.getElementById(ospele).style.color = 'green';}
+                else {
+                    document.getElementById(ospele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                one{{g|cut:" "}} = "{{g|cut:" "}}"
+                oinele = osel + "{{g|cut:" "}}"
+                if (tw{{g|cut:" "}} == "n"){
+                    document.getElementById(oinele).style.color = 'green';}
+                else {
+                    document.getElementById(oinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+   
+    else if (osel == "mant")
+        { {% for_longest c,d in mant_research.items; a,b in mant_bonus.items; e in mant_ops; f in mant_spells; g in mant_incas %}
+            {% if a != None %}
+                one{{a|cut:" "}} = {{b}};
+                oele = osel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}}
+                    else {
+                        document.getElementById(oele).style.color = 'green';}
+                }
+                else {
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}}){
+                            document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}
+                        else {
+                            document.getElementById(oele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{a|cut:" "}} > 0){
+                            document.getElementById(oele).style.color = 'green';}
+                        else if (one{{a|cut:" "}} < 0) {
+                            document.getElementById(oele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                one{{c|cut:" "}}RC = {{d}};
+                orcele = osel + "{{c|cut:" "}}RC";
+                if (tw{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC){
+                            document.getElementById(orcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC)
+                            {document.getElementById(orcele).style.color = 'green';}
+                        else {
+                            document.getElementById(orcele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{c|cut:" "}}RC > 0){
+                            document.getElementById(orcele).style.color = 'green';}
+                        else if (one{{c|cut:" "}}RC < 0) {
+                            document.getElementById(orcele).style.color = 'red';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                one{{e|cut:" "}} = "{{e|cut:" "}}"
+                oopele = osel + "{{e|cut:" "}}"
+                if (tw{{e|cut:" "}} == "n"){
+                    document.getElementById(oopele).style.color = 'green';}
+                else {
+                    document.getElementById(oopele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                one{{f|cut:" "}} = "{{f|cut:" "}}"
+                ospele = osel + "{{f|cut:" "|cut:"'"}}"
+                if (tw{{f|cut:" "}} == "n"){
+                    document.getElementById(ospele).style.color = 'green';}
+                else {
+                    document.getElementById(ospele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                one{{g|cut:" "}} = "{{g|cut:" "}}"
+                oinele = osel + "{{g|cut:" "}}"
+                if (tw{{g|cut:" "}} == "n"){
+                    document.getElementById(oinele).style.color = 'green';}
+                else {
+                    document.getElementById(oinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+    
+    else if (osel == "foos")
+        { {% for_longest c,d in foos_research.items; a,b in foos_bonus.items; e in foos_ops; f in foos_spells; g in foos_incas %}
+            {% if a != None %}
+                one{{a|cut:" "}} = {{b}};
+                oele = osel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}}
+                    else {
+                        document.getElementById(oele).style.color = 'green';}
+                }
+                else {
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}}){
+                            document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}
+                        else {
+                            document.getElementById(oele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{a|cut:" "}} > 0){
+                            document.getElementById(oele).style.color = 'green';}
+                        else if (one{{a|cut:" "}} < 0) {
+                            document.getElementById(oele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                one{{c|cut:" "}}RC = {{d}};
+                orcele = osel + "{{c|cut:" "}}RC";
+                if (tw{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC){
+                            document.getElementById(orcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC)
+                            {document.getElementById(orcele).style.color = 'green';}
+                        else {
+                            document.getElementById(orcele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{c|cut:" "}}RC > 0){
+                            document.getElementById(orcele).style.color = 'green';}
+                        else if (one{{c|cut:" "}}RC < 0) {
+                            document.getElementById(orcele).style.color = 'red';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                one{{e|cut:" "}} = "{{e|cut:" "}}"
+                oopele = osel + "{{e|cut:" "}}"
+                if (tw{{e|cut:" "}} == "n"){
+                    document.getElementById(oopele).style.color = 'green';}
+                else {
+                    document.getElementById(oopele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                one{{f|cut:" "}} = "{{f|cut:" "}}"
+                ospele = osel + "{{f|cut:" "|cut:"'"}}"
+                if (tw{{f|cut:" "}} == "n"){
+                    document.getElementById(ospele).style.color = 'green';}
+                else {
+                    document.getElementById(ospele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                one{{g|cut:" "}} = "{{g|cut:" "}}"
+                oinele = osel + "{{g|cut:" "}}"
+                if (tw{{g|cut:" "}} == "n"){
+                    document.getElementById(oinele).style.color = 'green';}
+                else {
+                    document.getElementById(oinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+    
+    else if (osel == "space")
+        { {% for_longest c,d in space_research.items; a,b in space_bonus.items; e in space_ops; f in space_spells; g in space_incas %}
+            {% if a != None %}
+            one{{a|cut:" "}} = {{b}};
+                oele = osel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}}
+                    else {
+                        document.getElementById(oele).style.color = 'green';}
+                }
+                else {
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}}){
+                            document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}
+                        else {
+                            document.getElementById(oele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{a|cut:" "}} > 0){
+                            document.getElementById(oele).style.color = 'green';}
+                        else if (one{{a|cut:" "}} < 0) {
+                            document.getElementById(oele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                one{{c|cut:" "}}RC = {{d}};
+                orcele = osel + "{{c|cut:" "}}RC";
+                if (tw{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC){
+                            document.getElementById(orcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC)
+                            {document.getElementById(orcele).style.color = 'green';}
+                        else {
+                            document.getElementById(orcele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{c|cut:" "}}RC > 0){
+                            document.getElementById(orcele).style.color = 'green';}
+                        else if (one{{c|cut:" "}}RC < 0) {
+                            document.getElementById(orcele).style.color = 'red';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                one{{e|cut:" "}} = "{{e|cut:" "}}"
+                oopele = osel + "{{e|cut:" "}}"
+                if (tw{{e|cut:" "}} == "n"){
+                    document.getElementById(oopele).style.color = 'green';}
+                else {
+                    document.getElementById(oopele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                one{{f|cut:" "}} = "{{f|cut:" "}}"
+                ospele = osel + "{{f|cut:" "|cut:"'"}}"
+                if (tw{{f|cut:" "}} == "n"){
+                    document.getElementById(ospele).style.color = 'green';}
+                else {
+                    document.getElementById(ospele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                one{{g|cut:" "}} = "{{g|cut:" "}}"
+                oinele = osel + "{{g|cut:" "}}"
+                if (tw{{g|cut:" "}} == "n"){
+                    document.getElementById(oinele).style.color = 'green';}
+                else {
+                    document.getElementById(oinele).style.color = 'white';}
+        {% endif %}
+            {% endfor %} }
+            
+    else if (osel == "dweav")
+        { {% for_longest c,d in dweav_research.items; a,b in dweav_bonus.items; e in dweav_ops; f in dweav_spells; g in dweav_incas %}
+            {% if a != None %}
+                one{{a|cut:" "}} = {{b}};
+                oele = osel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}}
+                    else {
+                        document.getElementById(oele).style.color = 'green';}
+                }
+                else {
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}}){
+                            document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}
+                        else {
+                            document.getElementById(oele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{a|cut:" "}} > 0){
+                            document.getElementById(oele).style.color = 'green';}
+                        else if (one{{a|cut:" "}} < 0) {
+                            document.getElementById(oele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                one{{c|cut:" "}}RC = {{d}};
+                orcele = osel + "{{c|cut:" "}}RC";
+				{% if c == "Military Max" %}
+					document.getElementById(orcele).style.color = 'red';
+				{% else %}
+                if (tw{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC){
+                            document.getElementById(orcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC)
+                            {document.getElementById(orcele).style.color = 'green';}
+                        else {
+                            document.getElementById(orcele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{c|cut:" "}}RC > 0){
+                            document.getElementById(orcele).style.color = 'green';}
+                        else if (one{{c|cut:" "}}RC < 0) {
+                            document.getElementById(orcele).style.color = 'red';}
+                    }
+				{% endif %}
+        {% endif %}
+        {% if e != "" %}
+                one{{e|cut:" "}} = "{{e|cut:" "}}"
+                oopele = osel + "{{e|cut:" "}}"
+                if (tw{{e|cut:" "}} == "n"){
+                    document.getElementById(oopele).style.color = 'green';}
+                else {
+                    document.getElementById(oopele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                one{{f|cut:" "}} = "{{f|cut:" "}}"
+                ospele = osel + "{{f|cut:" "|cut:"'"}}"
+                if (tw{{f|cut:" "}} == "n"){
+                    document.getElementById(ospele).style.color = 'green';}
+                else {
+                    document.getElementById(ospele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                one{{g|cut:" "}} = "{{g|cut:" "}}"
+                oinele = osel + "{{g|cut:" "}}"
+                if (tw{{g|cut:" "}} == "n"){
+                    document.getElementById(oinele).style.color = 'green';}
+                else {
+                    document.getElementById(oinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+            
+    else if (osel == "wkees")
+        { {% for_longest c,d in wkees_research.items; a,b in wkees_bonus.items; e in wkees_ops; f in wkees_spells; g in wkees_incas %}
+            {% if a != None %}
+                one{{a|cut:" "}} = {{b}};
+                oele = osel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}}
+                    else {
+                        document.getElementById(oele).style.color = 'green';}
+                }
+                else {
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}}){
+                            document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}
+                        else {
+                            document.getElementById(oele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{a|cut:" "}} > 0){
+                            document.getElementById(oele).style.color = 'green';}
+                        else if (one{{a|cut:" "}} < 0) {
+                            document.getElementById(oele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                one{{c|cut:" "}}RC = {{d}};
+                orcele = osel + "{{c|cut:" "}}RC";
+                if (tw{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC){
+                            document.getElementById(orcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC)
+                            {document.getElementById(orcele).style.color = 'green';}
+                        else {
+                            document.getElementById(orcele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{c|cut:" "}}RC > 0){
+                            document.getElementById(orcele).style.color = 'green';}
+                        else if (one{{c|cut:" "}}RC < 0) {
+                            document.getElementById(orcele).style.color = 'red';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                one{{e|cut:" "}} = "{{e|cut:" "}}"
+                oopele = osel + "{{e|cut:" "}}"
+                if (tw{{e|cut:" "}} == "n"){
+                    document.getElementById(oopele).style.color = 'green';}
+                else {
+                    document.getElementById(oopele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                one{{f|cut:" "}} = "{{f|cut:" "}}"
+                ospele = osel + "{{f|cut:" "|cut:"'"}}"
+                if (tw{{f|cut:" "}} == "n"){
+                    document.getElementById(ospele).style.color = 'green';}
+                else {
+                    document.getElementById(ospele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                one{{g|cut:" "}} = "{{g|cut:" "}}"
+                oinele = osel + "{{g|cut:" "}}"
+                if (tw{{g|cut:" "}} == "n"){
+                    document.getElementById(oinele).style.color = 'green';}
+                else {
+                    document.getElementById(oinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+            
+    else if (osel == "jacks")
+        { {% for_longest c,d in jacks_research.items; a,b in jacks_bonus.items; e in jacks_ops; f in jacks_spells; g in jacks_incas %}
+            {% if a != None %}
+                one{{a|cut:" "}} = {{b}};
+                oele = osel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}}
+                    else {
+                        document.getElementById(oele).style.color = 'green';}
+                }
+                else {
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}}){
+                            document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}
+                        else {
+                            document.getElementById(oele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{a|cut:" "}} > 0){
+                            document.getElementById(oele).style.color = 'green';}
+                        else if (one{{a|cut:" "}} < 0) {
+                            document.getElementById(oele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                one{{c|cut:" "}}RC = {{d}};
+                orcele = osel + "{{c|cut:" "}}RC";
+                if (tw{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC){
+                            document.getElementById(orcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC)
+                            {document.getElementById(orcele).style.color = 'green';}
+                        else {
+                            document.getElementById(orcele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{c|cut:" "}}RC > 0){
+                            document.getElementById(orcele).style.color = 'green';}
+                        else if (one{{c|cut:" "}}RC < 0) {
+                            document.getElementById(orcele).style.color = 'red';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                one{{e|cut:" "}} = "{{e|cut:" "}}"
+                oopele = osel + "{{e|cut:" "}}"
+                if (tw{{e|cut:" "}} == "n"){
+                    document.getElementById(oopele).style.color = 'green';}
+                else {
+                    document.getElementById(oopele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                one{{f|cut:" "}} = "{{f|cut:" "}}"
+                ospele = osel + "{{f|cut:" "|cut:"'"}}"
+                if (tw{{f|cut:" "}} == "n"){
+                    document.getElementById(ospele).style.color = 'green';}
+                else {
+                    document.getElementById(ospele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                one{{g|cut:" "}} = "{{g|cut:" "}}"
+                oinele = osel + "{{g|cut:" "}}"
+                if (tw{{g|cut:" "}} == "n"){
+                    document.getElementById(oinele).style.color = 'green';}
+                else {
+                    document.getElementById(oinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+    
+    
+    
+    if (tsel == "hark2")
+        { {% for_longest c,d in hark_research.items; a,b in hark_bonus.items; e in hark_ops; f in hark_spells; g in hark_incas %}
+            {% if a != None %}
+                tele = tsel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'green';}}
+                    else {
+                        document.getElementById(tele).style.color = 'green';}
+                }
+                else {
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'green';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}}
+                    else {
+                        if (tw{{a|cut:" "}} > 0){
+                            document.getElementById(tele).style.color = 'green';}
+                        else if (tw{{a|cut:" "}} < 0) {
+                            document.getElementById(tele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                trcele = tsel + "{{c|cut:" "}}RC";
+                if (one{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC){
+                            document.getElementById(trcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC)
+                            {document.getElementById(trcele).style.color = 'green';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
+                    }
+                    else {
+                        if (tw{{c|cut:" "}}RC > 0){
+                            document.getElementById(trcele).style.color = 'green';}
+                        else if (tw{{c|cut:" "}}RC < 0) {
+                            document.getElementById(trcele).style.color = 'red';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                topele = tsel + "{{e|cut:" "}}"
+                if (one{{e|cut:" "}} == "n"){
+                    document.getElementById(topele).style.color = 'green';}
+                else {
+                    document.getElementById(topele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                tspele = tsel + "{{f|cut:" "|cut:"'"}}"
+                if (one{{f|cut:" "}} == "n"){
+                    document.getElementById(tspele).style.color = 'green';}
+                else {
+                    document.getElementById(tspele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                tinele = tsel + "{{g|cut:" "}}"
+                if (one{{g|cut:" "}} == "n"){
+                    document.getElementById(tinele).style.color = 'green';}
+                else {
+                    document.getElementById(tinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+   
+    else if (tsel == "mant2")
+        { {% for_longest c,d in mant_research.items; a,b in mant_bonus.items; e in mant_ops; f in mant_spells; g in mant_incas %}
+            {% if a != None %}
+                tele = tsel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'green';}}
+                    else {
+                        document.getElementById(tele).style.color = 'green';}
+                }
+                else {
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+
+                            {document.getElementById(tele).style.color = 'green';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}}
+                    else {
+                        if (tw{{a|cut:" "}} > 0){
+                            document.getElementById(tele).style.color = 'green';}
+                        else if (tw{{a|cut:" "}} < 0) {
+                            document.getElementById(tele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                trcele = tsel + "{{c|cut:" "}}RC";
+                if (one{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC){
+                            document.getElementById(trcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC)
+                            {document.getElementById(trcele).style.color = 'green';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
+                    }
+                    else {
+                        if (tw{{c|cut:" "}}RC > 0){
+                            document.getElementById(trcele).style.color = 'green';}
+                        else if (tw{{c|cut:" "}}RC < 0) {
+                            document.getElementById(trcele).style.color = 'red';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                topele = tsel + "{{e|cut:" "}}"
+                if (one{{e|cut:" "}} == "n"){
+                    document.getElementById(topele).style.color = 'green';}
+                else {
+                    document.getElementById(topele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                tspele = tsel + "{{f|cut:" "|cut:"'"}}"
+                if (one{{f|cut:" "}} == "n"){
+                    document.getElementById(tspele).style.color = 'green';}
+                else {
+                    document.getElementById(tspele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                tinele = tsel + "{{g|cut:" "}}"
+                if (one{{g|cut:" "}} == "n"){
+                    document.getElementById(tinele).style.color = 'green';}
+                else {
+                    document.getElementById(tinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+    
+    else if (tsel == "foos2")
+        { {% for_longest c,d in foos_research.items; a,b in foos_bonus.items; e in foos_ops; f in foos_spells; g in foos_incas %}
+            {% if a != None %}
+                tele = tsel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'green';}}
+                    else {
+                        document.getElementById(tele).style.color = 'green';}
+                }
+                else {
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+
+                            {document.getElementById(tele).style.color = 'green';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}}
+                    else {
+                        if (tw{{a|cut:" "}} > 0){
+                            document.getElementById(tele).style.color = 'green';}
+                        else if (tw{{a|cut:" "}} < 0) {
+                            document.getElementById(tele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                trcele = tsel + "{{c|cut:" "}}RC";
+                if (one{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC){
+                            document.getElementById(trcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC)
+                            {document.getElementById(trcele).style.color = 'green';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
+                    }
+                    else {
+                        if (tw{{c|cut:" "}}RC > 0){
+                            document.getElementById(trcele).style.color = 'green';}
+                        else if (tw{{c|cut:" "}}RC < 0) {
+                            document.getElementById(trcele).style.color = 'red';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                topele = tsel + "{{e|cut:" "}}"
+                if (one{{e|cut:" "}} == "n"){
+                    document.getElementById(topele).style.color = 'green';}
+                else {
+                    document.getElementById(topele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                tspele = tsel + "{{f|cut:" "|cut:"'"}}"
+                if (one{{f|cut:" "}} == "n"){
+                    document.getElementById(tspele).style.color = 'green';}
+                else {
+                    document.getElementById(tspele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                tinele = tsel + "{{g|cut:" "}}"
+                if (one{{g|cut:" "}} == "n"){
+                    document.getElementById(tinele).style.color = 'green';}
+                else {
+                    document.getElementById(tinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+    
+    else if (tsel == "space2")
+        { {% for_longest c,d in space_research.items; a,b in space_bonus.items; e in space_ops; f in space_spells; g in space_incas %}
+            {% if a != None %}
+                tele = tsel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'green';}}
+                    else {
+                        document.getElementById(tele).style.color = 'green';}
+                }
+                else {
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+
+                            {document.getElementById(tele).style.color = 'green';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}}
+                    else {
+                        if (tw{{a|cut:" "}} > 0){
+                            document.getElementById(tele).style.color = 'green';}
+                        else if (tw{{a|cut:" "}} < 0) {
+                            document.getElementById(tele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                trcele = tsel + "{{c|cut:" "}}RC";
+                if (one{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC){
+                            document.getElementById(trcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC)
+                            {document.getElementById(trcele).style.color = 'green';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
+                    }
+                    else {
+                        if (tw{{c|cut:" "}}RC > 0){
+                            document.getElementById(trcele).style.color = 'green';}
+                        else if (tw{{c|cut:" "}}RC < 0) {
+                            document.getElementById(trcele).style.color = 'red';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                topele = tsel + "{{e|cut:" "}}"
+                if (one{{e|cut:" "}} == "n"){
+                    document.getElementById(topele).style.color = 'green';}
+                else {
+                    document.getElementById(topele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                tspele = tsel + "{{f|cut:" "|cut:"'"}}"
+                if (one{{f|cut:" "}} == "n"){
+                    document.getElementById(tspele).style.color = 'green';}
+                else {
+                    document.getElementById(tspele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                tinele = tsel + "{{g|cut:" "}}"
+                if (one{{g|cut:" "}} == "n"){
+                    document.getElementById(tinele).style.color = 'green';}
+                else {
+                    document.getElementById(tinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+            
+    else if (tsel == "dweav2")
+        { {% for_longest c,d in dweav_research.items; a,b in dweav_bonus.items; e in dweav_ops; f in dweav_spells; g in dweav_incas %}
+            {% if a != None %}
+                tele = tsel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}} '== "PopResearch"){
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'green';}}
+                    else {
+                        document.getElementById(tele).style.color = 'green';}
+                }
+                else {
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+
+                            {document.getElementById(tele).style.color = 'green';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}}
+                    else {
+                        if (tw{{a|cut:" "}} > 0){
+                            document.getElementById(tele).style.color = 'green';}
+                        else if (tw{{a|cut:" "}} < 0) {
+                            document.getElementById(tele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                trcele = tsel + "{{c|cut:" "}}RC";
+				{% if c == "Military Max" %}
+					document.getElementById(trcele).style.color = 'red';
+				{% else %}
+                if (one{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC){
+                            document.getElementById(trcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC)
+                            {document.getElementById(trcele).style.color = 'green';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
+                    }
+                    else {
+                        if (tw{{c|cut:" "}}RC > 0){
+                            document.getElementById(trcele).style.color = 'green';}
+                        else if (tw{{c|cut:" "}}RC < 0) {
+                            document.getElementById(trcele).style.color = 'red';}
+                    }
+        {% endif %}{% endif %}
+        {% if e != "" %}
+                topele = tsel + "{{e|cut:" "}}"
+                if (one{{e|cut:" "}} == "n"){
+                    document.getElementById(topele).style.color = 'green';}
+                else {
+                    document.getElementById(topele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                tspele = tsel + "{{f|cut:" "|cut:"'"}}"
+                if (one{{f|cut:" "}} == "n"){
+                    document.getElementById(tspele).style.color = 'green';}
+                else {
+                    document.getElementById(tspele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                tinele = tsel + "{{g|cut:" "}}"
+                if (one{{g|cut:" "}} == "n"){
+                    document.getElementById(tinele).style.color = 'green';}
+                else {
+                    document.getElementById(tinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+            
+    else if (tsel == "wkees2")
+        { {% for_longest c,d in wkees_research.items; a,b in wkees_bonus.items; e in wkees_ops; f in wkees_spells; g in wkees_incas %}
+            {% if a != None %}
+                tele = tsel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'green';}}
+                    else {
+                        document.getElementById(tele).style.color = 'green';}
+                }
+                else {
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+
+                            {document.getElementById(tele).style.color = 'green';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}}
+                    else {
+                        if (tw{{a|cut:" "}} > 0){
+                            document.getElementById(tele).style.color = 'green';}
+                        else if (tw{{a|cut:" "}} < 0) {
+                            document.getElementById(tele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                trcele = tsel + "{{c|cut:" "}}RC";
+                if (one{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC){
+                            document.getElementById(trcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC)
+                            {document.getElementById(trcele).style.color = 'green';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
+                    }
+                    else {
+                        if (tw{{c|cut:" "}}RC > 0){
+                            document.getElementById(trcele).style.color = 'green';}
+                        else if (tw{{c|cut:" "}}RC < 0) {
+                            document.getElementById(trcele).style.color = 'red';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                topele = tsel + "{{e|cut:" "}}"
+                if (one{{e|cut:" "}} == "n"){
+                    document.getElementById(topele).style.color = 'green';}
+                else {
+                    document.getElementById(topele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                tspele = tsel + "{{f|cut:" "|cut:"'"}}"
+                if (one{{f|cut:" "}} == "n"){
+                    document.getElementById(tspele).style.color = 'green';}
+                else {
+                    document.getElementById(tspele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                tinele = tsel + "{{g|cut:" "}}"
+                if (one{{g|cut:" "}} == "n"){
+                    document.getElementById(tinele).style.color = 'green';}
+                else {
+                    document.getElementById(tinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+            
+    else if (tsel == "jacks2")
+        { {% for_longest c,d in jacks_research.items; a,b in jacks_bonus.items; e in jacks_ops; f in jacks_spells; g in jacks_incas %}
+            {% if a != None %}
+                tele = tsel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'green';}}
+                    else {
+                        document.getElementById(tele).style.color = 'green';}
+                }
+                else {
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+
+                            {document.getElementById(tele).style.color = 'green';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}}
+                    else {
+                        if (tw{{a|cut:" "}} > 0){
+                            document.getElementById(tele).style.color = 'green';}
+                        else if (tw{{a|cut:" "}} < 0) {
+                            document.getElementById(tele).style.color = 'red';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                trcele = tsel + "{{c|cut:" "}}RC";
+                if (one{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC){
+                            document.getElementById(trcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC)
+                            {document.getElementById(trcele).style.color = 'green';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
+                    }
+                    else {
+                        if (tw{{c|cut:" "}}RC > 0){
+                            document.getElementById(trcele).style.color = 'green';}
+                        else if (tw{{c|cut:" "}}RC < 0) {
+                            document.getElementById(trcele).style.color = 'red';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                topele = tsel + "{{e|cut:" "}}"
+                if (one{{e|cut:" "}} == "n"){
+                    document.getElementById(topele).style.color = 'green';}
+                else {
+                    document.getElementById(topele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                tspele = tsel + "{{f|cut:" "|cut:"'"}}"
+                if (one{{f|cut:" "}} == "n"){
+                    document.getElementById(tspele).style.color = 'green';}
+                else {
+                    document.getElementById(tspele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                tinele = tsel + "{{g|cut:" "}}"
+                if (one{{g|cut:" "}} == "n"){
+                    document.getElementById(tinele).style.color = 'green';}
+                else {
+                    document.getElementById(tinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+            
+  
+});
+$(document).ready(function(){
+    $('.div-toggle').trigger('change');
+});
+</script>
+
+
+
+
+</head>
+<br><br>
+<select class="div-toggle" data-target=".my-info">
+  <option value="araces" data-show=".araces">All Races</option>
+  <option value="craces" data-show=".craces">Compare Races</option>
+</select>
+
+<div class="my-info">
+
+<div class="craces hide">
+
+<div style="width:100%; float:left; ">
+	<div class ="left_box" >
+		<div style="width: 100%; margin:0 auto; text-align: left;">
+
+<table align="center">
+<td align="center">
+<select class="div-toggle" id="opt1" data-target=".my-info-1">
+  <option value="hark" data-show=".hark">Harks</option>
+  <option value="mant" data-show=".mant">Manticarias</option>
+  <option value="foos" data-show=".foos">Foohons</option>
+  <option value="space" data-show=".space">Spacebornes</option>
+  <option value="dweav" data-show=".dweav">Dreamweavers</option>
+  <option value="wkees" data-show=".wkees">Wookies</option>
+  <option value="jacks" data-show=".jacks">Jackos</option>
+</select>
+</td>
 </table>
 
-{% if my_template == "front_page.html" %}
-		</div>
-		<div class="display_box_content_right"></div>
-	</div>
+<div class="my-info-1">
 
-	<div class="display_box_footer">
-		<div class="display_box_footer_left"></div>
-		<div class="display_box_footer_center"></div>
-		<div class="display_box_footer_right"></div>
-	</div>
+<div class="hark hide">
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in hark_research.items; a,b in hark_bonus.items; e in hark_ops; f in hark_spells; g in hark_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="hark{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="hark{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="hark{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="hark{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="hark{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
 </div>
-{% endif %}
+<div class="mant hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in mant_research.items; a,b in mant_bonus.items; e in mant_ops; f in mant_spells; g in mant_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="mant{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="mant{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="mant{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="mant{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="mant{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+<div class="foos hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in foos_research.items; a,b in foos_bonus.items; e in foos_ops; f in foos_spells; g in foos_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="foos{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="foos{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="foos{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="foos{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="foos{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+<div class="space hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in space_research.items; a,b in space_bonus.items; e in space_ops; f in space_spells; g in space_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="space{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="space{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="space{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="space{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="space{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+<div class="dweav hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in dweav_research.items; a,b in dweav_bonus.items; e in dweav_ops; f in dweav_spells; g in dweav_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="dweav{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="dweav{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="dweav{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="dweav{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="dweav{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+<div class="wkees hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in wkees_research.items; a,b in wkees_bonus.items; e in wkees_ops; f in wkees_spells; g in wkees_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="wkees{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="wkees{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="wkees{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="wkees{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="wkees{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+<div class="jacks hide">
+
+<table align="center">
+<tr>
+<td colspan="100%">Fast Tick only</td></tr>
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in jacks_research.items; a,b in jacks_bonus.items; e in jacks_ops; f in jacks_spells; g in jacks_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="jacks{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="jacks{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="jacks{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="jacks{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="jacks{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div></div>
+
+</div>
+
+	</div>
+	<div class ="right_box" >
+		<div style="width: 100%; margin:0 auto; text-align: left;">
+<table align="center">
+<td align="center">
+<select class="div-toggle" id="opt2" data-target=".my-info-2">
+  <option value="hark2" data-show=".hark2">Harks</option>
+  <option value="mant2" data-show=".mant2">Manticarias</option>
+  <option value="foos2" data-show=".foos2">Foohons</option>
+  <option value="space2" data-show=".space2">Spacebornes</option>
+  <option value="dweav2" data-show=".dweav2">Dreamweavers</option>
+  <option value="wkees2" data-show=".wkees2">Wookies</option>
+  <option value="jacks2" data-show=".jacks2">Jackos</option>
+</select>
+</td>
+</table>
+
+<div class="my-info-2">
+
+<div class="hark2 hide">
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in hark_research.items; a,b in hark_bonus.items; e in hark_ops; f in hark_spells; g in hark_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="hark2{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="hark2{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="hark2{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="hark2{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="hark2{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+<div class="mant2 hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in mant_research.items; a,b in mant_bonus.items; e in mant_ops; f in mant_spells; g in mant_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="mant2{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="mant2{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="mant2{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="mant2{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="mant2{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+<div class="foos2 hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in foos_research.items; a,b in foos_bonus.items; e in foos_ops; f in foos_spells; g in foos_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="foos2{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="foos2{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="foos2{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="foos2{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="foos2{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+<div class="space2 hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in space_research.items; a,b in space_bonus.items; e in space_ops; f in space_spells; g in space_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="space2{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="space2{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="space2{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="space2{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="space2{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+<div class="dweav2 hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in dweav_research.items; a,b in dweav_bonus.items; e in dweav_ops; f in dweav_spells; g in dweav_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="dweav2{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="dweav2{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="dweav2{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="dweav2{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="dweav2{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+<div class="wkees2 hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in wkees_research.items; a,b in wkees_bonus.items; e in wkees_ops; f in wkees_spells; g in wkees_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="wkees2{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="wkees2{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="wkees2{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="wkees2{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="wkees2{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+<div class="jacks2 hide">
+
+<table align="center">
+<tr>
+<td colspan="100%">Fast Tick only</td></tr>
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in jacks_research.items; a,b in jacks_bonus.items; e in jacks_ops; f in jacks_spells; g in jacks_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="jacks2{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="jacks2{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="jacks2{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="jacks2{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="jacks2{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div></div>
+</div>
+	</div></div>
+
+</div>
+<div class="araces hide">
+
+<table align="center">
+<th colspan="100%">Harks</th>
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in hark_research.items; a,b in hark_bonus.items; e in hark_ops; f in hark_spells; g in hark_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td>{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td>{{d}}{% if d != None %}%{% endif %}</td><td>{{e}}</td><td>{{f}}</td><td>{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+<table align="center">
+<th colspan="100%">Manticarias</th>
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in mant_research.items; a,b in mant_bonus.items; e in mant_ops; f in mant_spells; g in mant_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td>{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td>{{d}}{% if d != None %}%{% endif %}</td><td>{{e}}</td><td>{{f}}</td><td>{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
 
 
+<table align="center">
+<th colspan="100%">Foohons</th>
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in foos_research.items; a,b in foos_bonus.items; e in foos_ops; f in foos_spells; g in foos_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td>{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td>{{d}}{% if d != None %}%{% endif %}</td><td>{{e}}</td><td>{{f}}</td><td>{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+<table align="center">
+<th colspan="100%">Spacebornes</th>
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in space_research.items; a,b in space_bonus.items; e in space_ops; f in space_spells; g in space_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td>{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td>{{d}}{% if d != None %}%{% endif %}</td><td>{{e}}</td><td>{{f}}</td><td>{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+
+<table align="center">
+<th colspan="100%">Dreamweavers</th>
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in dweav_research.items; a,b in dweav_bonus.items; e in dweav_ops; f in dweav_spells; g in dweav_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td>{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td>{{d}}{% if d != None %}%{% endif %}</td><td>{{e}}</td><td>{{f}}</td><td>{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+<table align="center">
+<th colspan="100%">Wookiees</th>
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in wkees_research.items; a,b in wkees_bonus.items; e in wkees_ops; f in wkees_spells; g in wkees_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td>{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td>{{d}}{% if d != None %}%{% endif %}</td><td>{{e}}</td><td>{{f}}</td><td>{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+
+<table align="center">
+Jackos
+<tr>
+<td colspan="100%">Fast Tick only</td></tr>
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in jacks_research.items; a,b in jacks_bonus.items; e in jacks_ops; f in jacks_spells; g in jacks_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td>{{b}}{% if b != None %}{% if a != "Pop Research" %}%{% endif %}{% endif %}</td><td>{{c}}</td><td>{{d}}{% if d != None %}%{% endif %}</td><td>{{e}}</td><td>{{f}}</td><td>{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+</div>
+</div>
+<br><br><b>Note:</b> Pop research grants you 1 research point per noted population per week.<br><br>
 {% endblock %}

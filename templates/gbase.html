@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+{% load mathfilters %}
+
+<head>
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="{% static 'icon.jpg' %}">
+
+{% block title %}<title>Guide to Ectroverse</title>{% endblock %}
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+<!-- Add additional CSS in static file -->
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+<!-- Bootstrap stuff -->
+<!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"> -->
+<!--<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">-->
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>-->
+
+<!-- Our CSS should come after everything else -->
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+
+<style type="text/css">
+body
+{
+    background-image:url("/static/background.gif");
+}
+
+
+
+@media all and (max-width: 660px) {
+	.hide_pop {display: none;}
+	.content-desktop {display: none;}
+	.content-mobile-menu, .content-mobile-menu .content-mobile {display: block;}
+	.left_menu_large_scrn {display:none;}
+	.right_side{
+	width: fit-content;
+	}
+
+	.left_box, .right_box {
+		width: 100%;
+		}
+
+	.center_box_inside {
+		text-align: left;
+	}
+
+	.show_only_on_wide_scrn{
+		display: none;
+	}
+
+}
+
+@media all and (min-width: 661px) {
+	.left_menu_large_scrn{
+	min-width: 175px;
+	}
+	.right_side{
+	left: 180px;
+	right: 0px;
+	}
+	.show_only_on_mobile{
+		display: none;
+	}
+}
+
+@media all and (min-width: 661px) and (max-width: 837px) {
+	.content-mobile {display: block;}
+	.content-desktop, .content-mobile-menu {display: none;}
+}
+
+@media all and (min-width: 838px){
+	.content-desktop {display: block;}
+	.content-footer {display: block; position: absolute;
+            bottom: 0px;}
+	.content-mobile, .content-mobile-menu {display: none;}
+
+}
+
+/* sidebar */
+
+.headerplanets{
+  vertical-align: middle;
+}
+
+.nav_top{
+ position: relative;
+ width: 150px;
+ height: 40px;
+  content:url({% static 'files_004' %});
+}
+
+.nav_hq{
+  position:relative;
+  width: 150px;
+  height: 20px;
+    background-image:url({% static 'files_010' %});
+}
+
+.nav_body{
+  position: relative;
+  width: 150px;
+  display: block;
+  overflow: auto;
+    background-image:url({% static 'files_013' %});
+}
+
+.nav_bottom{
+  position: relative;
+  width: 150px;
+  height: 20px;
+    content:url({% static 'files_022' %});
+}
+
+.nav_footer{
+  position: relative;
+  width: 150px;
+  height: 75px;
+    content:url({% static 'files_014.jpg' %});
+
+</style>
+
+<script>
+
+ function startTime() {
+  var today = new Date();
+  var m = today.getMinutes();
+  var s = today.getSeconds();
+  m_left = 9 - (m % 10);
+  s_left = 59 - (s % 60);
+  s_left = fixTimeDigits(s_left);
+  document.getElementById('headerTime1').innerHTML = m_left + ":" + s_left;
+  document.getElementById('headerTime2').innerHTML = m_left + ":" + s_left;
+  m_left + ":" + s_left;
+  var t = setTimeout(startTime, 600);
+
+}
+
+function fixTimeDigits(s_left) {
+  if (s_left < 10) {s_left = "0" + s_left};  // add zero in front of numbers < 10
+  return s_left;
+}
+
+function toggleForm(form_name) {
+		var selectElements = document.querySelectorAll('input[type=checkbox]');
+		for(var i = 0; i < selectElements.length; i++) {
+			selectElements[i].checked = !selectElements[i].checked;
+		}
+	}
+
+function changeslider(newValue,field) {
+	window.document.getElementById(field).value=newValue;
+}
+
+
+</script>
+
+</head>
+
+
+<body style="
+   width:100%;
+   margin:0 0 50px 0;
+   max-width:100%;
+   overflow-x:hidden;"
+onload="startTime();">
+
+
+<div class="parent_container">
+<div class="content-wrap">
+		<div class="left_menu_large_scrn"> <!-- Hide on mobile -->
+        <!-- Sidebar content -->
+	<div class="nav_top"></div>
+        <div class="nav_hq">
+		<div class="nav_head">
+          	<b><font size="2" face="Tahoma">
+          	<a href="/portal">Portal</a></font></b>
+        	</div>
+	</div>
+        <div class="nav_body">
+		<div class="nav_navi">
+          	<b><font size="2" face="Tahoma">
+			<img src="/static/files_017" height="15">
+			<a href="/guide">Headquarters</a><br>
+			  <a href="/guide/council">Council</a><br>
+                <a href="/guide/units">Units</a><br>
+                <a href="/guide/planets">Planets</a><br>
+                - <a href="/guide/buildings">Buildings</a><br>
+				- <a href="/guide/obcalc">OB Calc</a><br>
+				- <a href="/guide/portal">Portals</a><br>
+				- <a href="/guide/population">Population</a><br>
+				- <a href="/guide/arti">Artefacts</a><br>
+                <a href="/guide/family">Empire</a><br>
+                - <a href="/guide/fam_func">Send aid<br></a>
+				- <a href="/guide/fam_func">Receive aid</a><br>
+                - <a href="/guide/fam_func">News</a><br>
+                - <a href="/guide/relations"> Relations</a><br>
+                <a href="/guide/fleet">Fleets</a><br>
+				- <a href="/guide/combat">Battle</a><br>
+                <a href="/guide/map">Full Map</a><br>
+                - <a href="/guide/map">Map Settings</a><br>
+				*Scouting<br>
+                <a href="/guide/research">Research</a><br>
+                <a href="/guide/specop">Operations</a>		
+                        <br><img src="/static/files_017" height="15">
+                <a href="/guide/account">Account</a><br>
+				<img src="/static/files_017" height="15">
+				<a href="/guide/nerd">Formulas</a><br>
+				<img src="/static/files_017" height="15">
+                <a href="/guide/history">History</a><br>
+					<img src="/static/files_017" height="15">				
+				<a href="https://discord.com/invite/U5FHwaEeCN" target="_blank">Discord</a></font></b>
+				<img src="/static/files_017" height="15">
+				<form action="/search" method="POST">{% csrf_token %}
+				<input type="text" name="u_inp" size="10"> <br>
+				<input type="submit" value="Search"></form>
+					
+        	</div>
+	</div>
+
+	<div class="nav_bottom"></div>
+	<div class="nav_footer"></div>
+
+
+  </div>
+
+  <div class="right_side">
+	{% include "top.htm" %}
+	<!-- Main area content -->
+	
+	{% include "box_top.html" with heading="Guide " minwidth="300px" textalign="center"  %}
+	    <a align="center" href="{{request.META.HTTP_REFERER}}">Go Back</a>
+		{% block content %}
+		{% endblock %}
+		<br><a align="center" href="{{request.META.HTTP_REFERER}}">Go Back</a>
+	{% include "box_bottom.html" %}
+
+
+</div>
+
+</body>
+</html>

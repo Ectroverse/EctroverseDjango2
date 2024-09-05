@@ -2,13 +2,15 @@ package org.ectroverse.processtick;
 
 import java.sql.*;
 import java.util.*;
+import java.util.HashMap;
 import static org.ectroverse.processtick.Constants.*;
 
 public class UpdatePlanets{
 	
 	private final String planetStatusUpdateQuery = "UPDATE \"PLANET\"  SET" +
-	" overbuilt = ? ," + //1
-	" overbuilt_percent = ? ," + //2
+	" protection = ? ," + //1
+	" overbuilt = ? ," + //2
+	" overbuilt_percent = ? ," + //3
 	" solar_collectors = ? ," + //4
 	" fission_reactors = ? ," + //5
 	" mineral_plants = ? ," + //6
@@ -143,6 +145,16 @@ public class UpdatePlanets{
 			//add planets population to total population
 			population += (int)rowValues[colLocation[0]];
 
+						//update portal coverage
+			double portalCoverage = 0;
+			double cover = 0;
+			for (Planet portal : portals){
+		    double d = Math.sqrt(Math.pow(((int)rowValues[colLocation[20]]-portal.x),2) + Math.pow(((int)rowValues[colLocation[21]]-portal.y),2));
+			cover += (100 * (Math.max(0, 1.0 - Math.sqrt(d/(7.0*(1.0 + 0.01*userIntValues.get("research_percent_portals")))))));}
+			portalCoverage = Math.min(100, cover);
+
+
+
 			//update planets buildings
 			int solar_collectors = (int)rowValues[colLocation[5]] + buildgsBuiltFromJobs.getOrDefault("solar_collectors",0);
 			int fission_reactors = (int)rowValues[colLocation[6]] + buildgsBuiltFromJobs.getOrDefault("fission_reactors",0);
@@ -183,7 +195,7 @@ public class UpdatePlanets{
 				fission_reactors + mineral_plants +
 				crystal_labs + refinement_stations +
 				cities + research_centers +
-				defense_sats + shield_networks;
+				defense_sats + shield_networks + (portal == true? 1 : 0);
 			
 			networth += total_buildings * networth_per_building;
 			networth += (int)rowValues[colLocation[22]] * 1.25;
@@ -192,11 +204,28 @@ public class UpdatePlanets{
 			networth += (int)rowValues[colLocation[25]] * 1.65;
 			networth += (int)rowValues[colLocation[26]] * 5.0;
 			networth += (int)rowValues[colLocation[19]] * 1.75; //size
-			int buildingsUnderConstr = (int)rowValues[colLocation[17]] - (total_buildings - (int)rowValues[colLocation[16]]); //total new - total old, change it!! might not work when raze
+			
+			
+			int buildingsUnderConstr = 0;
+			ResultSet underconSet = statement2.executeQuery("SELECT n FROM app_construction WHERE planet_id = " + planetID + " AND user_id = " + userID + ";");
+			
+			while(underconSet.next()){
+			    buildingsUnderConstr += underconSet.getInt("n");
+			    } 
+			
 			buildingsUnderConstr = Math.max(0 , buildingsUnderConstr);
 			
+			double tmpTickProduction_solar = (building_production_solar * solar_collectors) * (1 + (int)rowValues[colLocation[22]] /100.0) * race_info.getOrDefault("race_special_solar_15", 1.0);
+			
+			//ops modifier to incomes:
+			ResultSet darkMistSet = statement2.executeQuery("SELECT specop_strength FROM app_specops WHERE (name = 'Black Mist' or name = 'Dark Web') "+
+			"and user_to_id = " + userID + ";");
+			while(darkMistSet.next()){
+				tmpTickProduction_solar *= (1.0 - darkMistSet.getInt("specop_strength")/100.0);				
+			}
+			
 			//update player production
-			cmdTickProduction_solar += (building_production_solar * solar_collectors) * (1 + (int)rowValues[colLocation[22]] /100.0);
+			cmdTickProduction_solar += tmpTickProduction_solar;
 			cmdTickProduction_fission += (building_production_fission  * fission_reactors) * (1 + (int)rowValues[colLocation[26]] /100.0);
 			cmdTickProduction_mineral += (building_production_mineral   * mineral_plants) * (1 + (int)rowValues[colLocation[23]] /100.0);
 			cmdTickProduction_crystal += (building_production_crystal    * crystal_labs) * (1 + (int)rowValues[colLocation[24]]/100.0);
@@ -204,24 +233,14 @@ public class UpdatePlanets{
 			//cmdTickProduction_cities += building_production_cities * cities;
 			cmdTickProduction_research += building_production_research * research_centers;
 			
-			//ops modifier to incomes:
-			ResultSet darkMistSet = statement2.executeQuery("SELECT specop_strength FROM app_specops WHERE (name = 'Black Mist' or name = 'Dark Web') "+
-			"and user_to_id = " + userID + ";");
-			double darkMist = 1.0;
-			while(darkMistSet.next()){
-				int str = darkMistSet.getInt("specop_strength");
-				darkMist /= (1.0 + darkMistSet.getInt("specop_strength")/100.0);
-				System.out.println("user: " + userID + " darkMist" + darkMist + " str " + str);
-			}
-			cmdTickProduction_solar *= darkMist;
-			
-			double overbuilt = (double)(HelperFunctions.calc_overbuild((int)rowValues[colLocation[19]], total_buildings + buildingsUnderConstr));
+			int tmptotal_buildings = total_buildings - (defense_sats + shield_networks + (portal == true? 1 : 0));
+			double overbuilt = (double)(HelperFunctions.calc_overbuild((int)rowValues[colLocation[19]], tmptotal_buildings + buildingsUnderConstr));
 			double overbuilt_percent = (double)((overbuilt-1.0)*100); 
 
 			//add planet only if something has changed
 			if (//current_population != (int)rowValues[colLocation[0]] ||
 				//max_population != (int)rowValues[colLocation[1]] ||
-				//portalCoverage != (int)rowValues[colLocation[2]] ||
+				portalCoverage != (int)rowValues[colLocation[2]] ||
 				overbuilt != (double)rowValues[colLocation[3]] ||
 				overbuilt_percent != (double)rowValues[colLocation[4]] ||
 				solar_collectors != (int)rowValues[colLocation[5]] ||
@@ -241,26 +260,26 @@ public class UpdatePlanets{
 				//System.out.println("updating planet nr:" + planetID);
 				//planetsUpdateStatement.setInt(1, current_population);
 				//planetsUpdateStatement.setInt(2, max_population);
-				//planetsUpdateStatement.setInt(1, portalCoverage);
-				planetsUpdateStatement.setDouble(1, overbuilt);
-				planetsUpdateStatement.setDouble(2, overbuilt_percent);
-				planetsUpdateStatement.setInt(3, solar_collectors );
-				planetsUpdateStatement.setInt(4, fission_reactors );
-				planetsUpdateStatement.setInt(5, mineral_plants);
-				planetsUpdateStatement.setInt(6, crystal_labs);
-				planetsUpdateStatement.setInt(7, refinement_stations);
-				planetsUpdateStatement.setInt(8, cities);
-				planetsUpdateStatement.setInt(9, research_centers);
-				planetsUpdateStatement.setInt(10, defense_sats);
-				planetsUpdateStatement.setInt(11, shield_networks);	
-				planetsUpdateStatement.setBoolean(12, portal);	
+				planetsUpdateStatement.setDouble(1, portalCoverage);
+				planetsUpdateStatement.setDouble(2, overbuilt);
+				planetsUpdateStatement.setDouble(3, overbuilt_percent);
+				planetsUpdateStatement.setInt(4, solar_collectors );
+				planetsUpdateStatement.setInt(5, fission_reactors );
+				planetsUpdateStatement.setInt(6, mineral_plants);
+				planetsUpdateStatement.setInt(7, crystal_labs);
+				planetsUpdateStatement.setInt(8, refinement_stations);
+				planetsUpdateStatement.setInt(9, cities);
+				planetsUpdateStatement.setInt(10, research_centers);
+				planetsUpdateStatement.setInt(11, defense_sats);
+				planetsUpdateStatement.setInt(12, shield_networks);	
+				planetsUpdateStatement.setBoolean(13, portal);	
 				if (portal)
-					planetsUpdateStatement.setBoolean(13, false);	
+					planetsUpdateStatement.setBoolean(14, false);	
 				else
-					planetsUpdateStatement.setBoolean(13, resultSet.getBoolean("portal_under_construction"));	//keep the initial value
-				planetsUpdateStatement.setInt(14, total_buildings);
-				planetsUpdateStatement.setInt(15, buildingsUnderConstr);
-				planetsUpdateStatement.setInt(16, planetID);
+					planetsUpdateStatement.setBoolean(14, resultSet.getBoolean("portal_under_construction"));	//keep the initial value
+				planetsUpdateStatement.setInt(15, total_buildings);
+				planetsUpdateStatement.setInt(16, buildingsUnderConstr);
+				planetsUpdateStatement.setInt(17, planetID);
 
 				planetsUpdateStatement.addBatch();
 			}

@@ -4,7 +4,7 @@
 
 {% block content %}
 <br>
-
+{% if status.galsel == 1 %}
 <table align="center">
 <tr>
 <td ><a href="/messages">Inbox</a></td>
@@ -24,5 +24,25 @@
 {% endfor %}
 </table>
 
+{% elif status.galsel == 2 %}
+<table align="center">
+<tr>
+<td ><a href="/galtwo/messages">Inbox</a></td>
+<td style=" border-left:solid 40px transparent"> <a href="/galtwo/compose_message">Compose a message</a></td>
+<td style=" border-left:solid 40px transparent"><a href="/galtwo/delete_all_messages_outbox">Delete all messages</a></td>
+</tr>
+</table>
+<br>
+
+<table width = "80%" align="center">
+{% for message in messages_to %}
+<tr><td align="left"><b>To:</b> {{message.user2.user_name}} of Empire #{{message.user2.empire.number}}
+</td><td align ="right"><a href="/galtwo/delete_message_outbox{{message.id}}">Delete</a></td>
+<tr><td align="left"><b>Sent:</b> {{message.date_and_time}}</td><td align ="right"><a href="/galtwo/compose_message{{message.user2_id}}">Write again</td></tr>
+<tr><td align="left">{{message.message}}</td></tr>
+<tr><td><br></td></tr>
+{% endfor %}
+</table>
+{% endif %}
 
 {% endblock %}

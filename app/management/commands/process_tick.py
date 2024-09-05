@@ -1,12 +1,12 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from app.models import *
-from app.calculations import *
+from galtwo.models import *
+from galtwo.calculations import *
 from app.constants import *
 import time
 from django.db.models import Q
 from django.db import connection
-from app.helper_functions import *
+from galtwo.helper_functions import *
 
 # Note- the code line numbers are for NEctroverse commit f7d73af2630f993fbe8c59fdaca31ad43e494543
 
@@ -47,8 +47,8 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                 # search if a closer portal is found/ or the previous portal was destroyed
                 user = UserStatus.objects.get(user=fleet.owner)
                 if fleet.command_order == 5:
-                    portals = Planet.objects.filter(owner=fleet.owner,portal=True)
-                    portal = find_nearest_portal(fleet.current_position_x, fleet.current_position_y, portals)
+                    portals = Planets.objects.filter(owner=fleet.owner,portal=True)
+                    portal = find_nearest_portal(fleet.current_position_x, fleet.current_position_y, portals, user)
                     if portal.x != fleet.x and portal.y != fleet.y:
                         speed = race_info_list[user.get_race_display()]["travel_speed"]
                         generate_fleet_order(fleet, portal.x, portal.y, speed, fleet.command_order, portal.i)
@@ -243,9 +243,9 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             status.total_shield_networks = 0
             status.total_portals = 0
             # Pull out x,y values of planets that have portals, for battlePortalCalc
-            portal_xy_list = Planet.objects.filter(portal=True).values_list('x', 'y')
+            portal_xy_list = Planets.objects.filter(portal=True).values_list('x', 'y')
 
-            planets_buffer = Planet.objects.filter(owner=status.user.id)
+            planets_buffer = Planets.objects.filter(owner=status.user.id)
 
             start_t_planets = time.time()
             for planet in planets_buffer:
@@ -331,7 +331,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                 planet.overbuilt_percent = (planet.overbuilt-1.0)*100 # came from html_gameplay.c line 5541
                 # The above isnt even the correct formula im pretty sure
                 
-                # Planet.objects.filter(id = planet.id).update(max_population = planet.max_population,
+                # Planets.objects.filter(id = planet.id).update(max_population = planet.max_population,
                 #                                     current_population= planet.current_population,
                 #                                     protection=planet.protection,
                 #                                     total_buildings=planet.total_buildings,
@@ -354,7 +354,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                                     planet.overbuilt_percent,
                                     planet.id))
                 '''
-            # Planet.objects.bulk_update(planets_buffer, ['max_population',
+            # Planets.objects.bulk_update(planets_buffer, ['max_population',
             #                                             'current_population',
             #                                             'protection',
             #                                             'total_buildings',
@@ -696,7 +696,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
 	        # Clear networth
             status.networth = 0
 
-            for planet in Planet.objects.filter(owner=status.user.id):
+            for planet in Planets.objects.filter(owner=status.user.id):
                 '''
                 e = 0
                 if( planetd.unit[CMD_UNIT_PHANTOM] ) {

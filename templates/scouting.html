@@ -5,12 +5,12 @@
 {% block content %}
 
 <style>
-.dropbtn {  background-color: #4CAF50;  color: white;  font-size: 12px;  border: none;  padding: 0px;}
+.dropbtn { font-size: 12px;  border: none;  padding: 0px;}
 .dropdown {  position: relative;  display: inline-block;}
-.dropdown-content {  display: none;  position: absolute;  background-color: #f1f1f1;  min-width: 160px;  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);  z-index: 1;}
-.dropdown-content a {  color: black;  padding: 12px 16px;  text-decoration: none;  display: block;}
-.dropdown-content a:hover {background-color: #ddd;}.dropdown:hover .dropdown-content {display: block;}
-.dropdown:hover .dropbtn {background-color: #3e8e41;}
+.dropdown-content {  display: none;  position: absolute;  background-color: #0e151d;  min-width: 100%;  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);  z-index: 1;}
+.dropdown-content a {  color: #0e151d;  padding: 12px 16px;  text-decoration: none;  display: block;}
+.dropdown-content a:hover {background-color: #37506e;}.dropdown:hover .dropdown-content {display: block;}
+.dropdown:hover .dropbtn {background-color: #37506e;}
 
 
 
@@ -27,12 +27,19 @@ background-color: rgb(25,38,51);
 
 </style>
 
+{% if msg != '' %}
+    {{msg|linebreaksbr}}
+{% endif %}
+<form action="" method="POST">{% csrf_token %}
 <table style="width:100%">
 <tbody>
 <tr>
+<td colspan="100%" align="right"><input type="submit" name="landexp" value="Land selected Hovers">
+</td></tr>
+<tr>
 <td style="width:20%"><a href="?order_by=planet">Planet:</a></td>
 <td style="width:20%"><a href="?order_by=size">Size:</a></td>
-<td style="width:20%"><div class="dropdown"><button class="dropbtn" disabled>Bonus</button>
+<td style="width:18%"><div class="dropdown"><button class="dropbtn" disabled>Bonus</button>
 <div class="dropdown-content">
 <a href="?order_by=artefact">Artefacts</a>
 <a href="?order_by=bonus_solar">Solar</a>
@@ -40,7 +47,11 @@ background-color: rgb(25,38,51);
 <a href="?order_by=bonus_crystal">Crystal</a>
 <a href="?order_by=bonus_ectrolium">Ectrolium</a>
 <a href="?order_by=bonus_fission">Fission</a></div></div></td>
-<td style="width:40%"><a href="?order_by=owner">Status:</a></td>
+<td style="width:40%"><div class="dropdown"><button class="dropbtn" disabled>Status</button>
+<div class="dropdown-content">
+<a href="?order_by=unexplored">Unexplored</a>
+<a href="?order_by=user">Owner</a></div></div></td>
+<td colspan="2" align="center"><input type="submit" name="exp_scouting" value="Explore Selected"></td>
 </tr>
 
 {% for scouting in scouted %}
@@ -49,10 +60,14 @@ background-color: rgb(25,38,51);
 {% if scouting.scout < 1.0 %}
 	Not fully scouted! 
 {% endif %}
+{% if status.galsel == 1 %}
 <a href="/planet{{scouting.planet.id}}">{{scouting.planet.x}},{{scouting.planet.y}}:{{scouting.planet.i}}</a>
+{% elif status.galsel == 2 %}
+<a href="/galtwo/planet{{scouting.planet.id}}">{{scouting.planet.x}},{{scouting.planet.y}}:{{scouting.planet.i}}</a>
+{% endif %}
 </td>
 <td>
-{% if scouting.scout >= 0.5 %}
+{% if scouting.scout >= 0.4 %}
 	{{scouting.planet.size}}
 {% else %}
 	unknown size
@@ -60,7 +75,7 @@ background-color: rgb(25,38,51);
 </td>
 <td>
 {% if scouting.planet.artefact is not None and scouting.scout >= 1 %}
-	<img src="{{scouting.planet.artefact.image}}" alt="{{scouting.planet.artefact.name}}" title="Artefact"></td>
+	<img src="{{scouting.planet.artefact.image}}" alt="{{scouting.planet.artefact.name}}" title="Artefact" width="16" height="16"></td>
 {% elif scouting.planet.bonus_solar and scouting.scout >= 0.9 %}
 	<img src="{% static 'pr0.gif' %}" alt="Solar" title="Solar">+{{scouting.planet.bonus_solar}}%
 {% elif scouting.planet.bonus_mineral and scouting.scout >= 0.9  %}
@@ -74,19 +89,62 @@ background-color: rgb(25,38,51);
 {% endif %}	
 </td>
 
-<td> 
-{% if scouting.planet.owner == None %}
-<font color="#00FF00">Unexplored</font></td>
+<td>
+{% if scouting.planet.owner == None and scouting.planet.home_planet == True %}
+	<font color="#B2BEB5">Home Planet</font></td> 
+{% elif scouting.planet.owner == None and scouting.planet.home_planet == False %}
+	<font color="#00FF00">Unexplored</font></td>
 {% elif scouting.planet.owner.id == status.user.id %}
-<font color="#FFFF00">{{scouting.planet.owner.userstatus.user_name}}</font></td>
-{% else %}
-<font color="#FF0000">{{scouting.planet.owner.userstatus.user_name}}</font></td>
-{% endif %}
-</tr>
+	<font color="#FFFF00">{% if status.galsel == 1 %}{{scouting.planet.owner.userstatus.user_name}}
+	{% elif status.galsel == 2 %}{{scouting.planet.owner.galtwouser.user_name}}{% endif %}</font></td>
+{% elif scouting.planet.owner.userstatus.empire.id != status.user.userstatus.empire.id or scouting.planet.owner.userstatus.empire == None %}
 
+	{% if status.galsel == 1 %}
+	<a href="/account{{scouting.planet.owner.id}}" style="color: #FF0000">
+	{{scouting.planet.owner.userstatus.user_name}}
+	{% elif status.galsel == 2 %}
+	<a href="/galtwo/account{{scouting.planet.owner.id}}" style="color: #FF0000">
+	{{scouting.planet.owner.galtwouser.user_name}}
+	{% endif %}
+	
+{% else %}
+	{% if status.galsel == 1 %}
+	<a href="/account{{scouting.planet.owner.id}}" style="color: #0293FF">
+	{{scouting.planet.owner.userstatus.user_name}}
+	{% elif status.galsel == 2 %}
+	<a href="/galtwo/account{{scouting.planet.owner.id}}" style="color: #0293FF">
+	{{scouting.planet.owner.galtwouser.user_name}}
+	{% endif %}
+</td>
+{% endif %}
+
+
+<td align="center">
+{% if scouting.planet.id in expo_fleets.keys %}
+	<font color="#0293FF">
+	{% for k, v in expo_fleets.items %}
+	{% if scouting.planet.id == k and v == status.id %}
+	<font color="#FFFF00">	
+	{% endif %}{% endfor%}Exploring</font>
+{% elif scouting.planet.id in hov_fleets.keys %}
+	<font color="#0293FF">
+	{% for k, v in hov_fleets.items %}
+	{% if scouting.planet.id == k and v == status.id %}
+	<font color="#FFFF00">	
+	    <input type="checkbox" name="hov_planets" value="{{scouting.planet.id}}">&nbsp;&nbsp;
+    {% endif %}{% endfor%}Hovering</font>
+{% else %}
+	{% if scouting.planet.owner == None  and scouting.planet.home_planet == False%}
+	<input type="checkbox" name="exp_planets" value="{{scouting.planet.id}}">
+	{% endif %}
+{% endif %}
+
+
+</td>
+</tr>
 {% endfor %}
 </tbody>
 </table>
-
+</form>
 
 {% endblock %}

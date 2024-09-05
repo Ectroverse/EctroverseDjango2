@@ -35,7 +35,7 @@ ALLOWED_HOSTS = ['*'] # allow anyone to connect
 
 INSTALLED_APPS = [
     'app.apps.AppConfig', # our main app
-    'nyo',
+    'galtwo.apps.AppConfig',
     'django_tables2',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -44,6 +44,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 	'mathfilters',
+    'django.contrib.humanize',
+    'django.contrib.sites',
+    'multiforloop',
 
 ]
 
@@ -55,6 +58,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'app.middleware.SessionTimeoutMiddleware',
 
 ]
 
@@ -153,7 +159,38 @@ STATICFILES_DIRS = [
 
 
 LOGIN_URL = '/'
-LOGIN_REDIRECT_URL = '/choose_empire_race' # Redirect to home URL after login (Default redirects to /accounts/profile/)
+LOGIN_REDIRECT_URL = '/portal' # Redirect to home URL after login (Default redirects to /accounts/profile/)
 LOOUT_REDIRECT_URL = '/'
 
 DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap-responsive.html"
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+CSRF_TRUSTED_ORIGINS = ['ectroverse.org']
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 60*60
+
+CSRF_FAILURE_VIEW = 'app.views.csrf_failure'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+EMAIL_USE_TLS = True
+
+EMAIL_HOST = 'smtp.zoho.eu'
+
+EMAIL_HOST_USER = 'admin@ectroverse.co.uk'
+
+#Must generate specific password for your app in [gmail settings][1]
+EMAIL_HOST_PASSWORD = 'Beau@8613'
+
+EMAIL_PORT = 587
+
+#This did the trick
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+SITE_ID = 1

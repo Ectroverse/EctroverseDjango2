@@ -1,0 +1,64 @@
+{% load static %}
+
+
+<!-- script to show empire password if an empire has one and to hide it if it has none -->
+<script>
+function showEmpirePass2() {
+
+	var empireNum =  document.getElementById("chose_emp2").value;
+	var empires = JSON.parse('{{empires_json2 | safe}}');
+	
+	if (empires[empireNum] == true ){
+		document.getElementById('fampass_block2').style.display = '';
+	}
+	else{
+		document.getElementById('fampass_block2').style.display = 'none';
+	}
+}
+</script>
+
+
+
+{% if error %}
+	<p align = "center" > {{error}} </p>
+{% endif %}
+			<b><u>Register for the 30 Second Galaxy</u></b>	<br><br>
+			<form method="post" name="empire_race_choice" action="{% url 'choose_empire' %}" style =" margin: 0 5px;">
+			  {% csrf_token %}
+			  
+				Choose your faction(in-game) name:<br>
+				<input type="text" name="faction" id="faction">
+				<br><br>
+
+				Choose your race:<br>
+				<select name="chose_race">
+				{% for r in races2 %}
+				<option value="{{r.0}}"> {{r.1}}</option>
+				{% endfor %}
+				</select>
+				<br><br>
+				
+				<a href= "/races" >See races specs</a><br>
+
+				Choose your empire:<br>
+				<select name="chose_emp" id="chose_emp2" onchange="showEmpirePass2()">
+				{% for key, value in empires2.items %}
+				<option value="{{key}}"> {{key}} </option>
+				{% endfor %}
+				</select>
+				<br><br>
+				
+				<div style="display:none" id="fampass_block2">
+				Empire password:
+				<br><i>This empire has a password set, you must enter it here to be allowed entry!</i><br>
+				<input type="text" name="fampass" id="fampass2">
+				</div>
+
+			  <input type="submit" value="Select" style="margin-top: 10px">
+			</form> 
+
+  
+  
+
+  
+

@@ -6,6 +6,36 @@ import random
 from app.map_settings import *
 from django.db import transaction
 
+arti_list = {
+        "Ether Gardens": ["Increases your energy production by 10%!", 10, 0, 1, 0, "/static/arti/artimg0.gif"],
+        "Mirny Mine": ["Increases your mineral production by 15%!", 15, 0, 0, 0 ,"/static/arti/artimg1.gif"],
+        "Crystal Synthesis": ["Increases your crystal production by 15%!", 15, 0, 0, 0, "/static/arti/artimg3.gif"],
+        "Research Laboratory": ["Increases your research production by 10%!", 10, 0, 0, 0, "/static/arti/artimg4.gif"],
+        "t-Veronica": ["Improves populations fighting strength, also fight in stage 3!", 0, 0, 0, 0, "/static/arti/artimg5.gif"],   
+        "Military Might": ["Decreases unit upkeep by 10%!", 10, 0, 0, 0, "/static/arti/artimg14.gif"],
+        "Terraformer": ["An ancient gate allows planets to be transformed!", 0, 0, 0, 1, "/static/arti/artimg7.gif"],
+        "The Recycler": ["Funds research from Energy Decay, Tech Research impoves performance!", 0, 0, 1, 0, "/static/arti/artimg10.gif"],       
+        "Ironside Effect": ["The resting site of a great viking encourages your army to steal resources!", 0, 0, 1, 0, "/static/arti/artimg17.gif"],
+        "Scroll of the Necromancer": ["Traps the souls of the dead, raising a great army!", 1000, 0, 0, 0, "/static/arti/artimg22.png"],
+        "Foohon Technology": ["Increases your ectrolium production by 10%!", 10, 0, 0, 0, "/static/arti/artimg2.gif"],
+        "Crystal Recharger": ["Quarters crystal Decay!", 0, 0, 1, 0, "/static/arti/artimg20.png"],
+        "Darwinism": ["10% more population upkeep, population upkeep no longer capped!", 0, 0, 1, 0, "/static/arti/artimg6.gif"],
+        "Churchills Brandy": ["The War Chest has been found, improving your Fleets Readiness return!", 0, 0, 1, 0, "/static/arti/artimg23.png"],
+        "Advanced Robotics": ["Technology requirements are now halved!", 0, 0, 1, 0, "/static/arti/artimg24.png"],
+        "Flying Dutchman": ["Travelling the galaxy, the Flying Dutchman reports back on the findings!", 0, 0, 0, 1, "/static/arti/artimg25.png"],
+        "You Grow, Girl!": ["This Planet grows by 1 every week!", 0, 1, 0, 0, "/static/arti/artimg27.png"],
+        "Playboy Quantum": ["Raises Portals Research maximum by 50%!", 0, 0, 0, 0, "/static/arti/artimg30.png"],
+        "The General": ["Enamoured by The Generals Presence, your troops are stronger defending!", 0, 0, 0, 0, "/static/arti/artimg29.png"],
+        "Shield Network": ["Connects your Shield Networks across the Galaxy, removes the Technology requirement but reduces their effectiveness to 1/3!", 0, 0, 1, 0, "/static/arti/artimg28.png"],
+        "Double 0": ["Raises your Agents defence by 25% but lowers Military defence by 15%!", 0, 0, 0, 0, "/static/arti/artimg31.png"],
+        "Rabbit Theorum": ["Doubles your Population Research production!", 0, 0, 0, 0, "/static/arti/artimg32.png"],
+        "Engineers Son": ["A lifetime of watching his father has resulted in Fighters being 20% cheaper to build!", 0, 0, 0, 0, "/static/arti/artimg33.png"],
+        "Engineer": ["Reduces building upkeep by 10% or 20% with the Engineers Son!", 0, 0, 0, 0, "/static/arti/artimg34.png"],
+        "Magus Cloak": ["Reduces self spells by 25%!", 0, 0, 0, 0, "/static/arti/artimg26.png"],
+        "Genghis Effect": ["Reduces exploration costs by 25%!", 0, 0, 1, 0, "/static/arti/artimg35.png"],
+        
+    }
+
 def artifacts():
     start_t = time.time()
     # delete old
@@ -15,43 +45,37 @@ def artifacts():
         if e.artefacts is not None:
             e.artefacts.clear()
             e.save()
-    planets = Planet.objects.filter(home_planet=False)
+    planets = Planet.objects.filter(home_planet=False, bonus_solar=0, bonus_mineral=0, bonus_crystal=0, bonus_ectrolium=0, bonus_fission=0)
     for p in planets:
         if p.artefact is not None:
             p.artefact = None
             p.save()
 
-    # add new
-    # artefact list:
-    arti_list = {
-        "Ether Gardens": ["Increases your energy production by 10%!", 10, 0, 0, 0, "/static/arti/artimg0.gif"],
-        "Mirny Mine": ["Increases your mineral production by 15%!", 15, 0, 0, 0 ,"/static/arti/artimg1.gif"],
-        "Foohon Technology": ["Increases your ectrolium production by 10%!", 10, 0, 0, 0, "/static/arti/artimg2.gif"],
-        "Crystal Synthesis": ["Increases your crystal production by 15%!", 15, 0, 0, 0, "/static/arti/artimg3.gif"],
-        "Research Laboratory": ["Increases your research production by 10%!", 10, 0, 0, 0, "/static/arti/artimg4.gif"],
-        "t-Veronica": ["A strange virus in the air improves your populations fighting ability!", 0, 0, 0, 0, "/static/arti/artimg5.gif"],
-        "Darwinism": ["Citizens have evolved, aiding in the cause!", 0, 0, 0, 0, "/static/arti/artimg6.gif"],
-        "Military Might": ["Decreases unit upkeep by 10%!", 10, 0, 0, 0, "/static/arti/artimg14.gif"],
-        "Terraformer": ["An ancient gate allows planets to be transformed!", 0, 0, 0, 1, "/static/arti/artimg7.gif"],
-        "The Recycler": ["Your scientist have developed a new technology, reducing waste!", 0, 0, 0, 0, "/static/arti/artimg10.gif"],
-        "Crystal Recharger": ["Advances in storage minimises decay!", 0, 0, 0, 0, "/static/arti/artimg20.png"],
-        "Ironside Effect": ["The resting site of a great viking encourages pillaging!", 0, 0, 0, 1, "/static/arti/artimg17.gif"],
-        "Scroll of the Necromancer": ["Traps the souls of the dead, raising a great army!", 10000, 0, 0, 0, "/static/arti/artimg22.gif"],
-    }
-
     arti_planets = random.sample(list(planets), len(arti_list))
 
     for i, (key, val) in enumerate(arti_list.items()):
-        arti = Artefacts.objects.create(name=key,
-                                       description=val[0],
-                                       effect1=val[1],
-                                       effect2=val[2],
-                                       effect3=val[3],
-                                       ticks_left=val[4],
-                                       on_planet=arti_planets[i],
-                                       image=val[5])
-        arti_planets[i].artefact = arti
-        arti_planets[i].save()
+        if val[3] == 1:
+            arti = Artefacts.objects.create(name=key,
+                                           description=val[0],
+                                           effect1=val[1],
+                                           effect2=val[2],
+                                           effect3=val[3],
+                                           ticks_left=val[4],
+                                           on_planet=arti_planets[i],
+                                           image=val[5])
+            arti_planets[i].artefact = arti
+            if key == "You Grow, Girl!":
+                arti_planets[i].size = 1
+            arti_planets[i].save()
+        else:
+            arti = Artefacts.objects.create(name=key,
+                                           description=val[0],
+                                           effect1=val[1],
+                                           effect2=val[2],
+                                           effect3=val[3],
+                                           ticks_left=val[4],
+                                           on_planet=None,
+                                           image=val[5])
 
 
     print(arti_planets)
@@ -59,10 +83,10 @@ def artifacts():
     
 def bonuses():
     start_t = time.time()
-    solar = 150
-    mineral = 75
-    crystal = 50
-    ectrolium = 50
+    solar = 250
+    mineral = 125
+    crystal = 75
+    ectrolium = 75
     for _ in range(solar):
         planet = random.choice(Planet.objects.filter(home_planet=False, bonus_solar='0', bonus_mineral='0', bonus_crystal='0', bonus_ectrolium='0', artefact=None))
         bonus = random.randint(10,100)
@@ -149,11 +173,16 @@ def settings():
 def systems():
     start_t = time.time()
     System.objects.all().delete()
-    planets = Planet.objects.all().order_by('x', 'y')
+    planets = Planet.objects.filter(i=0).order_by('x', 'y')
     for p in planets:
         system = System.objects.filter(x=p.x, y=p.y).first()
         if system is None:
-            System.objects.create(x=p.x, y=p.y)
+            if p.home_planet == True:
+                System.objects.create(x=p.x, y=p.y, home=True)
+            else:
+                System.objects.create(x=p.x, y=p.y)
+            
+            
     systems = System.objects.all()
     for s in systems:
         if s.id % 10 == 0 or s.id % 10 == 5:

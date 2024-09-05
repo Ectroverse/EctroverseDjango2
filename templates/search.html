@@ -1,0 +1,31 @@
+{% extends "gbase.html" %}
+
+{% load static %}
+
+{% block content %}
+
+<style type="text/css">
+</style>
+<br><br>
+
+<form action="/search" method="POST">
+{% csrf_token %}
+<input type="text" name="u_inp" size="10">  <input type="submit" value="Search"></form>
+<br><br>
+To Search for a planet, use X,Y:I
+<br><br>
+To Search for a System, use X,Y
+<br><br>
+To Highlight a System on the map, use !X,Y
+<br><br>
+To Search for a Empire, use the Empire Number
+<br><br>
+To Search for a User, use their username (full or partial, case does not matter)
+<br><br>
+Search will also allow some key words and take you to the Guide, such as Map and Research.
+<br>
+<br>
+
+
+{% endblock %}
+

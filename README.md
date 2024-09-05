@@ -4,10 +4,24 @@ Put your name after an item if you want to reserve it for yourself, not all item
 
 #### v0.1 Remaining Items
 left to do:
+- incantations
 - any bugs?
+
+#### v0.2 Remaining Items
+
+- add proper design to rankings tables
+- add deletion possibility to account
+- forum
 - email password recovery
+- round ranks for past rounds
+
+#### v0.3 Remaining Items
+
 - new player tutorial
+- map bonuses? ancients
+- do we need the market?
 - add device fingerprinting to prevent double accounts
+- add sliders for mobile version forms
 
 ## Getting it setup on a new machine:
 
@@ -20,9 +34,9 @@ left to do:
 4. `python manage.py migrate`
 5. `python manage.py createsuperuser` create a user named admin, with whatever pass you want, you can skip email
 6. `python manage.py collectstatic --noinput`
-7. go to http://127.0.0.1:8000, log in as admin, and choose a race
-8. Check roundstatus, if no entries create entry
-9. `python manage.py generate_planets` (can take a while if its a big galaxy with a lot of planets)
+7. `python manage.py generate_planets` (can take a while if its a big galaxy with a lot of planets)
+8. go to http://127.0.0.1:8000, log in as admin, and choose a race
+9. `python manage.py generate_artefacts`
 10. `cd java`
 11. `javac *.java -d .` - if wasnt allready compiled into bytecode
 12. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTick >> log.txt &`
@@ -31,6 +45,12 @@ left to do:
 to kill the java process tick:
 1. `ps -aux` - get the list of currently running jobs
 2. ` kill PID` ,replacing the PID with the process ID of the Main.java
+
+this was the old way, which was never finished:
+ `python manage.py process_tick` (will eventually get called every 10 minutes with a cronjob)
+ go to http://127.0.0.1:8000 and it should work now
+ to start automatic ticks, type `crontab -e` and add this line to the bottom: `* * * * * /usr/local/bin/python3 /code/manage.py process_tick 2>&1 >>/tmp/tick.log`
+ control-x to exit crontab, do a `service cron restart`, and it should now automatically run ticks, check status with `ls /tmp/tick.log`
 
 ## Starting up server once its setup
 
@@ -108,3 +128,5 @@ to kill it:
 ##Django shell
 `python manage.py shell`
 
+##ME
+cd /root/Documents/EctroverseDjango

@@ -68,6 +68,38 @@ building_production_research = 6
 population_size_factor = 20  # determines max pop
 population_base_factor = 2  # determines starting pop
 
+building_info_list = {
+    "Solar Collectors": {
+        "Income": "12 Energy",
+        "Upkeep": 0},
+    "Fission Reactors": {
+        "Income": "40 Energy",
+        "Upkeep": 20},
+    "Mineral Plants": {
+        "Income": "1 Mineral",
+        "Upkeep": 2},
+    "Crystal Laboratories": {
+        "Income": "1 Crystal",
+        "Upkeep": 2},
+    "Refinement Stations": {
+        "Income": "1 Ectrolium",
+        "Upkeep": 2},
+    "Cities": {
+        "Effect": "10000 Pop",
+        "Upkeep": 4},
+    "Research Centers": {
+        "Income": "6 RC Points",
+        "Upkeep": 1},
+    "Defense Satellites": {
+        "Effect": "Attack 110 Defence 450",
+        "Upkeep": 4},
+    "Shield Network": {
+        "Effect": "1300 Defence",
+        "Upkeep": 16},
+    "Portal": {
+        "Effect": "Allows faster travel",
+        "Upkeep": 10000}}
+
 ################
 # Unit Related #
 ################
@@ -141,13 +173,106 @@ for i, unit in enumerate(unit_info["unit_list"]):
     unit_info[unit]['troops'] = unit_troops[i]
     unit_info[unit]['i'] = i
 
+unit_helper_list = {
+    "Bombers": {
+        "Attacking": "Phase 3", 
+        "Defending": "None", 
+        "Air Attack": "0", 
+        "Air Defence": "64", 
+        "Ground Attack": "24", 
+        "Ground Defence": "110", 
+        "Upkeep": "2"}, 
+    "Fighters": {
+        "Attacking": "Phase 2", 
+        "Defending": "Phase 2", 
+        "Air Attack": "20", 
+        "Air Defence": "120", 
+        "Ground Attack": "0", 
+        "Ground Defence": "60", 
+        "Upkeep": "1.6"}, 
+    "Transports": {  
+        "Air Defence": "60", 
+        "Ground Defence": "50",
+        "Soldiers": "100",
+        "Droids": "100",
+        "Goliaths": "25",
+        "Upkeep": "3.2"}, 
+    "Cruisers": {
+        "Attacking": "Phase 1, 2 + 3", 
+        "Defending": "Phase 1 + 2", 
+        "Air Attack": "70", 
+        "Air Defence": "600", 
+        "Ground Attack": "70", 
+        "Ground Defence": "600", 
+        "Upkeep": "12"}, 
+    "Carriers": {
+        "Air Defence": "540", 
+        "Ground Defence": "540",
+        "Bombers": "100",
+        "Fighters": "100",
+        "Transports": "100",
+        "Upkeep": "18"},
+    "Soldiers": {
+        "Attacking": "Phase 4", 
+        "Defending": "Phase 4", 
+        "Air Attack": "0", "Air Defence": "48", 
+        "Ground Attack": "3", 
+        "Ground Defence": "16",
+        "Upkeep": "0.4"}, 
+    "Droids": {
+        "Attacking": "Phase 4",
+        "Defending": "Phase 4", 
+        "Air Attack": "0", 
+        "Air Defence": "48", 
+        "Ground Attack": "5", 
+        "Ground Defence": "30", 
+        "Upkeep": "0.6"}, 
+    "Goliaths": {
+        "Attacking": "Phase 4", 
+        "Defending": "Phase 3 + 4", 
+        "Air Attack": "28", 
+        "Air Defence": "140", 
+        "Ground Attack": "10", 
+        "Ground Defence": "90", 
+        "Upkeep": "2.8"},
+    "Phantoms": {
+        "Attacking": "All", 
+        "Defending": "All", 
+        "Air Attack": "32", 
+        "Air Defence": "120", 
+        "Ground Attack": "20", 
+        "Ground Defence": "130", 
+        "Upkeep": "0"},
+    "Psychics": {
+        "Attacking": "Spells", 
+        "Defending": "Spells + Incantations", 
+        "Spells Attack": "1", 
+        "Spells Defence": "1",  
+        "Incantations Defence": "1", 
+        "Upkeep": "0.8"}, 
+    "Agents": {
+        "Attacking": "Operations", 
+        "Defending": "Operations", 
+        "Operations Attack": "1", 
+        "Operations Defence": "1", 
+        "Upkeep": "0.8"},
+    "Ghost Ships": {
+        "Attacking": "Incantations",
+        "Defending": "Incantations", 
+        "Incantations Attack": "1",
+        "Incantations Defence": "1", 
+        "Upkeep": "2.4"},
+    "Exploration Ships": {
+        "Effect": "Capture Uninhabited Planets",
+        "Upkeep": "60.0"}}
+
 ##########################################
 # Global game settings from evconfig.ini #
 ##########################################
 
 stockpile = 0
 settings_num_value = 1  # still not sure what this is
-tick_time = 30  # in seconds
+tick_time = 600  # in seconds
 
 ###################
 # Race Attributes #
@@ -237,7 +362,7 @@ race_info_list = {
         "energy_production": 0.8,
         "ectrolium_production": 1.2,
         "race_special": 'RACE_SPECIAL_POPRESEARCH',
-        "op_list": ["Observe Planet", "Spy Target", "Observe Planet", "Infiltration", "Military Sabotage",
+        "op_list": ["Spy Target", "Observe Planet", "Infiltration", "Military Sabotage",
                     "High Infiltration", "Planetary Beacon", "Maps theft"],
         "spell_list": ["Irradiate Ectrolium", "Dark Web", "Incandescence", "Psychic Assault", "Enlightenment"],
         "incantation_list": ["Sense Artefact", "Survey System", "Vortex Portal", "Mind Control"]},
@@ -314,7 +439,7 @@ race_info_list = {
         "research_bonus_population": 2.0,
         "research_bonus_culture": 1.0,
         "research_bonus_operations": 1.0,
-        "research_bonus_portals": 1.0,
+        "research_bonus_portals": 2.0,
         "research_max_military": 200,
         "research_max_construction": 200,
         "research_max_tech": 200,
@@ -332,7 +457,264 @@ race_info_list = {
         "op_list": ["Observe Planet", "Infiltration", "Nuke Planet", "Planetary Beacon", "Diplomatic Espionage",
                     "Bribe officials"],
         "spell_list": ["Irradiate Ectrolium", "Incandescence", "War Illusions", "Grow Planet's Size"],
-        "incantation_list": ["Sense Artefact", "Survey System", "Portal Force Field", "Call to Arms"]}}
+        "incantation_list": ["Sense Artefact", "Survey System", "Portal Force Field", "Call to Arms"]},
+    "Jackos": {
+        "pop_growth": 1.0 * 0.02,
+        "military_attack": 1.0,
+        "military_defence": 1.0,
+        "travel_speed": 1.0 * 2.0,
+        "research_bonus_military": 0.8,
+        "research_bonus_construction": 0.8,
+        "research_bonus_tech": 0.8,
+        "research_bonus_energy": 0.8,
+        "research_bonus_population": 0.8,
+        "research_bonus_culture": 0.8,
+        "research_bonus_operations": 0.8,
+        "research_bonus_portals": 0.8,
+        "research_max_military": 200,
+        "research_max_construction": 200,
+        "research_max_tech": 200,
+        "research_max_energy": 200,
+        "research_max_population": 200,
+        "research_max_culture": 250,
+        "research_max_operations": 250,
+        "research_max_portals": 200,
+        "energy_production": 1.0,
+        "mineral_production": 0.9,
+        "race_special": 'RACE_SPECIAL_WOOKIEE',
+        "op_list": ["Spy Target",
+                "Observe Planet",
+                "Network Infiltration",
+                "Infiltration",
+                "Diplomatic Espionage",
+                "Bio Infection",
+                "Hack mainframe",
+                "Military Sabotage",
+                "Planetary Beacon",
+                "Bribe officials",
+                "Nuke Planet",
+                "Maps theft",
+                "High Infiltration",
+                "Spoil Resources"],
+        "spell_list": ["Irradiate Ectrolium",
+              "Dark Web",
+              "Incandescence",
+              "Black Mist",
+              "War Illusions",
+              "Psychic Assault",
+              "Enlightenment",
+              "Grow Planet's Size"],
+        "incantation_list": ["Survey System", "Sense Artefact", "Planetary Shielding", "Portal Force Field", "Mind Control", "Call to Arms", "Energy Surge"]},
+    "Shootout": {
+        "pop_growth": 1.0 * 0.02,
+        "military_attack": 1.0,
+        "military_defence": 1.0,
+        "travel_speed": 1.0 * 2.0,
+        "research_bonus_military": 1.0,
+        "research_bonus_construction": 1.0,
+        "research_bonus_tech": 1.0,
+        "research_bonus_energy": 1.0,
+        "research_bonus_population": 1.0,
+        "research_bonus_culture": 1.0,
+        "research_bonus_operations": 1.0,
+        "research_bonus_portals": 1.0,
+        "research_max_military": 200,
+        "research_max_construction": 200,
+        "research_max_tech": 200,
+        "research_max_energy": 200,
+        "research_max_population": 200,
+        "research_max_culture": 200,
+        "research_max_operations": 200,
+        "research_max_portals": 200,
+        "energy_production": 1.0,
+        "op_list": ["Spy Target",
+                "Observe Planet",
+                "Infiltration",
+                "Maps theft",
+                "High Infiltration"],
+        "spell_list": ["Incandescence",
+              "War Illusions",
+              "Enlightenment",
+              "Grow Planet's Size"],
+        "incantation_list": ["Survey System", "Planetary Shielding", "Call to Arms", "Vortex Portal"]}}    
+        
+race_display_list = {
+    "Harks": {"bonuses":{
+        "Population Growth": "-20",
+        "Attack": "40",
+        "Defence": "-10",
+        "Speed": "40",
+        "Fighters": "20",  # defaults to 1.0
+        "Energy": "-10",  # defaults to 1.0
+        "Crystal": "25",},
+        "research":{
+        "Military": "20",
+        "Construction": "20",
+        "Tech": "20",
+        "Energy": "20",
+        "Population": "20",
+        "Culture": "-40",
+        "Operations": "20",
+        "Portals": "20",
+        "Military Max": 250,},
+        "op_list": ["Observe Planet", "Network Infiltration", "Infiltration", "Bio Infection", "Military Sabotage",
+                    "Nuke Planet", "Diplomatic Espionage", "Bribe officials"],
+        "spell_list": ["Irradiate Ectrolium", "Incandescence", "Black Mist", "War Illusions"],
+        "incantation_list": ["Portal Force Field", "Vortex Portal", "Energy Surge", "Call to Arms"]},
+    "Manticarias": {"bonuses":{
+        "Population Growth": "-10",
+        "Attack": "-30",
+        "Defence": "10",
+        "Psychics": "40",
+        "Ghost Ships": "20",
+        "Solars": "15",
+        "Energy": "40",},
+        "research":{
+        "Military": "-10",
+        "Construction": "-10",
+        "Tech": "-10",
+        "Energy": "-10",
+        "Population": "-10",
+        "Culture": "80",
+        "Operations": "-10",
+        "Portals": "-10",},
+        
+        "op_list": ["Spy Target", "Observe Planet", "Hack mainframe"],
+        "spell_list": ["Dark Web", "Black Mist", "War Illusions", "Psychic Assault", "Phantoms", "Enlightenment",
+                       "Grow Planets Size"],
+        "incantation_list": ["Planetary Shielding", "Mind Control"]},
+    "Foohons": {"bonuses":{
+        "Population Growth": "-20",
+        "Attack": "20",
+        "Defence": "10",
+        "Ghost Ships": "10",
+        "Energy": "-20",
+        "Ectrolium": "20",
+        "Pop Research": "6000"},
+        "research":{
+        "Military": "50",
+        "Construction": "50",
+        "Tech": "50",
+        "Energy": "50",
+        "Population": "50",
+        "Culture": "50",
+        "Operations": "50",
+        "Portals": "50",},
+        
+        "op_list": ["Spy Target", "Observe Planet", "Infiltration", "Military Sabotage",
+                    "High Infiltration", "Planetary Beacon", "Maps theft"],
+        "spell_list": ["Irradiate Ectrolium", "Dark Web", "Incandescence", "Psychic Assault", "Enlightenment"],
+        "incantation_list": ["Sense Artefact", "Survey System", "Vortex Portal", "Mind Control"]},
+    "Spacebornes": {"bonuses":{
+        "Population Growth": "20",
+        "Defence": "20",
+        "Speed": "80",
+        "Soldiers": "10",
+        "Droids": "10",
+        "Psychics": "-30",
+        "Agents": "30",
+        "Energy": "30",},
+        "research":{
+        "Military": "10",
+        "Construction": "10",
+        "Tech": "-40",
+        "Energy": "10",
+        "Population": "10",
+        "Culture": "10",
+        "Operations": "10",
+        "Portals": "10",
+        "Energy Max": 250,},
+        "op_list": ["Spy Target", "Observe Planet", "Network Infiltration", "Bio Infection",
+                    "Hack mainframe", \
+                    "Nuke Planet", "Planetary Beacon", "Diplomatic Espionage", "Bribe officials", "Maps theft"],
+        "spell_list": ["Irradiate Ectrolium", "Incandescence", "Black Mist"],
+        "incantation_list": ["Survey System", "Planetary Shielding"]},
+    "Dreamweavers": {"bonuses":{
+        "Population Growth": "10",
+        "Defence": "-30",
+        "Psychics": "50",
+        "Ghost Ships": "30",
+        "Energy": "-20",
+        "Crystal": "25",},
+        "research":{
+        "Military": "40",
+        "Construction": "40",
+        "Tech": "180",
+        "Energy": "40",
+        "Population": "40",
+        "Culture": "40",
+        "Operations": "40",
+        "Portals": "40",
+        "Military Max": 100,
+        "Construction Max": 250,
+        },
+        
+        "op_list": ["Observe Planet", "Network Infiltration", "Bio Infection", "Hack mainframe", "Military Sabotage"],
+        "spell_list": ["Irradiate Ectrolium", "Dark Web", "Incandescence", "Black Mist", "War Illusions",
+                       "Psychic Assault", "Phantoms", "Enlightenment", "Grow Planets Size"],
+        "incantation_list": ["Sense Artefact", "Portal Force Field", "Mind Control", "Energy Surge"]},
+    "Wookiees": {"bonuses":{
+        "Population Growth": "20",
+        "Attack": "-10",
+        "Defence": "30",
+        "Speed": "60",
+        "Cruisers": "15",
+        "Ghost Ships": "15",
+        "Energy": "-10",
+        "Mineral": "25",
+        "Crystal": "25",
+        "Interest": "0.5"},
+        "research":{
+        "Construction": "100",
+        "Population": "100",
+        "Portals": "100",
+        "Population Max": 250,},
+        
+        
+        "op_list": ["Observe Planet", "Infiltration", "Nuke Planet", "Planetary Beacon", "Diplomatic Espionage",
+                    "Bribe officials"],
+        "spell_list": ["Irradiate Ectrolium", "Incandescence", "War Illusions", "Grow Planets Size"],
+        "incantation_list": ["Sense Artefact", "Survey System", "Portal Force Field", "Call to Arms"]},
+    "Jackos": {"bonuses":{
+        "Mineral": "-10",
+        "Pop Research": "10000",
+        "Solars": "10",
+        "Interest": "0.2",},
+        "research":{
+        "Military": "-20",
+        "Construction": "-20",
+        "Tech": "-20",
+        "Energy": "-20",
+        "Population": "-20",
+        "Culture": "-20",
+        "Operations": "-20",
+        "Portals": "-20",
+        "Culture Max": 250,
+        "Operations Max": 250,},
+        "op_list": ["Spy Target",
+                "Observe Planet",
+                "Network Infiltration",
+                "Infiltration",
+                "Diplomatic Espionage",
+                "Bio Infection",
+                "Hack mainframe",
+                "Military Sabotage",
+                "Planetary Beacon",
+                "Bribe officials",
+                "Nuke Planet",
+                "Maps theft",
+                "High Infiltration",
+                "Spoil Resources"],
+        "spell_list": ["Irradiate Ectrolium",
+              "Dark Web",
+              "Incandescence",
+              "Black Mist",
+              "War Illusions",
+              "Psychic Assault",
+              "Enlightenment",
+              "Grow Planets Size"],
+        "incantation_list": ["Survey System", "Sense Artefact", "Planetary Shielding", "Portal Force Field", "Mind Control", "Call to Arms", "Energy Surge"]}
+    }
 
 ###################
 #    Relations    #

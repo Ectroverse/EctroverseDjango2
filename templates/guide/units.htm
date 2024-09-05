@@ -1,0 +1,94 @@
+{% extends "gbase.html" %}
+
+{% block content %}
+
+{% load multifor %}
+
+<head>
+<title>Ectroverse Guide</title>
+
+<style>
+#content-desktop {display: block;}
+#content-mobile {display: none;}
+
+@media screen and (max-width: 837px) {
+
+#content-desktop {display: none;}
+#content-mobile {display: block;}
+
+}
+
+.row1{}
+
+.row2{
+display: table-row;
+background-color: rgb(25,38,51);
+}
+
+
+</style>
+
+</head>
+
+<p align="center"><font size="5"><b>Units</b></font></p>
+<p align="left">Units are an essential part of your faction, along with your
+buildings they are the backbone of your empire, providing the defense against
+any attackers that wish to take planets from you, as well as attacking power
+against your enemies. Here is a brief description of units available:</p>
+<p align="left">Note: Some units have a tech requirement, the tech requirement
+stated is not to be able to build the unit but to be able to build it without
+penalty.</p>
+
+<p align="left">AA: Air Attack<br>
+AD: Air Defence<br>
+GA: Ground Attack<br>
+GD: Ground Defence<br>
+</p>
+
+<table width="100%">
+<tr>
+<th>Name</th>
+<th>Energy</th>
+<th>Minerals</th>
+<th>Crystals</th>
+<th>Ectrolium</th>
+<th>Time</th>
+<th>Req. Tech</th>
+<th>Upkeep</th>
+<th>AA</th>
+<th>AD</th>
+<th>GA</th>
+<th>GD</th>
+<th>Networth</th>
+</tr>
+
+{% for u in units; c in unitcost; t in tech; up in upkeep; b in battle %}
+<tr class="{% cycle 'row2' 'row1' %}"><td>{{u}}</td>
+
+{% for c in c %}
+<td>
+{% if c < 0 %}
+N/A
+{% else %}
+{{c}}
+{% endif %}
+</td>
+{% endfor %}
+
+<td>{{t}}</td>
+
+<td>{{up}}</td>
+
+{% for b in b %}
+{% if not forloop.counter == 5 %}
+<td>
+{{b}}
+</td>
+{% endif %}
+{% endfor %}
+
+</tr>{% endfor %}
+
+ </table>
+
+{% endblock %}

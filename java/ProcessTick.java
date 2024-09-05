@@ -140,8 +140,10 @@ public class ProcessTick
 	" economy_flag = ? ," + //57
 	" military_flag = ? ," +//58
 	" total_buildings  = ? , " + //59
-	" energy_specop_effect  = ? " + //60
-	" WHERE id = ?" ; //61 wow what a long string :P
+	" energy_specop_effect  = ? , " + //60
+	" mineral_decay = ? , " + //61
+	" ectrolium_decay = ? " + //62
+	" WHERE id = ?" ; //63 wow what a long string :P
 	
 	private void processTick(Connection con){
 		long startTime = 0, resultTime = 0;
@@ -181,58 +183,71 @@ public class ProcessTick
 
 		//update arte timer
 		
-		ResultSet RL = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Research Laboratory' ");
-		RL.next();
-		int RLA = RL.getInt("empire_holding_id");
-		ResultSet CS = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Crystal Synthesis' ");
-		CS.next();
-		int CSA = CS.getInt("empire_holding_id");
-		ResultSet FT = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Foohon Technology' ");
-		FT.next();
-		int FTA = FT.getInt("empire_holding_id");
-		ResultSet MM = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Mirny Mine' ");
-		MM.next();
-		int MMA = MM.getInt("empire_holding_id");
-		ResultSet EG = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Ether Gardens' ");
-		EG.next();
-		int EGA = EG.getInt("empire_holding_id");
-		ResultSet TV = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 't-Veronica' ");
-		TV.next();
-		int TVA = TV.getInt("empire_holding_id");
-		ResultSet DW = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Darwinism' ");
-		DW.next();
-		int DWA = DW.getInt("empire_holding_id");
-		ResultSet MI = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Military Might' ");
-		MI.next();
-		int MIA = MI.getInt("empire_holding_id");
-		ResultSet TR = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'The Recycler' ");
-		TR.next();
-		int TRA = TR.getInt("empire_holding_id");
+		//ResultSet RL = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Research Laboratory' ");
+		//RL.next();
+		//int RLA = RL.getInt("empire_holding_id");
+		//ResultSet CS = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Crystal Synthesis' ");
+		//CS.next();
+		//int CSA = CS.getInt("empire_holding_id");
+		//ResultSet FT = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Foohon Technology' ");
+		//FT.next();
+		//int FTA = FT.getInt("empire_holding_id");
+		//ResultSet MM = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Mirny Mine' ");
+		//MM.next();
+		//int MMA = MM.getInt("empire_holding_id");
+		//ResultSet EG = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Ether Gardens' ");
+		//EG.next();
+		//int EGA = EG.getInt("empire_holding_id");
+		//ResultSet TV = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 't-Veronica' ");
+		//TV.next();
+		//int TVA = TV.getInt("empire_holding_id");
+		//ResultSet DW = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Darwinism' ");
+		//DW.next();
+		//int DWA = DW.getInt("empire_holding_id");
+		//ResultSet MI = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Military Might' ");
+		//MI.next();
+		//int MIA = MI.getInt("empire_holding_id");
+		//ResultSet TR = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'The Recycler' ");
+		//TR.next();
+		//int TRA = TR.getInt("empire_holding_id");
 		ResultSet TF = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Terraformer' ");
 		TF.next();
 		int TFA = TF.getInt("empire_holding_id");
 		ResultSet TFTF = statement.executeQuery("SELECT ticks_left FROM app_artefacts WHERE name = 'Terraformer' ");
 		TFTF.next();
 		int TFT = TFTF.getInt("ticks_left");
-		ResultSet SN = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Scroll of the Necromancer' ");
-		SN.next();
-		int SNA = SN.getInt("empire_holding_id");
-		ResultSet IE = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Ironside Effect' ");
-		IE.next();
-		int IEA = IE.getInt("empire_holding_id");
-		ResultSet CR = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Crystal Recharger' ");
-		CR.next();
-		int CRA = CR.getInt("empire_holding_id");
+		ResultSet DU = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Flying Dutchman' ");
+		DU.next();
+		int FDU = DU.getInt("empire_holding_id");
+		ResultSet TFD = statement.executeQuery("SELECT ticks_left FROM app_artefacts WHERE name = 'Flying Dutchman' ");
+		TFD.next();
+		int FLD = TFD.getInt("ticks_left");
+		ResultSet TG = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'The General' ");
+		TG.next();
+		int TGA = TG.getInt("empire_holding_id");
+		ResultSet GL = statement.executeQuery("SELECT ticks_left FROM app_artefacts WHERE name = 'The General' ");
+		GL.next();
+		int GLA = GL.getInt("ticks_left");
+		//ResultSet SN = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Scroll of the Necromancer' ");
+		//SN.next();
+		//int SNA = SN.getInt("empire_holding_id");
+		//ResultSet IE = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Ironside Effect' ");
+		//IE.next();
+		//int IEA = IE.getInt("empire_holding_id");
+		//ResultSet CR = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Crystal Recharger' ");
+		//CR.next();
+		//int CRA = CR.getInt("empire_holding_id");
 		
-		if(RLA == CSA && FTA == MMA && RLA == FTA && MMA == TFA && TFA == TVA && TVA == DWA && DWA == MIA && MIA == TRA && TRA == SNA && SNA == IEA && IEA == CRA){
+		//if(RLA == CSA && FTA == MMA && RLA == FTA && MMA == TFA && TFA == TVA && TVA == DWA && DWA == MIA && MIA == TRA && TRA == SNA && SNA == IEA && IEA == CRA){
 		
-		    if(FTA == EGA && RLA >= 1){
-		        statement.execute("UPDATE app_roundstatus SET artetimer = artetimer - 1;");
-		        statement.execute("UPDATE app_roundstatus SET is_running = false WHERE artetimer = 0;");
-		    }
-		else{statement.execute("UPDATE app_roundstatus SET artetimer = 1440;");
-		}
-		}
+		//    if(FTA == EGA && RLA >= 1){
+		//        statement.execute("UPDATE app_roundstatus SET artetimer = artetimer - 1;");
+		//        statement.execute("UPDATE app_roundstatus SET is_running = false WHERE artetimer = 0;");
+		//    }
+		//else{statement.execute("UPDATE app_roundstatus SET artetimer = 1440;");
+		//}
+		//}
+		
 		//update terraformer
 		
 		if(TFA >= 1){
@@ -245,13 +260,32 @@ public class ProcessTick
 			    Process p = pb.start();
 			}
 		
+		//update dutchman
+		
+		if(FDU >= 1){
+		    statement.execute("UPDATE app_artefacts SET ticks_left = ticks_left - 1 WHERE name = 'Flying Dutchman';");
+		    }
+		else{statement.execute("UPDATE app_artefacts SET ticks_left = 1 WHERE name = 'Flying Dutchman';");}
+		
+		if(FLD == 0){
+		    ProcessBuilder pb = new ProcessBuilder("python", "/code/manage.py", "generate_dutchman");
+			    Process p = pb.start();
+			}
+		
+		//update general
+		
+		if(GLA >= 1){
+		    statement.execute("UPDATE app_artefacts SET ticks_left = ticks_left - 1 WHERE name = 'The General';");
+		    }
 		
 					
 		//update fleet construction time
 		statement.execute("UPDATE app_unitconstruction SET ticks_remaining = ticks_remaining - 1;");
 		
-		//udpate war timer
-		statement.execute("UPDATE app_relations SET relation_remaining_time = relation_remaining_time - 1;");
+		//udpate rel timer
+		statement.execute("UPDATE app_relations SET relation_remaining_time = relation_remaining_time - 1 WHERE relation_type = 'W';");
+		statement.execute("UPDATE app_relations SET relation_remaining_time = relation_remaining_time - 1 WHERE relation_type = 'NC';");
+		statement.execute("UPDATE app_relations SET relation_remaining_time = relation_remaining_time - 1 WHERE relation_type = 'C';");
 		statement.execute("DELETE FROM app_relations WHERE relation_remaining_time = 0;");
 		
 		//udpate bot attack
@@ -287,8 +321,9 @@ public class ProcessTick
 
 		String specopIncomeUpdateQuery = "UPDATE app_userstatus SET" +
 			" energy_specop_effect = energy_specop_effect + ? , "+	 //1	
-			" energy_income = energy_income + ? "+	 //2					
-			" WHERE id = ? "  ; //3
+			" energy_income = energy_income + ? , "+	 //2
+			" energy = energy + ? "+ //3
+			" WHERE id = ? ;"  ; //4
 					
 		PreparedStatement userIncomeUpdateStatement = con.prepareStatement(specopIncomeUpdateQuery);
 
@@ -334,7 +369,7 @@ public class ProcessTick
 			HashMap<String,Long> userLongValues  = usersLong.get(j);
 			int userID = userIntValues.get("user_id");
 			int empireID = userIntValues.get("empire_id");
-			userStatusUpdateStatement.setInt(61, userID);
+			userStatusUpdateStatement.setInt(63, userID);
 			String race = usersRace.get(userID);
 			HashMap<String, Double> race_info = race_info_list.get(race);
 			long networth = 1;
@@ -366,7 +401,11 @@ public class ProcessTick
 				Planet planet = new Planet(portalstSet.getInt("x"), portalstSet.getInt("y"), portalstSet.getInt("i"));
 				portals.add(planet);
 			}
-			
+			ResultSet vpportalstSet = statement.executeQuery("SELECT * FROM \"PLANET\" INNER JOIN app_specops ON \"PLANET\".id = planet_id WHERE name = 'Vortex Portal' AND app_specops.user_to_id = " + userID);
+			while(vpportalstSet.next()){
+				Planet planet = new Planet(vpportalstSet.getInt("x"), vpportalstSet.getInt("y"), vpportalstSet.getInt("i"));
+				portals.add(planet);
+			}
 			//update mooving fleets
 			updateFleets.updateMoovingFleets(portals, militaryFlag, race_info);
 			
@@ -411,9 +450,12 @@ public class ProcessTick
 			//update reseach
 			int artibonus = 0;
 			double racebonus = 0;
+			double popcount = 6000;
 			if (race.equals("FH"))
 				racebonus = 1.0;
-			
+			if (race.equals("JK")){
+				racebonus = 1.0;
+				popcount = 10000;}
 			
 			//Research laboratory artefact resarch
 			Statement statement4 = con.createStatement();
@@ -429,15 +471,34 @@ public class ProcessTick
 				userLongValues.get(researchNames[i][0]) +
 				research_modifier * (enlightenmentResearchFactor * 1.2 * race_info.get(researchNames[i][1])  * userIntValues.get(researchNames[i][2])
 				* (userPlanetsUpdate.getResearchProduction() + userLongValues.get("current_research_funding")/100 + 
-				(racebonus * userPlanetsUpdate.getPopulation() / 6000.0) )  / 100
+				(racebonus * userPlanetsUpdate.getPopulation() / popcount) )  / 100
 				));			
+				
+				long rpoints = 0;
+				ResultSet rabbitSet = statement4.executeQuery("SELECT * FROM app_artefacts WHERE name = 'Rabbit Theorum' AND empire_holding_id = " + empireID);
+			    while (rabbitSet.next()){
+			        if (i == 4){
+				    rpoints = (long) (research_modifier * (enlightenmentResearchFactor * 1.2 * race_info.get(researchNames[i][1])  * userIntValues.get(researchNames[i][2])
+				    * (userPlanetsUpdate.getResearchProduction() + userLongValues.get("current_research_funding")/100 + 
+				    (racebonus * userPlanetsUpdate.getPopulation() / popcount) )  / 100
+				    ));
+				    rc += rpoints;}
+			    }
 				
 				rc = Math.max(0, rc);
 				totalRcPoints += rc;
 				userStatusUpdateStatement.setLong(15 + i, rc);
 				double raceMax = race_info.getOrDefault(researchNames[i][3], 200.0);
+				ResultSet quantumSet = statement4.executeQuery("SELECT * FROM app_artefacts WHERE name = 'Playboy Quantum' AND empire_holding_id = " + empireID);
+			    while (quantumSet.next()){
+				    if (i == 7){
+				    raceMax += 50;}
+			    }
+				
 				long nw = userLongValues.get("networth");
 				int rcPercent = (int) Math.floor(raceMax * (1.0 - Math.exp(rc / (-10.0 * nw))));
+				if(raceMax == 100){
+					rcPercent = (int) Math.min(100, Math.floor(200 * (1.0 - Math.exp(rc / (-10.0 * nw)))));}
 				int currPercent = (int) (userIntValues.get(researchNames[i][4]));			
 				
 				if (rcPercent > currPercent )
@@ -452,7 +513,7 @@ public class ProcessTick
 
 			//update energy income
 			//race_special_solar_15
-			long energyProduction = (long)(userPlanetsUpdate.getEnergyProduction(0) * race_info.getOrDefault("race_special_solar_15", 1.0));
+			long energyProduction = (long)(userPlanetsUpdate.getEnergyProduction(0));
 			energyProduction += userPlanetsUpdate.getEnergyProduction(1);
 			double energyRaceFactor = race_info.get("energy_production");
 			double energyResearchFactor = (1 + userIntValues.get("research_percent_energy")/100.0);
@@ -491,6 +552,25 @@ public class ProcessTick
             userPlanetsUpdate.getTotalBuildings(6) * upkeep_research_centers +
             userPlanetsUpdate.getTotalBuildings(7) * upkeep_defense_sats +
             userPlanetsUpdate.getTotalBuildings(8) * upkeep_shield_networks);
+            
+            ResultSet ENG = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Engineer' ");
+		    ENG.next();
+		    int ENGA = ENG.getInt("empire_holding_id");
+		    
+		    ResultSet ENS = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Engineers Son' ");
+		    ENS.next();
+		    int ENSA = ENS.getInt("empire_holding_id");
+            
+            ResultSet engineerSet = statement4.executeQuery("SELECT * FROM app_artefacts WHERE name = 'Engineer' AND empire_holding_id = " + empireID);
+            while (engineerSet.next()){
+                if(ENGA == ENSA){
+                buildings_upkeep *= 0.8;
+                }
+                else{
+                buildings_upkeep *= 0.9;
+                }
+            }
+            
 			userStatusUpdateStatement.setLong(34, buildings_upkeep);
 			
 			//get unit amounts
@@ -550,10 +630,19 @@ public class ProcessTick
 		    int mineral_interest = (int) (userLongValues.get("minerals") * race_info.getOrDefault("race_special_resource_interest", 0.0));
 		    if (mineral_interest >= mineral_production)
 				mineral_interest = mineral_production;
+			//spoil op modifier
+			operationSet = statement3.executeQuery("SELECT * FROM app_specops WHERE name = 'Spoil Resources' AND user_to_id = " + userID);
+			
+			while(operationSet.next()){
+				double factor = operationSet.getFloat("specop_strength")/100;
+				
+				mineral_decay += (int) (userLongValues.get("minerals") * factor);
+			}
 		    int mineral_income = mineral_production - mineral_decay + mineral_interest;
 		    userStatusUpdateStatement.setInt(38, mineral_production);
 		    userStatusUpdateStatement.setInt(43, mineral_interest);
 		    userStatusUpdateStatement.setInt(47, mineral_income);
+			userStatusUpdateStatement.setInt(61, mineral_decay);
 
 		    //crystals
     	    int crystal_production = (int) (race_info.get("crystal_production") *  crystalProduction);
@@ -593,16 +682,31 @@ public class ProcessTick
     	    int ectrolium_interest =(int) (userLongValues.get("ectrolium") * race_info.getOrDefault("race_special_resource_interest", 0.0));
     	    if (ectrolium_interest >= ectrolium_production)
 				ectrolium_interest = ectrolium_production;
-    	    int ectrolium_income = ectrolium_production + ectrolium_decay + ectrolium_interest;
+    	    
+			//spoil op modifier
+			operationSet = statement3.executeQuery("SELECT * FROM app_specops WHERE name = 'Spoil Resources' AND user_to_id = " + userID);
+			
+			while(operationSet.next()){
+				double factor = operationSet.getFloat("specop_strength")/100;
+				
+				ectrolium_decay += (int) (userLongValues.get("ectrolium") * factor);
+			}
+			
+			int ectrolium_income = ectrolium_production - ectrolium_decay + ectrolium_interest;
     	    userStatusUpdateStatement.setInt(41, ectrolium_production);
     	    userStatusUpdateStatement.setInt(45, ectrolium_interest);
     	    userStatusUpdateStatement.setInt(49, ectrolium_income);
+			userStatusUpdateStatement.setInt(62, ectrolium_decay);
+			
+			
 			
 			//hack mainframe op modifier
 			operationSet = statement3.executeQuery("SELECT * FROM app_specops WHERE name = 'Hack mainframe' AND user_to_id = " + userID);
-
-			long energyProductionTmp = energyProduction;
+			
+			
+			
 			while(operationSet.next()){
+				long energyProductionTmp = energyProduction;
 				double factor = operationSet.getFloat("specop_strength")/100;
 				double factor2 = operationSet.getFloat("specop_strength2")/100;
 				
@@ -612,7 +716,8 @@ public class ProcessTick
 				long energy_specop_effect2 = (long) (subtractEnergy * factor2);
 				userIncomeUpdateStatement.setLong(1, energy_specop_effect2);
 				userIncomeUpdateStatement.setLong(2, energy_specop_effect2);
-				userIncomeUpdateStatement.setLong(3, operationSet.getInt("user_from_id"));
+				userIncomeUpdateStatement.setLong(3, energy_specop_effect2);
+				userIncomeUpdateStatement.setLong(4, operationSet.getInt("user_from_id"));
 				userIncomeUpdateStatement.addBatch();
 			}
 			
@@ -622,7 +727,9 @@ public class ProcessTick
 			
 			//update resources income
 			//energy
+
 			long energy_income = (energyProduction + energy_interest + population_upkeep_reduction + energy_specop_effect1) - (energyDecay + units_upkeep + buildings_upkeep + portals_upkeep) ;
+
 			
 			userStatusUpdateStatement.setLong(46, energy_income);
     	    
@@ -634,6 +741,7 @@ public class ProcessTick
 			
 
 			//decay
+			
 			if( Math.max(0, userLongValues.get("energy") + energy_income) > 0){
 				int fr = Math.min(userIntValues.get("fleet_readiness")+2, userIntValues.get("fleet_readiness_max"));
 				userStatusUpdateStatement.setInt(1, fr);
@@ -643,15 +751,22 @@ public class ProcessTick
 				userStatusUpdateStatement.setInt(3, ar);
 			}
 			else{
-				int fr = Math.max(userIntValues.get("fleet_readiness")-3, -200);
+				int fr = Math.max(userIntValues.get("fleet_readiness")-3, -100);
 				userStatusUpdateStatement.setInt(1, fr);
-				int pr = Math.max(userIntValues.get("psychic_readiness")-3, -200);
+				int pr = Math.max(userIntValues.get("psychic_readiness")-3, -100);
 				userStatusUpdateStatement.setInt(2, pr);
-				int ar = Math.max(userIntValues.get("agent_readiness")-3, -200);
+				int ar = Math.max(userIntValues.get("agent_readiness")-3, -100);
 				userStatusUpdateStatement.setInt(3, ar);
 				//fleets also decya, 2% a tick
 				updateFleets.updateDecayedFleet();
 			}
+			if((tick_nr % 2) == 0){
+			if( Math.max(0, userLongValues.get("energy") + energy_income) > 0){
+			artefactSet = statement4.executeQuery("SELECT * FROM app_artefacts WHERE name = 'Churchills Brandy' AND empire_holding_id = " + empireID);
+			while (artefactSet.next()){
+				int fr = Math.min(userIntValues.get("fleet_readiness")+3, userIntValues.get("fleet_readiness_max"));
+				userStatusUpdateStatement.setInt(1, fr);
+			}}}
 
 			//update research funding
 			
@@ -672,12 +787,12 @@ public class ProcessTick
 			}
 			
 			userStatusUpdateStatement.setInt(59, total_buildings);
-			userStatusUpdateStatement.setInt(61, userID);
+			userStatusUpdateStatement.setInt(63, userID);
 			
 			//update networth
 			networth += userPlanetsUpdate.getNetworth();
 			networth += userPlanetsUpdate.getPopulation() * 0.0005;
-			networth += (0.002 * totalRcPoints);
+			networth += (0.001 * totalRcPoints);
 			userStatusUpdateStatement.setLong(54, networth);	
 
 			//fleets update
@@ -765,27 +880,7 @@ public class ProcessTick
 			System.out.println("Exception: " +  e.getMessage());
 		}
 		
-		long python_script2 = System.nanoTime();
-		try{
-			ProcessBuilder pb = new ProcessBuilder("python", "/code/manage.py", "process_portals");
-			Process p = pb.start();
-			BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-			p.waitFor();
-			String s = null;
-			s = stdError.readLine();
-			if (s != null){
-				System.out.println("Here is the standard error of the process_portals");
-				while (s != null) {
-					System.out.println(s);
-					s = stdError.readLine();
-				}
-			}
-		}
-		catch (Exception e){
-			System.out.println("Exception: " +  e.getMessage());
-		}
 		
-		long python_script3 = System.nanoTime();
 		
 		long endTime = System.nanoTime();
 		
@@ -796,7 +891,6 @@ public class ProcessTick
 		System.out.println("batch executions: " + (double)(batchTime2 - batchTime1)/1_000_000_000.0 + " sec.");
 		System.out.println("Main loop: " + (double)(main_loop2-main_loop1)/1_000_000_000.0 + " sec.");
 		System.out.println("Python script process_ops time: " + (double)(python_script1-main_loop2)/1_000_000_000.0 + " sec.");
-		System.out.println("Python script process_portals time: " + (double)(python_script2-python_script1)/1_000_000_000.0 + " sec.");
 		System.out.println("Total time: " + (double)(endTime-startTime)/1_000_000_000.0 + " sec.");
 		System.out.println("");
 		

@@ -4,7 +4,12 @@
 
 {% block content %}
 <br>
+	{% if status.galsel == 1 %}
 <form action="/vote" method="post">
+{% elif status.galsel == 2 %}
+<form action="/galtwo/vote" method="post">
+{% endif %}
+
 {% csrf_token %}
 {% for player in player_list %}
 <label for="choice{{ forloop.counter }}">{{ player.user_name }}</label>
@@ -13,7 +18,11 @@
 <input type="submit" value="Vote">
 </form>
 <br>
-<a href="/results">See results</a>
+	{% if status.galsel == 1 %}
+<form action="/results" method="post">
+{% elif status.galsel == 2 %}
+<form action="/galtwo/results" method="post">
+{% endif %}
 
 
 {% endblock %}

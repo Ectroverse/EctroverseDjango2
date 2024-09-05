@@ -3,99 +3,209 @@
 {% block content %}
 
 {% load mathfilters %}
+{% load tags %}
 
-<div id="mapdiv" style="background-color:black;"></div>	
+<div id="mapdiv" style="background-color:black;"></div>
+
 <script>
-  const width = 130;
-  const height = 130;
-  const circle_radius = 0.4;
-
-  const zoom = d3.zoom()
-      .scaleExtent([1, 30]) // max zoom out, max zoom in
+  const width = {{maxX}}+10;
+  const height = {{maxY}}+10;
+  const circle_radius = 1;
+  
+   const zoom = d3.zoom()
+      .scaleExtent([.5, 200]) // max zoom out, max zoom in
       .on("zoom", zoomed);
 
   const svg = d3.select("#mapdiv")
     .append("div")
     .append("svg")
     .style("height", '80vh')
-    .style("width", '100%')
-    .attr("preserveAspectRatio", "xMidYMin meet") // see here for a nice graphic https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/preserveAspectRatio
-    .attr("viewBox", [-1, -1, width+1, height+1]) // default view
-
-  const g = svg.append("g");
-
-{% for planet in mapgen %}
-	{% if planet.s == "SC" %}
-	g.append("ellipse")
-                .attr("cx", ({{planet.x}}-9.88))
-                .attr("cy", ({{planet.y}}-9.88))
-                .attr("rx", circle_radius+0.15)
-                .attr("ry", circle_radius+0.15)
-                .style("stroke", "{{planet.c}}")
-                .style("stroke-width", "0.1")
-                .style("fill", "none")
-                .style("opacity", 1)
-	{% elif planet.s == "YR" %}
-	g.append("ellipse")
-                .attr("cx", ({{planet.x}}-9.88))
-                .attr("cy", ({{planet.y}}-9.88))
-                .attr("rx", circle_radius+0.05)
-                .attr("ry", circle_radius+0.05)
-                .style("stroke", "{{planet.c}}")
-                .style("stroke-width", "0.1")
-                .style("fill", "none")
-                .style("opacity", 1)
-	{% else %}
+    .style("width", '80vw')
+    .attr("preserveAspectRatio", "xMidYmin meet")
+    .attr("viewBox", [-1, -1, width+1, height+1])
+	
+	const g = svg.append("g");
+	
+	{% for key in mapgen %}
+    {% with o=mapgen|getvalue:key %}		
+	
 	g.append("circle")
-                .attr("cx", ({{planet.x}}-9.88))
-                .attr("cy", ({{planet.y}}-9.88))
-                .attr("r", circle_radius)
-                .style("fill", "{{planet.c}}")
-                .style("opacity", 0.5)
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.55)
+			.style("fill", "{{o.sense}}")
+			.style("opacity",1)
+
+	
+	g.append("circle")
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.5)
+			.style("fill", "{{o.portal}}")
+			.style("opacity",1)
+			.style("stroke", "{{o.scout}}")
+			.style("stroke-width", 0.05)
+	
+	{% if o.color2 == "None" %}
+		g.append("circle")
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.45)
+			.style("fill", "{{o.color}}")
+			.style("opacity",0.8)
+			
+			
+	
+	
+	{% elif o.color2 != "None" and o.color3 == "None" %}
+		{{o.gradient}} = g.append("g:defs")
+			.append("g:linearGradient")
+			.attr("id", "{{o.gradient}}")
+			.attr("x1", "5%")
+			.attr("y1", "5%")
+			.attr("x2", "100%")
+			.attr("y2", "100%")
+			.attr("spreadMethod", "pad");
+
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "5%")
+			.attr("stop-color", "{{o.color}}")
+			.attr("stop-opacity", 1);
+
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "100%")
+			.attr("stop-color", "{{o.color2}}")
+			.attr("stop-opacity", 1);
+
+		g.append('circle')
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.45)
+			.attr('fill', 'url(#{{o.gradient}})');
+			
+	{% elif o.color3 != "None" and o.color4 == "None" %}
+		{{o.gradient}} = g.append("g:defs")
+			.append("g:linearGradient")
+			.attr("id", "{{o.gradient}}")
+			.attr("x1", "0%")
+			.attr("y1", "0%")
+			.attr("x2", "100%")
+			.attr("y2", "100%")
+			.attr("spreadMethod", "pad");
+
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "25%")
+			.attr("stop-color", "{{o.color}}")
+			.attr("stop-opacity", 1);
+
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "50%")
+			.attr("stop-color", "{{o.color2}}")
+			.attr("stop-opacity", 1);
+		
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "75%")
+			.attr("stop-color", "{{o.color3}}")
+			.attr("stop-opacity", 1);
+
+		g.append('circle')
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.45)
+			.attr('fill', 'url(#{{o.gradient}})');
+			
+	{% elif o.color4 != "None" %}
+		{{o.gradient}} = g.append("g:defs")
+			.append("g:linearGradient")
+			.attr("id", "{{o.gradient}}")
+			.attr("x1", "0%")
+			.attr("y1", "0%")
+			.attr("x2", "100%")
+			.attr("y2", "100%")
+			.attr("spreadMethod", "pad");
+
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "20%")
+			.attr("stop-color", "{{o.color}}")
+			.attr("stop-opacity", 1);
+
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "40%")
+			.attr("stop-color", "{{o.color2}}")
+			.attr("stop-opacity", 1);
+		
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "60%")
+			.attr("stop-color", "{{o.color3}}")
+			.attr("stop-opacity", 1);
+			
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "80%")
+			.attr("stop-color", "{{o.color4}}")
+			.attr("stop-opacity", 1);
+
+		g.append('circle')
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.45)
+			.attr('fill', 'url(#{{o.gradient}})');		
+			
 	{% endif %}
-{% endfor %}
 
-	{% for scouting in narti %}
-            g.append("ellipse")
-                .attr("cx", ({{scouting.x}}-9.88))
-                .attr("cy", ({{scouting.y}}-9.88))
-                .attr("rx", circle_radius+0.25)
-                .attr("ry", circle_radius+0.25)
-                .style("stroke", "Gold")
-                .style("stroke-width", "0.1")
-                .style("fill", "none")
-                .style("opacity", 1) 
+	{% if o.imgarti != "" %}
+		g.append("image")
+			.attr("xlink:href", "{{o.imgarti}}")
+			.attr("x", {{o.x}}-0.3)
+			.attr("y", {{o.y}}-0.3)
+			.attr("width", circle_radius *0.6)
+			.attr("height", circle_radius *0.6)
+	{% endif %}
+		
+	{% if o.home != "" %}
+		g.append("image")
+			.attr("xlink:href", "{{o.home}}")
+			.attr("x", {{o.x}}-0.3)
+			.attr("y", {{o.y}}-0.3)
+			.attr("width", circle_radius *0.6)
+			.attr("height", circle_radius *0.6)
+	{% endif %}		
+	
+		
+	g.append("a")
+        {% if status.galsel == 1 %}
+		.attr("xlink:href", "/system{{o.id}}")
+		{% elif status.galsel == 2 %}
+		.attr("xlink:href", "/galtwo/system{{o.id}}")
+		{% endif %}
+		.append("circle")
+		.attr("cx", "{{o.x}}")
+		.attr("cy", "{{o.y}}")
+		.attr("r", circle_radius * 0.5)
+		.style("fill", "black")
+		.style("opacity", 0)	
+		
+		
+	{% if narti.empire_holding == status.empire and narti.effect1 == o.id %}
+		g.append("circle")
+			.attr("cx", {{o.x}}+0.4)
+			.attr("cy", {{o.y}}-0.3)
+			.attr("r", circle_radius * 0.2)
+			.style("fill", "white")
+			.style("opacity", 1)
+		g.append("image")
+			.attr("xlink:href", "{{narti.image}}")
+			.attr("x", {{o.x}}+0.25)
+			.attr("y", {{o.y}}-0.45)
+			.attr("width", circle_radius *0.3)
+			.attr("height", circle_radius *0.3)
+	{% endif %}	
+	
+              
+	{% endwith %}
 	{% endfor %}
-
-{% for system in systems %}
-
-	  g.append("a")
-	  	.attr("xlink:href", "system{{system.id}}")
-	  	.append("ellipse")
-				.attr("cx", ({{system.x}}-9.88))
-	    		.attr("cy", ({{system.y}}-9.88))
-                .attr("rx", 0.15)
-                .attr("ry", 0.15)
-                .style("fill", "Orange")
-                .style("opacity", 1)
-	    		.append("title") // hover-over text
-	    		.text("{{system.x}},{{system.y}}");
-
-	  g.append("text")
-	    .attr("x", ({{system.x}}-9.88))
-	    .attr("y", ({{system.y}})-9.6)
-	    .attr("font-family", "sans-serif")
-	    .attr("font-size", "0.2px")
-	    .attr("fill", "white")
-	    .attr("text-anchor", "middle") // horizontal centering
-	    .attr("allignment-baseline", "after-edge") // vertical centering
-	    .style("pointer-events", "none")
-	    .style("visibility", "visible") // changes in zoom
-	    .text("{{system.x}},{{system.y}}");
-{% endfor %}
-
-
- svg.call(zoom);
+	
+	
+	svg.call(zoom);
 
   function reset() {
     svg.transition().duration(750).call(
@@ -115,7 +225,7 @@
       zoom.transform,
       d3.zoomIdentity
         .translate(width / 2, height / 2)
-        .scale(Math.min(80, 9 / Math.max(circle_radius / width, circle_radius / height)))
+        .scale(Math.min(8, 0.9 / Math.max(circle_radius / width, circle_radius / height)))
         .translate(-width, -height),
       d3.mouse(svg.node())
     );
@@ -125,22 +235,10 @@
   function zoomed() {
     const {transform} = d3.event;
     g.attr("transform", transform);
-    if (transform.k > 100) {
-         g.selectAll("circle")
-           .attr("r", circle_radius*.1)
-         g.selectAll("text")
-           .style("visibility", "visible");
-     } else {
-         g.selectAll("circle")
-           .attr("rx", circle_radius*1)
-           .attr("ry", circle_radius*1)
-           .attr("r", circle_radius*1)
-         g.selectAll("text")
-           .style("visibility", "visible");
-    }
+    g.attr("stroke-width", 1 / transform.k);
+    
   }
-
 </script>
-
+</div>
 
 {% endblock %}

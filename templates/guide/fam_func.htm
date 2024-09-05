@@ -1,0 +1,55 @@
+{% extends "gbase.html" %}
+
+{% block content %}
+
+<head>
+<title>Ectroverse Guide</title>
+
+<style>
+#content-desktop {display: block;}
+#content-mobile {display: none;}
+
+@media screen and (max-width: 837px) {
+
+#content-desktop {display: none;}
+#content-mobile {display: block;}
+
+}
+
+
+</style>
+
+</head>
+<table cellSpacing="0" cellPadding="0" width="90%" align="center" border="0">
+  <tbody>
+    <tr>
+
+<p>&nbsp;</p>
+<p><b><font size="4">Change Vote</font></b></p>
+<p>Here you can select you leader. In order for someone to become a leader he
+needs 1 vote more than the next person, or if they are tied the leader remains.</p>
+<p>&nbsp;</p>
+<p><b><font size="4">Prime Minister Options</font></b></p>
+<p>Only available for the Prime Minister, here you can change Empire name, give Empire members roles and offer relations to other Empires.</p>
+<p>&nbsp;</p>
+<p><font size="4"><b>Send Aid</b></font></p>
+<p>Here you can send aid to other empire members, just select the faction you
+wish to aid from the drop-down list and type the amount of resources you wish to
+send&nbsp; </p>
+
+<p><font size="4"><b>Receive Aid</b></font></p>
+<p>Here you can request aid from fellow Empire members, if their options allow you to do so. You can also see their production and adjust your aid settings&nbsp; </p>
+
+<p><b><font size="4">Empire News</font></b> </p>
+
+<p>Tells you what happened in the empire in the past year, it shows things like
+who was attacked and who attacked someone else, as well as who explored what
+planets and who sent aid, you'll understand it better once you first see
+it.&nbsp; </p>
+
+
+&nbsp;</td>
+    </tr>
+  </tbody>
+</table>
+{% endblock %}

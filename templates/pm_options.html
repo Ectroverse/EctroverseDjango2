@@ -28,10 +28,22 @@ Options updated!<br>
 <tr><td><input type="password" maxlength="30" name="empire_pass" size="10" value="{{empire.password}}"></td></tr>
 <tr><td align="left" nowrap>Empire picture</td></tr>
 <tr><td><input type="file" value="Upload" name="empire_picture"/></td></tr>
-<tr><td align="left" nowrap>Taxation</td></tr>
-<tr><td><input type="text" title="Number between 0 and 100%, with 2 possible decimals."
-pattern="100|([0-9]{1,2}(\.[0-9]{1,2})?)" maxlength="5" name="empire_taxation" size="10" 
-value="{{empire.taxation}}"></td></tr>
+
+<tr><td align="left" nowrap>Empire Roles</td></tr>
+<tr><td align="left" nowrap><select name="player">
+	{% for player in player_list %}
+		{% if player.id != status.id %}
+			<option value="{{player.id}}"> {{player.user_name}}
+		{% endif %}
+	{% endfor %}
+	</select>
+	<select name="role">
+			<option value="NA" selected>
+			<option value="VM">Vice Minister
+			<option value="P">None
+			<option value="I">Independant
+	</select>
+
 <tr><td align="left" nowrap>Offer an alliance to an empire</td></tr>
 <tr><td><input type="text" pattern="[0-9]+" maxlength="6" name="empire_offer_alliance" size="10"></td></tr>
 
@@ -39,7 +51,23 @@ value="{{empire.taxation}}"></td></tr>
 <td align="left" nowrap>Nr. of hours</td></tr>
 
 <tr><td><input type="text" pattern="[0-9]+" maxlength="6" name="empire_offer_nap" size="10"></td>
-<td><input type="text" pattern="[0-9]+" maxlength="3" name="empire_offer_nap_hours" size="10"></td></tr>
+<td><select name="naphr">
+			<option value="NA" selected>
+			<option value="tw">12 Hours
+			<option value="tf">24 Hours
+			<option value="fe">48 Hours
+	</select></td></tr>
+
+<tr><td align="left" nowrap>Offer a Ceasefire to an empire</td>
+<td align="left" nowrap>Nr. of hours</td></tr>
+
+<tr><td><input type="text" pattern="[0-9]+" maxlength="6" name="empire_offer_cf" size="10"></td>
+<td><select name="cfhr">
+			<option value="NA" selected>
+			<option value="tw">12 Hours
+			<option value="tf">24 Hours
+			<option value="fe">48 Hours
+	</select></td></tr>
 
 <tr><td align="left" nowrap>Declare war to an empire</td></tr>
 <tr><td><input type="text" pattern="[0-9]+" maxlength="6" name="empire_declare_war" size="10"></td></tr>
@@ -61,8 +89,9 @@ value="{{empire.taxation}}"></td></tr>
 <tr><td><input type="text" maxlength="300" name="empire_relations_message" size="50" value="{{empire.relations_message}}"></td></tr>
 
 </table>
-<input type="submit" value="Change">
+<input type="submit" name="empire_settings" value="Change">
 </form>
+<br><br>
 
 
 {% endblock %}

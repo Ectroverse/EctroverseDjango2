@@ -22,6 +22,12 @@
   <p align="center">{{errors}}</p>
   {% endif %}
 
+<style>
+td {
+  font-size: 1em;
+  padding-bottom: 0.5em;
+}
+</style>
   
 <div style="width:100%; float:left ">
 
@@ -48,11 +54,270 @@
 		</form> 
 		{# Assumes you setup the password_reset view in your URLconf #}
 		<p><a href="{% url 'password_reset' %}" style ="margin: 0 5px;">Lost password?</a></p>
-
+		<br>Players Online: {{online_now}}
 		{% include "box_bottom.html" %}
 	</div>
+
+
+
+<div class="front_news" style ="margin: 0 auto; text-align:center;">
+{% include "box_top.html" with heading="Round Status" %}
+<table style="width:100%;">
+<tr>
+    <th colspan="100%" align="center">Regular Round</th>
 	
-  <div class="front_news" style ="margin: 0 auto; text-align:center;">
+</tr>
+<tr>
+    {% if time_tick.is_running == False and time_tick.round_start == None %}
+	<td colspan="5" align="center">
+	Congratulations, the round has finished. New round will be announced soon!
+	</td>
+	{% elif time_tick.is_running == False and time_tick.round_start != None %}
+	<td colspan="4" align="center">
+	Round  starts at 14:00 GMT on {{time_tick.round_start}}
+	</td>
+	<td align="center"><p id="roundstart"></p></td>
+	{% else %}
+	<td colspan="4" align="center">
+	The Round has started, good luck!
+	</td>
+	<td align="center"><p id="roundstart"></p></td>
+	{% endif %}
+</tr>
+<tr>
+<td align="center"><u>Next Tick</u></td>
+<td align="center"><u>Round</u></td>
+<td align="center"><u>Year</u></td>
+<td align="center"><u>Week</u></td>
+<td align="center"><u>Total Empires</u></td>
+</tr>
+<tr>
+<td align="center">
+{% if time_tick.is_running == False %}
+	{% if time_tick.tick_number == 0 %}
+	Pre Round Registration
+	{% else %}
+	Round Over!
+	{% endif %}
+{% else %}
+<span id="Time1"></span>
+{% endif %}</td>
+<td align="center">{{round_no}}</td>
+<td align="center">{{year}}</td>
+<td align="center">{{week}}</td>
+<td align="center">{{no_empires}}</td>
+</tr>
+<tr>
+<td align="center"><u>Active Players</u></td>
+<td align="center"><u>Available Spots</u></td>
+<td align="center"><u>Total Planets</u></td>
+<td align="center"><u>Available Planets</u></td>
+<td align="center"><u>Total Systems</u></td>
+</tr>
+<tr>
+<td align="center">{{no_players}}</td>
+<td align="center">{{avail_spots}}</td>
+<td align="center">{{no_planets}}</td>
+<td align="center">{{avail_planets}}</td>
+<td align="center">{{no_system}}</td>
+</tr>
+</table>
+<br>	
+<div style="background-color:black; text-align:center;">
+			<a style="color: white; padding: 7px 10px;" href="/ranking">Faction Ranks</a>
+			<a style="color: white; padding: 7px 10px;" href="/empire_ranking">Empire Ranks</a>
+			<a style="color: white; padding: 7px 10px;" href="/halloffame">Hall of Fame</a>
+			</div> 
+
+<script>
+
+ function startTime() {
+  var today = new Date();
+  var m = today.getMinutes();
+  var s = today.getSeconds();
+  m_left = 9 - (m % 10);
+  s_left = 59 - (s % 60);  
+  {% if time_tick.is_running == True %}
+  s_left = fixTimeDigits(s_left);
+  document.getElementById('Time1').innerHTML = m_left + ":" + s_left;
+  {% endif %}
+  {% if time_tick2.is_running == True %}
+  document.getElementById('Time2').innerHTML = s_left;
+  {% endif %}
+  var t = setTimeout(startTime, 600);
+
+}
+
+function fixTimeDigits(s_left) {
+  if (s_left < 10) {s_left = "0" + s_left};  // add zero in front of numbers < 10
+  return s_left;
+}
+
+</script>
+<br>
+<table style="width:100%;">
+<tr>
+    <th colspan="100%" align="center">Fast Tick</th>
+</tr>
+<tr>
+    {% if time_tick2.is_running == False and time_tick2.tick_number > 0 %}
+	<td colspan="5" align="center">
+	Congratulations, the round has finished. New round will be announced soon!
+	</td>
+	{% elif time_tick2.is_running == False and time_tick2.tick_number == 0 %}
+	<td colspan="5" align="center">
+	{% if time_tick2.round_start != None %}
+	<p id="roundstart2"></p>
+	{% else %}
+	Round starts when the Regular Round ends!
+	{% endif %}
+	</td>
+	{% else %}
+	<td colspan="4" align="center">
+	The Round has started, good luck!
+	</td>
+	<td align="center"><p id="roundstart2"></p></td>
+	{% endif %}
+</tr>
+<tr>
+<td align="center"><u>Next Tick</u></td>
+<td align="center"><u>Round</u></td>
+<td align="center"><u>Year</u></td>
+<td align="center"><u>Week</u></td>
+<td align="center"><u>Total Empires</u></td>
+</tr>
+<tr>
+<td align="center">
+{% if time_tick2.is_running == False %}
+	{% if time_tick2.tick_number == 0 %}
+	Pre Round Registration
+	{% else %}
+	Round Over!
+	{% endif %}
+{% else %}
+<span id="Time2"></span>
+{% endif %}</td>
+<td align="center">{{round_no2}}</td>
+<td align="center">{{year2}}</td>
+<td align="center">{{week2}}</td>
+<td align="center">{{no_empires2}}</td>
+</tr>
+<tr>
+<td align="center"><u>Active Players</u></td>
+<td align="center"><u>Available Spots</u></td>
+<td align="center"><u>Total Planets</u></td>
+<td align="center"><u>Available Planets</u></td>
+<td align="center"><u>Total Systems</u></td>
+</tr>
+<tr>
+<td align="center">{{no_players2}}</td>
+<td align="center">{{avail_spots2}}</td>
+<td align="center">{{no_planets2}}</td>
+<td align="center">{{avail_planets2}}</td>
+<td align="center">{{no_system2}}</td>
+</tr>
+</table>
+<br>
+<div style="background-color:black; text-align:center;">
+			<a style="color: white; padding: 7px 10px;" href="/galtwo/ranking">Faction Ranks</a>
+			<a style="color: white; padding: 7px 10px;" href="/galtwo/empire_ranking">Empire Ranks</a>
+			<a style="color: white; padding: 7px 10px;" href="/galtwo/halloffame">Hall of Fame</a>
+			</div>
+
+
+	{% include "box_bottom.html" %}
+</div>
+
+
+<script>
+var countDownDate = new Date("{{fortime}} GMT+00:00").getTime();
+
+var x = setInterval(function() {
+
+  var now = new Date().getTime();
+
+  var distance = countDownDate - now;
+
+  var message = "Round Starts in: "
+
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  if(seconds < 0){
+	distance = now - countDownDate;
+	message = "Time Elasped: "}
+
+  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+	var timer = ''
+  if(days > 0){
+	timer = days + "d "
+	}
+  if(hours > 0){
+	timer += hours + "h "
+  }
+  if(minutes > 0){
+	timer += minutes + "m " 
+	}
+  timer += seconds + "s "
+  document.getElementById("roundstart").innerHTML = message + timer;
+
+  // If the count down is finished, write some text
+  //if (distance < 0) {
+    //clearInterval(x);
+    //document.getElementById("roundstart").innerHTML = "Round Started!";
+  //}
+}, 1000);
+</script>
+
+<script>
+var countDownDate2 = new Date("{{formtime}} GMT+00:00").getTime();
+
+var x2 = setInterval(function() {
+
+  var now2 = new Date().getTime();
+
+  var distance2 = countDownDate2 - now2;
+
+  var message2 = "Round Starts in: "
+
+  var seconds2 = Math.floor((distance2 % (1000 * 60)) / 1000);
+  if(seconds2 < 0){
+	distance2 = now2 - countDownDate2;
+	message2 = "Time Elasped: "}
+
+  var days2 = Math.floor(distance2 / (1000 * 60 * 60 * 24));
+  var hours2 = Math.floor((distance2 % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  var minutes2 = Math.floor((distance2 % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds2 = Math.floor((distance2 % (1000 * 60)) / 1000);
+	var timer2 = ''
+  if(days2 > 0){
+	timer2 = days2 + "d "
+	}
+  if(hours2 > 0){
+	timer2 += hours2 + "h "
+  }
+  if(minutes2 > 0){
+	timer2 += minutes2 + "m " 
+	}
+  timer2 += seconds2 + "s "
+  document.getElementById("roundstart2").innerHTML = message2 + timer2;
+
+  // If the count down is finished, write some text
+  //if (distance < 0) {
+    //clearInterval(x);
+    //document.getElementById("roundstart").innerHTML = "Round Started!";
+  //}
+}, 1000);
+</script>
+
+<script>
+window.onload = function(){
+startTime();
+};
+</script>
+
+<div class="front_news" style ="margin: 0 auto; text-align:center;">
 	{% for news in news_feed %}
 
 	 {% include "box_top.html" with heading=news.date_and_time %}

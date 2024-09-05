@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/png" href="/static/icon.jpg">
+
+<title>Starfurys Guide to Ectroverse</title>
+<style>
+.float-container {
+}
+
+.float-child1 {
+	width:150px;
+    position: absolute;
+	height: 100%;
+
+}
+.float-child2 {
+	postion: absolute;
+	margin-left: 150px;
+	height: 100vh;
+
+} 
+iframe { vertical-align:bottom; } 
+
+body, html
+{
+	margin: 0; padding: 0; height: 100%; overflow: hidden;
+	background-image:url("/static/background.gif");
+}
+
+</style>
+
+</head>
+<body style="margin:0px;padding:0px;max-width:100%;min-height:100%">
+<div class="float-container">
+
+  <div class="float-child1" src="sidebar.htm">
+    <iframe src="sidebar.htm" height="870" width="100%" style="border:none;"></iframe>
+  </div>
+  
+  <div class="float-child2">
+	<iframe src="top.htm" style="border:none;" height="70" width="100%"></iframe>
+	<iframe src="hq.htm" style="border:none;" height="800" width="100%" name="rbottom" scrolling="yes"></iframe>
+  </div>
+  
+</div>
+</body>
+</html>

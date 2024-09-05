@@ -1,0 +1,57 @@
+{% extends "gbase.html" %}
+
+{% block content %}
+
+{% load static %}
+
+<head>
+<title>Ectroverse Guide</title>
+
+<style>
+#content-desktop {display: block;}
+#content-mobile {display: none;}
+
+@media screen and (max-width: 837px) {
+
+#content-desktop {display: none;}
+#content-mobile {display: block;}
+
+}
+
+
+</style>
+
+</head>
+
+<table cellSpacing="0" cellPadding="0" width="90%" align="center" border="0">
+  <tbody>
+    <tr>
+        <p align="center"><b><font size="5">The 4 buttons on top</font></b></p>
+        <p align="left"><b>Mail</b></p>
+        <p align="left"><a href="messages.htm"><img src="{% static 'i09.jpg' %}">
+		<img src="{% static 'i09a.jpg' %}"></a>When
+        you click this button you will go to the mail screen, note that gray is
+        its usual appearance, when you have a new message it will turn blue.</p>
+        <p align="left"><b>Economy</b></p>
+        <p align="left"><a href="hq.htm"><img src="{% static 'i10.jpg' %}">
+		<img src="{% static 'i10a.jpg' %}"></a>When
+        you click this button you will go to hq screen, note that gray is its
+        usual appearance, when you have a any new economy reports (buildings or
+        units finished) the button will turn yellow. </p>
+        <p align="left"><b>Aid</b></p>
+        <p align="left"><a href="hq.htm"><img src="{% static 'i11.jpg' %}">
+		<img src="{% static 'i11a.jpg' %}"></a>When
+        you click this button you will also go to hq screen, note that gray is
+        it's usual appearance, if an Empire members requests aid, it will turn green.</p>
+        <p align="left"><b>Military</b></p>
+        <p align="left"><a href="hq.htm"><img src="{% static 'i12.jpg' %}">
+		<img src="{% static 'i12a.jpg' %}">
+		<img src="{% static 'i12b.jpg' %}">
+		<img src="{% static 'i12c.jpg' %}"></a>As
+        before this button will bring you to the hq screen, note that gray is
+        it's usual appearance. This will light up red if you are attacked or an opertation fails, green when you explore or a successful operation, or yellow if a fleet has returned.</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+{% endblock %}

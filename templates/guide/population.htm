@@ -1,0 +1,74 @@
+{% extends "gbase.html" %}
+
+{% block content %}
+{% load mathfilters %}
+<head>
+<title>Ectroverse Guide</title>
+
+<style>
+#content-desktop {display: block;}
+#content-mobile {display: none;}
+
+@media screen and (max-width: 837px) {
+
+#content-desktop {display: none;}
+#content-mobile {display: block;}
+
+}
+
+
+</style>
+
+</head>
+<table cellSpacing="0" cellPadding="0" width="90%" align="center" border="0">
+  <tbody>
+    <tr>
+<p align="center"><b><font size="5">Population</font></b></p>
+<p align="left">Population is another major part of your faction, each planet has
+a certain amount of population assigned to it, that amount is the maximum number
+of buildings on each planet times 200, so if your maximum number of buildings on
+the planet is 100, then the maximum population is 100*200=20,000. Population is
+very useful to make your upkeep smaller as for every 350 people that live in
+your faction your total up keep is reduced by 1. This may not seem like a lot but
+it is when you have a lot of people.<br>
+Population grows at 2% per week if you don't have any bonuses. To calculate how
+much it grows with a bonus multiply that bonus by 0.02 and then add 2. (Ex. for
+10% - 0.02*10+2=2.20% per tick)</p>
+<p align="left">Population also helps with your defence, with each 100 population the equivalent to 1 Soldier</p>
+<p align="left">Like all things, Population also increases Networth, with each Person giving you 0.0005 NW. 
+Simply times your Total Population by 0.0005 to see how much Networth your
+Population is. or use the calculator below. </p>
+<p align="left"><b><u>Note</u></b> if you are currently logged in, your population is filled automatically.
+<form name="popNW">
+<p align="left">Population:&nbsp;{% if status != "None" %}
+<input type="text" name="pop" value="{{status.population}}" size="10">
+{% else %}
+<input type="text" name="pop" size="10">
+{% endif %}<input type="text" name="requp" value="{{upkeep}}" size="10" style="display:none;"><br>
+Networth:&nbsp; <input name="nw" style="background-color: #0b1119; color: white; border-style: solid; border-color: #0b1119;" />
+<br>Upkeep:&nbsp; <input name="upkeep" style="background-color: #0b1119; color: white; border-style: solid; border-color: #0b1119;" />
+<br>Covering Upkeep?<input name="upkeepdef" style="background-color: #0b1119; color: red; border-style: solid; border-color: #0b1119;" />
+
+<br><input type="submit" value="Calculate" onclick="
+var pop=document.popNW.pop.value;
+var popup = Math.round(pop / 350);
+var req = document.popNW.requp.value;
+var excess = popup - req;
+document.popNW.nw.value = Math.round(pop * 0.0005);
+document.popNW.upkeep.value = popup;
+document.popNW.upkeepdef.value = excess;
+
+if (req < popup){
+document.popNW.upkeepdef.style.color = 'green';
+}
+
+
+
+return false;" />
+          
+
+</p></form>
+    </tr>
+  </tbody>
+</table>
+{% endblock %}

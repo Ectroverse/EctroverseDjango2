@@ -1,0 +1,433 @@
+{% extends "gbase.html" %}
+
+{% block content %}
+{% load static %}
+{% load mathfilters %}
+{% load tags %}
+
+<style>
+.row1{}
+
+.row2{
+display: table-row;
+background-color: rgb(25,38,51);
+}
+td{
+padding-bottom: 1em;}
+</style>
+
+<br><br>Below is an example of the map, in this case the full map. In both the full map and base map, how the map looks will be dependant on your map settings. Colours can and will merge if more than 1 setting
+ is detected in a system. <br>In the full map, Portals will be represented by an image in the bottom right hand corner of a system with the colour of your choice but only if "Your Portals" are a setting
+ you have chosen. <br>
+ If you or one of your empire members has either Agents or Exploration Ships travelling to a system, their respective images will appear on the Left of the system.
+ <br>All home systems will be represented by a house and unlike this example, will be around the edge of the map rather than centrally. 
+ <br>Any Artefacts you have found will display on the system it is contained in.
+ <br><br>We have 2 options to display Systems we have studied, either through <font color="Orange">Scouted Planets</font> or <font color="Purple">Sensed Planets</font>. Both will show a ring around the system. For Scouted systems to show up you will need
+  full knowledge of that system and to have them selected in your map settings. This can be done by either attaining all planets through exploration or attacking, or using Observe Planet or Survey System. Sensed Systems will show if you or an Empire member has successfully used Sense Artefact in the area.
+<div id="mapdiv" style="background-color:black; "></div>
+
+
+
+<table width="100%">
+<td colspan=100%"><b><u>Key</b></u></td>
+<tr class="row2">
+<td>Position</td>
+<td>Image</td>
+<td>When</td>
+</tr>
+<tr class="row1">
+<td>Top Left</td>
+<td>
+<img src="/static/units/Exploration%20Ships.png" width="25" height="25"></td>
+<td>You or an Empire member have sent an Exploration Ship to explore a planet within the system.</td>
+</tr>
+<tr class="row2">
+<td>Top Left</td>
+<td>
+<img src="/static/units/exphover.png" width="25" height="25"></td>
+<td>You or an Empire member have sent an Exploration Ship hovering (waiting) to a planet within the system.</td>
+</tr>
+<tr class="row1">
+<td>Bottom Left</td>
+<td>
+<img src="/static/units/Agents.png" width="25" height="25"></td>
+<td>You or an Empire member have sent Agents to Observe a planet or planets within the system.</td>
+</tr>
+<tr class="row2">
+<td>Bottom Left</td>
+<td>
+<img src="/static/units/Ghost%20Ships.png" width="25" height="25"></td>
+<td>You or an Empire member have sent Ghost Ships to Survey the system.</td>
+</tr>
+<tr class="row1">
+<td>Bottom Right</td>
+<td>
+<img src="/static/buildings/Portal.png" width="25" height="25"></td>
+<td>You have a Portal in this system, note your choice of colour will be displayed behind the image.</td>
+</tr>
+<tr class="row2">
+<td>Bottom Right</td>
+<td>
+<img src="/static/buildings/portcon.png" width="25" height="25"></td>
+<td>You have a Portal Under Construction in this system.</td>
+</tr>
+<tr class="row1">
+<td>Top Right</td>
+<td>
+<a href="/guide/arti"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="25" height="25"></a></td>
+<td>Some Artefacts will affect a system or systems, they will display in the top Right of a System.</td>
+</tr>
+</table>
+
+<br><br>
+<table width="100%">
+<tr>
+<td colspan="100%">
+<b><u>Speed</b></u></td>
+</tr><tr>
+<td colspan="100%">Speed can be very important for moving around a map, below is a list of Races and which Systems they would be Instant (travel immediately) to from the <b>Portal</b> shown.</td></tr>
+<tr></tr><tr class="row1">
+<td>Race</td><td><font color="Red">Red</font></td><td><font color="Green">Green</font></td><td><font color="Blue">Blue</font></td><td>Grey</td>
+</tr>
+<tr class="row2">
+<td>Harks</td><td>Yes</td><td>Yes</td><td>No</td><td>No</td>
+</tr>
+<tr class="row1">
+<td>Manticarias</td><td>Yes</td><td>No</td><td>No</td><td>No</td>
+</tr>
+<tr class="row2">
+<td>Foohons</td><td>Yes</td><td>No</td><td>No</td><td>No</td>
+</tr>
+<tr class="row1">
+<td>Spacebornes</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td>
+</tr>
+<tr class="row2">
+<td>Dreamweavers</td><td>Yes</td><td>No</td><td>No</td><td>No</td>
+</tr>
+<tr class="row1">
+<td>Wookies</td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td>
+</tr>
+<tr class="row2">
+<td>Jackos</td><td>Yes</td><td>No</td><td>No</td><td>No</td>
+</tr>
+</table>
+
+<div id="speeddiv" style="background-color:black; "></div> 
+<script>
+  const width = 10;
+  const height = 10;
+  const circle_radius = 0.8;
+  
+   const zoom = d3.zoom()
+      .scaleExtent([.5, 2]) // max zoom out, max zoom in
+      .on("zoom", zoomed);
+
+  const svg = d3.select("#mapdiv")
+    .append("div")
+    .append("svg")
+    .style("height", '50vh')
+    .style("width", '80vw')
+    .attr("preserveAspectRatio", "xMidYmin meet")
+    .attr("viewBox", [-1, -1, width+1, height+1])
+	
+	const g = svg.append("g");
+	
+	{% for key in mapgen %}
+    {% with o=mapgen|getvalue:key %}		
+	
+
+    g.append("circle")
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.55)
+			.style("fill", "{{o.sense}}")
+			.style("opacity",1)
+
+	
+	g.append("circle")
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.5)
+			.style("fill", "{{o.scout}}")
+			.style("opacity",1)
+	
+	{% if o.color2 == "None" %}
+		g.append("circle")
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.45)
+			.style("fill", "{{o.color}}")
+			.style("opacity",1)
+			
+			
+	
+	
+	{% elif o.color2 != "None" and o.color3 == "None" %}
+		{{o.gradient}} = g.append("g:defs")
+			.append("g:linearGradient")
+			.attr("id", "{{o.gradient}}")
+			.attr("x1", "5%")
+			.attr("y1", "5%")
+			.attr("x2", "100%")
+			.attr("y2", "100%")
+			.attr("spreadMethod", "pad");
+
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "5%")
+			.attr("stop-color", "{{o.color}}")
+			.attr("stop-opacity", 1);
+
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "100%")
+			.attr("stop-color", "{{o.color2}}")
+			.attr("stop-opacity", 1);
+
+		g.append('circle')
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.45)
+			.attr('fill', 'url(#{{o.gradient}})');
+			
+	{% elif o.color3 != "None" and o.color4 == "None" %}
+		{{o.gradient}} = g.append("g:defs")
+			.append("g:linearGradient")
+			.attr("id", "{{o.gradient}}")
+			.attr("x1", "0%")
+			.attr("y1", "0%")
+			.attr("x2", "100%")
+			.attr("y2", "100%")
+			.attr("spreadMethod", "pad");
+
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "25%")
+			.attr("stop-color", "{{o.color}}")
+			.attr("stop-opacity", 1);
+
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "50%")
+			.attr("stop-color", "{{o.color2}}")
+			.attr("stop-opacity", 1);
+		
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "75%")
+			.attr("stop-color", "{{o.color3}}")
+			.attr("stop-opacity", 1);
+
+		g.append('circle')
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.45)
+			.attr('fill', 'url(#{{o.gradient}})');
+			
+	{% elif o.color4 != "None" %}
+		{{o.gradient}} = g.append("g:defs")
+			.append("g:linearGradient")
+			.attr("id", "{{o.gradient}}")
+			.attr("x1", "0%")
+			.attr("y1", "0%")
+			.attr("x2", "100%")
+			.attr("y2", "100%")
+			.attr("spreadMethod", "pad");
+
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "20%")
+			.attr("stop-color", "{{o.color}}")
+			.attr("stop-opacity", 1);
+
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "40%")
+			.attr("stop-color", "{{o.color2}}")
+			.attr("stop-opacity", 1);
+		
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "60%")
+			.attr("stop-color", "{{o.color3}}")
+			.attr("stop-opacity", 1);
+			
+		{{o.gradient}}.append("svg:stop")
+			.attr("offset", "80%")
+			.attr("stop-color", "{{o.color4}}")
+			.attr("stop-opacity", 1);
+
+		g.append('circle')
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.45)
+			.attr('fill', 'url(#{{o.gradient}})');		
+			
+	{% endif %}
+
+	{% if o.imgarti != "" %}
+		g.append("image")
+			.attr("xlink:href", "{{o.imgarti}}")
+			.attr("x", {{o.x}}-0.15)
+			.attr("y", {{o.y}}-0.15)
+			.attr("width", circle_radius *0.4)
+			.attr("height", circle_radius *0.4)
+	{% endif %}
+		
+	{% if o.home != "" %}
+		g.append("image")
+			.attr("xlink:href", "{{o.home}}")
+			.attr("x", {{o.x}}-0.25)
+			.attr("y", {{o.y}}-0.25)
+			.attr("width", circle_radius *0.6)
+			.attr("height", circle_radius *0.6)
+	{% endif %}	
+	
+		
+
+	g.append("circle")
+		.attr("cx", "{{o.x}}")
+		.attr("cy", "{{o.y}}")
+		.attr("r", circle_radius * 0.5)
+		.style("fill", "black")
+		.style("opacity", 0)
+		{% if status.galsel == 1 %}
+		.on("click", function(){document.getElementById("clsyst").style.display="contents"; document.getElementById('syst').setAttribute('src', '/syst{{o.id}}');} );
+		{% elif status.galsel == 2 %}
+		.on("click", function(){document.getElementById("clsyst").style.display="contents"; document.getElementById('syst').setAttribute('src', '/galtwo/syst{{o.id}}');} );
+		{% endif %}
+	
+	{% if key in expfl %}
+		g.append("image")
+			.attr("xlink:href", "/static/units/Exploration%20Ships.png")
+			.attr("x", {{o.x}}-0.4)
+			.attr("y", {{o.y}}-0.35)
+			.attr("width", circle_radius *0.3)
+			.attr("height", circle_radius *0.3)
+	{% endif %}
+	
+	{% if key in hovfl %}
+		g.append("image")
+			.attr("xlink:href", "/static/units/exphover.png")
+			.attr("x", {{o.x}}-0.4)
+			.attr("y", {{o.y}}-0.35)
+			.attr("width", circle_radius *0.3)
+			.attr("height", circle_radius *0.3)
+	{% endif %}
+	
+	{% if key in obsfl %}
+		g.append("image")
+			.attr("xlink:href", "/static/units/Agents.png")
+			.attr("x", {{o.x}}-0.4)
+			.attr("y", {{o.y}}+0.15)
+			.attr("width", circle_radius *0.3)
+			.attr("height", circle_radius *0.3)
+	{% endif %}
+	
+	{% if key in suvfl %}
+		g.append("image")
+			.attr("xlink:href", "/static/units/Ghost%20Ships.png")
+			.attr("x", {{o.x}}-0.4)
+			.attr("y", {{o.y}}+0.15)
+			.attr("width", circle_radius *0.3)
+			.attr("height", circle_radius *0.3)
+	{% endif %}
+    
+    {% if o.portal != "" %}
+	    {% if o.portal == "con" %}
+            g.append("image")
+			    .attr("xlink:href", "/static/buildings/portcon.png")
+			    .attr("x", {{o.x}}+0.2)
+			    .attr("y", {{o.y}}+0.15)
+			    .attr("width", circle_radius *0.3)
+			    .attr("height", circle_radius *0.3)
+	    {% else %}
+	        g.append("circle")
+			    .attr("cx", {{o.x}}+0.32)
+			    .attr("cy", {{o.y}}+0.27)
+			    .attr("r", circle_radius * 0.25)
+			    .style("fill", "{{o.portal}}")
+			    .style("opacity", 1)
+		    g.append("image")
+			    .attr("xlink:href", "/static/buildings/Portal.png")
+			    .attr("x", {{o.x}}+0.2)
+			    .attr("y", {{o.y}}+0.15)
+			    .attr("width", circle_radius *0.3)
+			    .attr("height", circle_radius *0.3)
+	    {% endif %}
+	{% endif %}
+              
+	{% endwith %}
+	{% endfor %}
+	
+	
+	svg.call(zoom);
+
+  function reset() {
+    svg.transition().duration(750).call(
+      zoom.transform,
+      d3.zoomIdentity,
+      d3.zoomTransform(svg.node()).invert([width / 2, height / 2])
+    );
+  }
+
+
+  function clicked(d,i) {
+    //const [[x0, y0], [x1, y1]] = path.bounds(d);
+    console.log(d); // coming back as undefined for circles
+    console.log(i); // come back as 0 for every circle
+    d3.event.stopPropagation();
+    svg.transition().duration(750).call(
+      zoom.transform,
+      d3.zoomIdentity
+        .translate(width / 2, height / 2)
+        .scale(Math.min(8, 0.9 / Math.max(circle_radius / width, circle_radius / height)))
+        .translate(-width, -height),
+      d3.mouse(svg.node())
+    );
+  }
+
+
+  function zoomed() {
+    const {transform} = d3.event;
+    g.attr("transform", transform);
+    g.attr("stroke-width", 1 / transform.k);
+    
+  }
+</script>
+
+<script>
+
+  const svg2 = d3.select("#speeddiv")
+    .append("div")
+    .append("svg")
+    .style("height", '50vh')
+    .style("width", '80vw')
+    .attr("preserveAspectRatio", "xMidYmin meet")
+    .attr("viewBox", [-1, -1, width, height])
+	
+	const ge = svg2.append("g");
+	
+	{% for key in speedgen %}
+    {% with s=speedgen|getvalue:key %}		
+	
+	ge.append("circle")
+		.attr("cx", {{s.x}})
+		.attr("cy", {{s.y}})
+		.attr("r", circle_radius * 0.45)
+		.style("fill", "{{s.color}}")
+		.style("opacity",1)
+    
+    {% if s.portal != "" %}
+	        ge.append("circle")
+			    .attr("cx", {{s.x}}+0.32)
+			    .attr("cy", {{s.y}}+0.27)
+			    .attr("r", circle_radius * 0.25)
+			    .style("fill", "{{s.portal}}")
+			    .style("opacity", 1)
+		    ge.append("image")
+			    .attr("xlink:href", "/static/buildings/Portal.png")
+			    .attr("x", {{s.x}}+0.2)
+			    .attr("y", {{s.y}}+0.15)
+			    .attr("width", circle_radius *0.3)
+			    .attr("height", circle_radius *0.3)
+    {% endif %}
+              
+	{% endwith %}
+	{% endfor %}
+
+</script>
+
+{% endblock %}

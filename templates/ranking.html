@@ -1,8 +1,22 @@
-{% extends "base.html" %}
+{% extends my_template %}
 
 {% load static %}
-
+{% load humanize %}
 {% block content %}
+
+{% if my_template == "front_page.html" %}
+
+<div class="display_box" style="width:85%" >
+	<div class="display_box_header">
+		<div class="display_box_header_left"></div>
+		<div class="display_box_header_center">
+			<div class="display_box_header_center_content">Faction Ranks</div>
+		</div>
+		<div class="display_box_header_right"></div>
+	</div>
+	<div class="display_box_content" style =" margin: 0 auto;" >
+		<div class="display_box_content_left"></div>
+		<div class="display_box_content_center"  >
 
 <style type="text/css">
 
@@ -14,6 +28,7 @@ background-color: rgb(25,38,51);
 }
 
 </style>
+
 <br>
 
 <table style="width:100%;">
@@ -31,9 +46,54 @@ background-color: rgb(25,38,51);
 <tr class="{% cycle 'row2' 'row1' %}">
 <td>{{forloop.counter}}</td>
 <td>
+    {{values.user_name}}
+</td>
+<td>
+    {{values.empire.name_with_id}}
+</td>
+<td>{{values.num_planets}}</td>  
+<td>{{values.networth|intcomma}}</td> 
+<td>{{values.get_race_display}}</td> 
+</tr>
+{% endfor %}
+</table>		
+		
+{% else %}
+
+<style type="text/css">
+
+.row1{}
+
+.row2{
+display: table-row;
+background-color: rgb(25,38,51);
+}
+
+</style>
+<br>
+
+
+<table style="width:100%;">
+<tr>
+
+<td></td>
+<td><u>Player</u></td>
+<td><u>Empire</u></td>
+<td><u>Planets</u></td>
+<td><u>Networth</u></td>
+<td><u>Race</u></td>
+
+</tr>
+{% for values in table %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{forloop.counter}}</td>
+{% if status.galsel == 1 %}
+<td>
     {%if values.id == 1 %}<b><a href= "/account{{values.id}}" style="color:Yellow;">{{values.user_name}}</a></b>
     {%elif values.id == status.id %}<b><a href= "/account{{values.id}}" style="color:#0293FF;">{{values.user_name}}</a></b>
-    {% else %} <b><a href= "/account{{values.id}}" >{{values.user_name}}</a></b>
+    {% else %} <b><a href= "/account{{values.id}}" >{{values.user_name}}{% if values.id == 27 %}
+		&nbsp;&nbsp;<img src="/static/scriv.png" width=26px height=16px>
+	{% endif %}</a></b>
     {% endif %}
 </td>
 <td>
@@ -42,11 +102,26 @@ background-color: rgb(25,38,51);
     {% else %} <b><a href = "/empire{{values.empire_id}}" >{{values.empire.name_with_id}}</a></b>
     {% endif %}
 </td>
+{% elif status.galsel == 2 %}
+<td>
+    {%if values.id == 1 %}<b><a href= "/galtwo/account{{values.id}}" style="color:Yellow;">{{values.user_name}}</a></b>
+    {%elif values.id == status.id %}<b><a href= "/galtwo/account{{values.id}}" style="color:#0293FF;">{{values.user_name}}</a></b>
+    {% else %} <b><a href= "/galtwo/account{{values.id}}" >{{values.user_name}}</a></b></a></b>
+    {% endif %}
+</td>
+<td>
+    {%if values.empire.number == 0 %}<b><a href= "/galtwo/empire{{values.empire_id}}" style="color:Yellow;">Administration #0</a></b>
+    {%elif values.empire.number == status.empire.number %}<b><a href= "/galtwo/empire{{values.empire_id}}" style="color:#0293FF">{{values.empire.name_with_id}}</a></b>
+    {% else %} <b><a href = "/galtwo/empire{{values.empire_id}}" >{{values.empire.name_with_id}}</a></b>
+    {% endif %}
+</td>
+{% endif %}
 <td>{{values.num_planets}}</td>  
-<td>{{values.networth}}</td> 
+<td>{{values.networth|intcomma}}</td> 
 <td>{{values.get_race_display}}</td> 
 </tr>
 {% endfor %}
 </table>
+{% endif %}
 
 {% endblock %}

@@ -10,7 +10,11 @@
 {% endfor %}
 <br>
 <br>
+{% if status.galsel == 1 %}
 <a href="/vote">Vote again?</a>
+{% elif status.galsel == 2 %}
+<a href="/vote">Vote again?</a>
+{% endif %}
 
 
 {% endblock %}

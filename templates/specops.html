@@ -114,16 +114,21 @@ function ghostsCheck() {
 
 	{% endfor %}
 }
+
 </script>
 
-
+<br><a href="/guide/opstats">All Operations</a><br><br>
 
 <div class ="border_agent"  >
 <div class="centered2"><h3>Covert Operations</h3></div>
 	<div class="ops_box spaceUnder">
 	<b>Agents amount: {{main_fleet.agent}}</b>
 	<br><br>
+	{% if status.galsel == 1 %}
 		<form action="/specops" method="POST">
+		{% elif status.galsel == 2 %}
+		<form action="/galtwo/specops" method="POST">
+		{% endif %}
 		{% csrf_token %}
 			{% for name, values in operations.items  %}
 			<input class="spaceUnder" type="radio" id="{{ values.4 }}" name="operation" value="{{ name }}" onclick="agentsCheck()">
@@ -165,8 +170,12 @@ function ghostsCheck() {
 	</div>
 {% if agent_fleets %}
 	<div style="width:100%; float:left;">
-		Agents travelling:	
+		Agents travelling:
+		{% if status.galsel == 1 %}
 		<form action="/specops" method="POST" name="cancelAgents" style="margin-bottom: 25px" >
+		{% elif status.galsel == 2 %}
+		<form action="/galtwo/specops" method="POST" name="cancelAgents" style="margin-bottom: 25px" >
+		{% endif %}		
 		{% csrf_token %}
 		<table style="margin: 0 auto;">
 		<tr>
@@ -196,35 +205,81 @@ function ghostsCheck() {
 {% endif %}
 	<div style="width:100%; float:left;">
 		<div class="ops_box spaceUnder">
+		{% if ops_in.count > 0 %}
 		<b>Operations affecting your faction:</b><br>
 			{% for o in ops_in%}
 				{{o.name}} 
 				{% if o.specop_strength > 0 %}
 				of 
 				{{o.specop_strength}}% 
+				{% if o.extra_effect == "resource_cost" %}
+						increased building cost
+				{% elif o.extra_effect == "building_time" %}
+						increased building time
+				{% endif %}	
 				{% endif %}
+				{% if status.galsel == 1 %}
+				{% if o.stealth == False %}
 				from <a href="/account{{o.user_from.userstatus.id}}">{{o.user_from.userstatus.user_name}}</a>
+				{% endif %}
 				{% if o.planet is not None %}
 						on <a href="/planet{{o.planet.id}}">{{o.planet.x}}:{{o.planet.y}},{{o.planet.i}}</a>
 				{% endif %}
+				{% elif status.galsel == 2 %}
+				{% if o.stealth == False %}
+				from <a href="/galtwo/account{{o.user_from.userstatus.id}}">{{o.user_from.galtwouser.user_name}}</a>
+				{% endif %}
+				{% if o.planet is not None %}
+						on <a href="/galtwo/planet{{o.planet.id}}">{{o.planet.x}}:{{o.planet.y}},{{o.planet.i}}</a>
+				{% endif %}
+				{% endif %}
 				for {{o.ticks_left}} weeks.<br>
 			{% endfor %}
+		{% endif %}
 		</div>
 		<div id="dvtext2" class="ops_box2">
+		{% if ops_out.count > 0 %}
 			<b>Your operations on other factions:</b><br>
 			{% for o in ops_out%}
-				{{o.name}} 
+				{{o.name}}
+				{% if status.galsel == 1 %}
 				{% if o.name == "Diplomatic Espionage" or o.name == "High Infiltration" %}
 					<a href="/specop_show{{o.id}}">{{o.extra_effect}}</a>
 				{% elif o.specop_strength > 0 %}
 				of {{o.specop_strength}}% 
 					{% endif %}
+				{% if o.extra_effect == "resource_cost" %}
+						increased building cost
+				{% elif o.extra_effect == "building_time" %}
+						increased building time
+				
+				{% endif %}	
 				on <a href="/account{{o.user_to.userstatus.id}}">{{o.user_to.userstatus.user_name}}</a> 
 				{% if o.planet is not None %}
 					on <a href="/planet{{o.planet.id}}">{{o.planet.x}}:{{o.planet.y}},{{o.planet.i}}</a> 
 				{% endif %}
+				{% elif status.galsel == 2 %}
+				{% if o.name == "Diplomatic Espionage" or o.name == "High Infiltration" %}
+					<a href="/galtwo/specop_show{{o.id}}">{{o.extra_effect}}</a>
+				{% elif o.specop_strength > 0 %}
+				of {{o.specop_strength}}% 
+					{% endif %}
+				{% if o.extra_effect == "resource_cost" %}
+						increased building cost
+				{% elif o.extra_effect == "building_time" %}
+						increased building time
+				
+				{% endif %}	
+				on <a href="/galtwo/account{{o.user_to.userstatus.id}}">{{o.user_to.galtwouser.user_name}}</a> 
+				{% if o.planet is not None %}
+					on <a href="/galtwo/planet{{o.planet.id}}">{{o.planet.x}}:{{o.planet.y}},{{o.planet.i}}</a> 
+				{% endif %}
+				{% endif %}
+				
 				for {{o.ticks_left}} weeks.<br>
+				
 			{% endfor %}
+		{% endif %}
 		</div>
 	</div>
 </div>
@@ -237,7 +292,11 @@ function ghostsCheck() {
 	<div class="ops_box ">
 	<b>Psychics amount: {{main_fleet.wizard}}</b>
 	<br><br>
+		{% if status.galsel == 1 %}
 		<form action="/specops" method="POST" style="margin-bottom: 25px">
+		{% elif status.galsel == 2 %}
+		<form action="/galtwo/specops" method="POST" style="margin-bottom: 25px">
+		{% endif %}
 		{% csrf_token %}
 			{% for name, values in spells.items  %}
 			<input class="spaceUnder" type="radio" id="{{ values.4 }}" name="spell" value="{{ name }}" onclick="psychicCheck()">
@@ -252,7 +311,7 @@ function ghostsCheck() {
 				user name/id:
 				<input type="text" name="user_id2" size="12" value="{{user_to_template_specop}}" />
 			</div>
-			<input type="submit" value="Perform">
+			<input type="submit" id="cast" value="Perform">
 		</form> 
 	</div>
 	<div id="dvtext" class="ops_box2">
@@ -277,6 +336,7 @@ function ghostsCheck() {
 	</div>
 	<div style="width:100%; float:left;">
 		<div class="ops_box spaceUnder">
+		{% if spells_in.count > 0 %}
 		<b>Spells affecting your faction:</b><br>
 			{% for o in spells_in%}
 				{{o.name}}
@@ -290,14 +350,19 @@ function ghostsCheck() {
 					of
 				{% endif %}
 				
-				{{o.specop_strength}}% from {{o.user_from.userstatus.user_name}} for {{o.ticks_left}} weeks.<br>
+				{{o.specop_strength}}% from {% if status.galsel == 1 %}{{o.user_from.userstatus.user_name}} 
+				{% elif status.galsel == 2 %}{{o.user_from.galtwouser.user_name}}{% endif %} for {{o.ticks_left}} weeks.<br>
 			{% endfor %}
+		{% endif %}
 		</div>
 		<div id="dvtext2" class="ops_box2">
+		{% if spells_out.count > 0 %}
 			<b>Your spells on other factions:</b><br>
 			{% for o in spells_out%}
-				{{o.name}} of {{o.specop_strength}}% on {{o.user_to.userstatus.user_name}} for {{o.ticks_left}} weeks.<br>
+				{{o.name}} of {{o.specop_strength}}% on {% if status.galsel == 1 %}{{o.user_to.userstatus.user_name}} 
+				{% elif status.galsel == 2 %}{{o.user_to.galtwouser.user_name}}{% endif %} for {{o.ticks_left}} weeks.<br>
 			{% endfor %}
+		{% endif %}
 		</div>
 	</div>
 </div>
@@ -309,7 +374,11 @@ function ghostsCheck() {
 	<div class="ops_box spaceUnder">
 	Ghost ships amount: {{main_fleet.ghost}}
 	<br>
-		<form action="/specops" method="POST">
+		{% if status.galsel == 1 %}
+		<form action="/specops" method="POST" style="margin-bottom: 25px">
+		{% elif status.galsel == 2 %}
+		<form action="/galtwo/specops" method="POST" style="margin-bottom: 25px">
+		{% endif %}
 		{% csrf_token %}
 			{% for name, values in incantations.items %}
 			<input class="spaceUnder" type="radio" id="{{ values.4 }}" name="incantation" value="{{ name }}" onclick="ghostsCheck()">
@@ -322,9 +391,9 @@ function ghostsCheck() {
 			<input class="spaceUnder" type="number"  min="0" max="{{main_fleet.ghost}}" name="unit_ammount" size="12" value="{{main_fleet.ghost}}" />
 			<div class="spaceUnder" id="target_planet">
 				Target coordinates:
-				X:<input class="spaceUnder" pattern="[0-9]+" type="text" name="X" size="4" value ="{{planet_to_template_specop.x}}">
-				Y:<input class="spaceUnder" pattern="[0-9]+" type="text" name="Y" size="4" value ="{{planet_to_template_specop.y}}">
-				Planet:<input class="spaceUnder" pattern="[0-9]+" type="text" name="I" size="4" value ="{{planet_to_template_specop.i}}">
+				X:<input class="spaceUnder" pattern="[0-9]+" type="text" id="X" name="X" size="4" value ="{{planet_to_template_specop.x}}">
+				Y:<input class="spaceUnder" pattern="[0-9]+" type="text" id="Y" name="Y" size="4" value ="{{planet_to_template_specop.y}}">
+				Planet:<input class="spaceUnder" pattern="[0-9]+" type="text" id="I" name="I" size="4" value ="{{planet_to_template_specop.i}}">
 			</div>
 			<input type="submit" value="Perform">
 		</form> 
@@ -352,7 +421,12 @@ function ghostsCheck() {
 {% if ghost_fleets %}
 	<div style="width:100%; float:left;">
 		Ghost Ships travelling:	
+		{% if status.galsel == 1 %}
 		<form action="/specops" method="POST" name="cancelGhosts" style="margin-bottom: 25px" >
+		{% elif status.galsel == 2 %}
+		<form action="/galtwo/specops" method="POST" name="cancelGhosts" style="margin-bottom: 25px" >
+		{% endif %}
+		
 		{% csrf_token %}
 		<table style="margin: 0 auto;">
 		<tr>
@@ -382,8 +456,10 @@ function ghostsCheck() {
 {% endif %}	
 	<div style="width:100%; float:left;">
 		<div class="ops_box spaceUnder">
+		{% if inca_in.count > 0 %}
 		<b>Incantations affecting your faction:</b><br>
 			{% for g in inca_in%}
+				{% if status.galsel == 1 %}
 				{% if g.name == "Planetary Shielding" %}
 				<a href="/planet{{g.planet.id}}">{{g.planet.x}},{{g.planet.y}}:{{g.planet.i}}</a> {{g.name}} of {{g.specop_strength}} for {{g.ticks_left}} weeks.<br>
 				{% elif g.name == "Portal Force Field" %}
@@ -393,13 +469,32 @@ function ghostsCheck() {
 				{% else %}
 				{{g.name}} of {{g.specop_strength}}% from <a href="/account{{g.user_from.userstatus.id}}">{{g.user_from.userstatus.user_name}}</a> for {{g.ticks_left}} weeks.<br>
 				{% endif %}
+				{% elif status.galsel == 2 %}
+				{% if g.name == "Planetary Shielding" %}
+				<a href="/galtwo/planet{{g.planet.id}}">{{g.planet.x}},{{g.planet.y}}:{{g.planet.i}}</a> {{g.name}} of {{g.specop_strength}} for {{g.ticks_left}} weeks.<br>
+				{% elif g.name == "Portal Force Field" %}
+				<a href="/galtwo/planet{{g.planet.id}}">{{g.planet.x}},{{g.planet.y}}:{{g.planet.i}}</a> {{g.name}} of {{g.specop_strength}}% for {{g.ticks_left}} weeks from <a href="/galtwo/account{{g.user_from.userstatus.id}}">{{g.user_from.galtwouser.user_name}}</a>.<br>
+				{% elif g.name == "Vortex Portal" %}
+				{{g.name}} for {{g.ticks_left}} weeks at {{g.planet.x}}, {{g.planet.y}}<br>
+				{% else %}
+				{{g.name}} of {{g.specop_strength}}% from <a href="/galtwo/account{{g.user_from.userstatus.id}}">{{g.user_from.galtwouser.user_name}}</a> for {{g.ticks_left}} weeks.<br>
+				{% endif %}
+				{% endif %}
+				
 			{% endfor %}
+		{% endif %}
 		</div>
 		<div id="dvtext2" class="ops_box2">
+		{% if inca_out.count > 0 %}
 			<b>Your incantations on other factions:</b><br>
 			{% for g in inca_out%}
+				{% if status.galsel == 1 %}
 				<a href="/planet{{g.planet.id}}">{{g.planet.x}},{{g.planet.y}}:{{g.planet.i}}</a> {{g.name}} of {{g.specop_strength}}% on <a href="/account{{g.user_to.userstatus.id}}">{{g.user_to.userstatus.user_name}}</a> for {{g.ticks_left}} weeks.<br>
+				{% elif status.galsel == 2 %}
+				<a href="/galtwo/planet{{g.planet.id}}">{{g.planet.x}},{{g.planet.y}}:{{g.planet.i}}</a> {{g.name}} of {{g.specop_strength}}% on <a href="/galtwo/account{{g.user_to.userstatus.id}}">{{g.user_to.galtwouser.user_name}}</a> for {{g.ticks_left}} weeks.<br>
+				{% endif %}
 			{% endfor %}
+		{% endif %}
 		</div>
 	</div>
 </div>

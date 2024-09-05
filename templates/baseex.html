@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+{% load mathfilters %}
+
+<head>
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="{% static 'icon.jpg' %}">
+
+{% block title %}<title>Ectroverse</title>{% endblock %}
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+<!-- Add additional CSS in static file -->
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+<!-- Bootstrap stuff -->
+<!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"> -->
+<!--<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">-->
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>-->
+
+<!-- Our CSS should come after everything else -->
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+<style type="text/css">
+body
+{
+    background-image:url("/static/background.gif");
+}
+
+
+
+@media all and (max-width: 660px) {
+	.hide_pop {display: none;}
+	.content-desktop {display: none;}
+	.content-mobile-menu, .content-mobile-menu .content-mobile {display: block;}
+	.left_menu_large_scrn {display:none;}
+	.right_side{
+	width: 100%;
+	height: 100%
+	}
+
+	.left_box, .right_box {
+		width: 100%;
+		}
+
+	.center_box_inside {
+		text-align: left;
+	}
+
+	.show_only_on_wide_scrn{
+		display: none;
+	}
+
+}
+
+@media all and (min-width: 661px) {
+	.left_menu_large_scrn{
+	min-width: 175px;
+	}
+	.right_side{
+	left: 180px;
+	right: 0px;
+	}
+	.show_only_on_mobile{
+		display: none;
+	}
+}
+
+@media all and (min-width: 661px) and (max-width: 837px) {
+	.content-mobile {display: block;}
+	.content-desktop, .content-mobile-menu {display: none;}
+}
+
+@media all and (min-width: 838px){
+	.content-desktop {display: block;}
+	.content-footer {display: block; position: absolute;
+            bottom: 0px;}
+	.content-mobile, .content-mobile-menu {display: none;}
+
+}
+</style>
+
+</head>
+
+
+<body style="
+   width:100%;
+   margin:0 0 0 0;
+   max-width:100%;
+   overflow-x:hidden;">
+
+{% if user.is_authenticated %}
+
+  <div class="right_side">
+	<!-- Main area content -->
+	{% include "box_top.html" with heading=page_title minwidth="300px" textalign="center"  %}
+		{% block content %}
+		{% endblock %}
+	{% include "box_bottom.html" %}
+  </div>
+</div>
+
+
+{% else %}
+
+YOU SHOULD NEVER BE ABLE TO GET TO THIS PAGE!! THE VIEW REQUIRES AUTHENTICATION!
+
+{% endif %}
+
+</div>
+
+</body>
+</html>

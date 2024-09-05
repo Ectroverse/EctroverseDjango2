@@ -6,7 +6,11 @@
 
 
 <td bgcolor="#0b1119" align="center"><br>
+{% if status.galsel == 1 %}
 <form action="/raze{{planet.id}}/" method="POST">
+{% elif status.galsel == 2 %}
+<form action="/galtwo/raze{{planet.id}}/" method="POST">
+{% endif %}
 {% csrf_token %}
 
 {% if top_msg %}
@@ -16,9 +20,9 @@
 
 
 <input type="hidden" value="4300" name="id">
-There are 1927 buildings on this planet. This planet can support 202 buildings, additional ones will be very expensive.
+There are {{planet.total_buildings}} buildings on this planet. This planet can support {{planet.size}} buildings, additional ones will be very expensive.
 <br>
-The overbuilding penalty for this planet is 9000.41%
+The overbuilding penalty for this planet is {{planet.overbuilt_percent|floatformat:2}}
 <br><br><br>
 <table width="200">
     {% if planet.solar_collectors > 0 %}
@@ -152,9 +156,16 @@ The overbuilding penalty for this planet is 9000.41%
 <input type="submit" value="Raze">
 </form>
 <br><br>
+{% if status.galsel == 1 %}
 <a href="/planet{{planet.id}}">View planet</a>
 <br><br>
 <a href="/system{{system}}">View system</a>
+{% elif status.galsel == 2 %}
+<a href="/galtwo/planet{{planet.id}}">View planet</a>
+<br><br>
+<a href="/galtwo/system{{system}}">View system</a>
+{% endif %}
+
 
 
 {% endblock %}

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="{% static 'icon.jpg' %}">
+
+{% block title %}<title>Ectroverse</title>{% endblock %}
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<style type="text/css">
+
+<!-- Somehow if we put background-image into css it doesnt work with @media-->
+
+.front_parent2{
+	position: relative;
+	width: 100%;
+}
+
+.front_bck06{
+	height: 75px;
+	background-image: url("/static/ectro_12.jpg");
+	width: 100%;
+}
+
+.front_imgBox  {
+    position:relative;
+    width: 660px; height: 75px;
+	background-image:url("/static/ectro_13.jpg");
+}
+
+
+
+.left_box, .right_box {
+	width: 100%;
+	}
+
+
+	
+
+.front_top_logo {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+  background-image:url("/static/evlogo4.jpg");
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+@media all and (max-width: 660px) {
+    .front_parent {display:none;}
+	.front_parent2 {display:block;}
+
+}
+
+@media all and (min-width: 661px) {
+    .front_parent {display:block;}
+	.front_parent2 {display:none;}
+}
+
+ @media only screen and (max-width : 660px) {
+	.front_login, .front_news {
+		width: 100%;
+	}
+
+ }
+
+td {
+  font-size: 1.25em;
+  padding-bottom: 0.5em;
+} 
+
+input[type=submit] {
+    background:black;
+    border:0 none;
+    cursor:pointer;
+    float: left;
+    text-align: center;
+    padding: 0px 12px;
+    text-decoration: none;
+    font-size: 14px;
+	color: white;
+}
+
+input[type=submit]:hover{
+     background: #ddd;
+	 color:black;
+}
+
+</style>
+
+
+    
+</head>
+<body style="font-family:Verdana;
+   color:#aaaaaa; 
+   background-image: url('/static/background.gif');   
+   min-width:360px;        
+   display: inline-block;
+   width:100%;
+   margin:0 0 50px 0;
+   "
+   >
+
+
+
+<div class="front_parent" style="overflow:auto">
+  <img class="front_image1" src="{% static 'ectro_03.jpg' %}" />
+  
+  <div class="front_bck06 ">
+  <img class=" front_image1" src= "{% static 'ectro_06.jpg' %}" />
+  </div>
+
+  <img class="front_image1" src= "{% static 'ectro_09.jpg' %}"  />
+
+  <div class="front_bck06 " width="100%">
+	  <div class="front_image1 front_imgBox ">
+		<div class="topnav ">
+			<div class="topnav_inner ">
+			<form action="/portal" name="one" method="POST">
+			{% csrf_token %}
+			<input type="submit" name = "one" value="10 Minutes"></form>
+			<form action="/portal" name="ten" method="POST">
+			{% csrf_token %}
+			<input type="submit" name = "ten" value="30 Seconds"></form>
+			<a href="/update">Update Notes</a>
+			<a href="https://discord.com/invite/UXyUAV9V" target="_blank">Discord</a>
+			<a href="/guide">Guide</a>
+			{{msg}}
+			</div>
+		</div>
+	  </div>
+   </div>
+</div>
+
+
+
+<div class="front_parent2" >
+	 <div class="front_top_logo">
+		<div class="topnav ">
+			<div class="topnav_inner ">
+				<div class="front_imgText2 " align="center">
+					</div>
+					<form action="/portal" name="one" method="POST">
+			{% csrf_token %}
+			<input type="submit" name = "one" value="10 Minutes"></form>
+			<form action="/portal" name="ten" method="POST">
+			{% csrf_token %}
+			<input type="submit" name = "ten" value="1 Minute"></form>
+				<div class="dropup">
+					  <input type="image" src="{% static 'hamburger.png' %}" style="height:25px; padding:0px 25px" class="dropbtn"/>
+					  <div class="dropup-content">
+					  <a href="/update">Update Notes</a>
+					  <a href="https://discord.com/invite/UXyUAV9V" target="_blank">Discord</a>
+						<a href="/guide">Guide</a>
+					  </div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+</body>
+
+
+{% block content %}
+
+<div class="display_box" style="width:85%" >
+	<div class="display_box_header">
+		<div class="display_box_header_left"></div>
+		<div class="display_box_header_center">
+			<div class="display_box_header_center_content">Update Notes 21/03/2024</div>
+		</div>
+		<div class="display_box_header_right"></div>
+	</div>
+	<div class="display_box_content" style =" margin: 0 auto;" >
+		<div class="display_box_content_left"></div>
+		<div class="display_box_content_center"  >
+		<label><b><u>Operations</u></b></label>
+		<br>- Hack Mainframe has had difficulty increased, no longer stacks
+		<br>- Network Infiltration has had difficulty increased and maximum lost research capped at 3%
+		<br>- Nuke Planet has had a 50% cost increase but difficulty has been halved
+		<br><br><label><b><u>Game Flow</u></b></label>
+		<br>- Fleet orders now appear under the travelling fleet rather than opening a new page
+		<br>- Trial map opens systems/ planets on top of the map rather than opening a new page, when playing around on testing things like attacking could be done at a much faster pace
+		<br><br><label><b><u>Maps and Systems</u></b></label>
+		<br>- Map now displays home image
+		<br>- Systems show travelling fleets from empire
+		<br>- Portals swapped from text to image in system view, stationed fleet image added (planets page too)
+		<br><br><label><b><u>Misc</u></b></label>
+		<br>- Defense Satalites and Shield Networks no longer contribute to overall overbuilt %. This was always the case previously. Note that while under construction they <u>DO</u> count towards OB%
+		<br>- Maximum base planet size has been increased from 600 to 800
+		<br>- More bonus planets added from the start
+		<br>- Flying Dutchman no longer scouts home systems and produces planet information in news
+		<br>- Activity is now shown in empire page
+		<br>- Portal coverage returned to battle page
+		<br><br><label><b><u>Independant</u></b></label>
+		<br>- Marking a user independant reduces FR to 1/3
+		<br>- This is for all users, however being in the same empire you get 1/3 then a further 1/3
+		<br>- Once all other planets have been taken, attacking the home planet removes the user from the empire
+		<br>- Whoever clears the last planet also receives all resources from the independant user
+		<br><br><label><b><u>Fast tick</u></b></label>
+		<br>- New Race, the Jackos (Jack of all trades) check races page for information
+		<br>- New race also has a new op, 'Spoil Resources' causing mineral and ectrolium to decay
+		<br>- The Necro arti returns, massively reduced in power (only population now refills Necros, scales at a lower % the more population killed)
+		<br>- Military Sabotage destroys Necros
+		<br>- 15 total Artefacts
+
+		{% include "box_bottom.html" %}
+</div>
+</div>
+
+</div>
+
+<div class="display_box" style="width:85%" >
+	<div class="display_box_header">
+		<div class="display_box_header_left"></div>
+		<div class="display_box_header_center">
+			<div class="display_box_header_center_content">Update Notes 04/03/2024</div>
+		</div>
+		<div class="display_box_header_right"></div>
+	</div>
+	<div class="display_box_content" style =" margin: 0 auto;" >
+		<div class="display_box_content_left"></div>
+		<div class="display_box_content_center"  >
+		- Tweaked some ops, more balanced
+		<br>- Empires reduced to 10, random will now fill empires. To join and play solo, choose an empire number and set the password
+		<br>- Fleet orders now display current position
+		<br>- Artefacts now show in system view if scouted
+		<br>- Terraformer produces a seperate bonus for each Empire member
+		<br>- Advanced Robotics now effects Spells, Operations and Incantations
+		<br>- Selecting planets and then choosing a building type and confirming, will raze all of that buildings from selected planets
+		{% include "box_bottom.html" %}
+</div>
+</div>
+
+</div>
+
+<div class="display_box" style="width:85%" >
+	<div class="display_box_header">
+		<div class="display_box_header_left"></div>
+		<div class="display_box_header_center">
+			<div class="display_box_header_center_content">Update Notes 20/02/2024</div>
+		</div>
+		<div class="display_box_header_right"></div>
+	</div>
+	<div class="display_box_content" style =" margin: 0 auto;" >
+		<div class="display_box_content_left"></div>
+		<div class="display_box_content_center"  >
+		<label><b><u>Map and Systems</u></b></label>
+		<br>- Currently under trial map, will be pushed to be the main map going forward. Gives much better results in terms of map settings and speed difference is minimal
+		<br>- Systems had to be tweaked to display multiple map settings, also resulting in faster speeds. Changes to scouting also required the change
+		<br><br><label><b><u>Scouting</u></b></label>
+		<br>- Large overhaul to scouting, now Empire based rather than individual
+		<br>- Has been optimised, resulting in faster loading pages in maps, systems and scouting page
+		<br><br><label><b><u>Operations</u></b></label>
+		<br>- Hack Mainframe time reduced from 48 to 32 ticks (maximum)
+		<br>- Vortex portal has been tweaked to give fairer results, maximum time upped from 48, to 144 ticks
+		<br><br><label><b><u>NAPs</u></b></label>
+		<br>- Changed how NAPs are offered, now have a set 24 and 48hr cancellation time
+		<br>- NAPs can be accepted and cancelled from the relations page if Leader
+		<br><br><label><b><u>Battle</u></b></label>
+		<br>- Stationed units now working
+		<br>- Portal coverage is now calculated every battle, rather than every tick on defence. This caused a delay in both building a portal and losing a portal previously
+		<br><br><label><b><u>Final Notes</u></b></label>
+		<br>Lots and lots of other little bugs tweaked and fixed, hopefully light at the end of the tunnel. Working on a fix to razing individual buildings, this will be completed before round start.
+		{% include "box_bottom.html" %}
+</div>
+</div>
+
+</div>
+
+<div class="display_box" style="width:85%" >
+	<div class="display_box_header">
+		<div class="display_box_header_left"></div>
+		<div class="display_box_header_center">
+			<div class="display_box_header_center_content">Update Notes 08/02/2024</div>
+		</div>
+		<div class="display_box_header_right"></div>
+	</div>
+	<div class="display_box_content" style =" margin: 0 auto;" >
+		<div class="display_box_content_left"></div>
+		<div class="display_box_content_center"  >
+		<label><b><u>Galaxies</u></b></label>
+		<br>- Created a second galaxy, this is completely seperate from the main galaxy and can run with different options<br>
+		- To achieve this I had to change the login format so now you are directed to a portal
+		<br>- To access each galaxy, click the links as above, 10 Minutes will take you to one galaxy, 1 Minute the other.
+		<br>- Returning to the portal and selecting the other will swap which galaxy you enter.
+		<br>- You can play one or the other, or both if so desired<br>
+		<br><label><b><u>Quality of life</u></b></label>
+		<br>- Added the option from PM Options to give other Empire member roles, roles dont really serve a purpose yet.
+		<br>- Selecting a planet or system will now display how far away that system is in weeks
+		<br>- Offering planets has been added, it will only show on eligible planets. The offered planet will show in news on Headquarters along with an accept button.
+		Accepting a planet costs FR (although minimal compared to exploring) and destroys 20% of the buildings. This is to deter from using a smaller Empire member 
+		with better construction building and passing
+		<br>- The map has been trimmed so speed up loading time, I still have one more thing to try so may change before round starts
+		<br>- The tick script has been optimised resulting in a 10x completion time
+		<br>- Password reset has been fixed<br>
+		- Hack Mainframe has returned to stacking, with a maximum effectiveness of 15% versus 20%. Income to the user has been upped from 20% to 25%<br>
+		<br><label><b><u>10 Minutes galaxy</u></b></label>
+		<br>- 3 man empires as the last round
+		<br>- Artefacts have been reduced to 9
+		<br>- Map is half the size of last time as travel time would take hours 75x75
+		<br>- Upped from 15 Empires to 19 (+ Admin)
+		<br><br><b><u><label>1 Minute galaxy</u></b></label>
+		<br>- 1 man empires, upto 49 (+ Admin)
+		<br>- 13 Artefacts
+		<br>- I still need to finish off some of the links in each page (I have tested everything but manually adjusted in the browser bar). I will finish this tomorrow
+		 and open registration.
+		<br>- Map as last time, 150x150
+		<br><br><label><b><u>Final Notes</u></b></label>
+		<br>- Plenty has been tweaked and may yet still not be perfect, please bare this in mind
+		<br>- Still need to finish off some of the pages to stop items "exploding" from the containers, more for Mobile users
+		
+		{% include "box_bottom.html" %}
+</div>
+</div>
+
+</div>
+	
+
+
+
+{% endblock %}
+<footer>
+{% include "footer.html" %}
+</footer>
+
+</html>
