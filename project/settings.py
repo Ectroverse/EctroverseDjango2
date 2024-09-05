@@ -183,10 +183,10 @@ EMAIL_USE_TLS = True
 
 EMAIL_HOST = 'smtp.zoho.eu'
 
-EMAIL_HOST_USER = 'admin@ectroverse.co.uk'
+EMAIL_HOST_USER = 'ev@ev.com'
 
 #Must generate specific password for your app in [gmail settings][1]
-EMAIL_HOST_PASSWORD = 'Beau@8613'
+EMAIL_HOST_PASSWORD = 'password'
 
 EMAIL_PORT = 587
 
