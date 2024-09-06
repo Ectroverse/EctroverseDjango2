@@ -4,24 +4,13 @@ Put your name after an item if you want to reserve it for yourself, not all item
 
 #### v0.1 Remaining Items
 left to do:
-- incantations
 - any bugs?
 
 #### v0.2 Remaining Items
 
-- add proper design to rankings tables
-- add deletion possibility to account
-- forum
-- email password recovery
-- round ranks for past rounds
-
-#### v0.3 Remaining Items
-
 - new player tutorial
-- map bonuses? ancients
-- do we need the market?
+- finish Guide
 - add device fingerprinting to prevent double accounts
-- add sliders for mobile version forms
 
 ## Getting it setup on a new machine:
 
@@ -36,6 +25,7 @@ left to do:
 6. `python manage.py collectstatic --noinput`
 7. `python manage.py generate_planets` (can take a while if its a big galaxy with a lot of planets)
 8. go to http://127.0.0.1:8000, log in as admin, and choose a race
+8.1 you may need to go to Round Status in admin panel and add 1 entry if none are present
 9. `python manage.py generate_artefacts`
 10. `cd java`
 11. `javac *.java -d .` - if wasnt allready compiled into bytecode
@@ -127,6 +117,3 @@ to kill it:
 
 ##Django shell
 `python manage.py shell`
-
-##ME
-cd /root/Documents/EctroverseDjango
