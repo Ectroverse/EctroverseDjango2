@@ -21,86 +21,103 @@ def random_combination(iterable, r):
 
 
 def fill_system(x,y):
-    planet_buffer_fill = []
-    planets_in_system = np.random.randint(1,9) # max of 8 planets per system with the way we are visualizing it
-    positions = random_combination(range(8), planets_in_system)
-    bonus = np.random.randint(1,17)
-    if bonus <= 7:
-        for i in range(planets_in_system):
-            size = planet_size_distribution()
-            planet_buffer_fill.append(Planet(home_planet=False,
-                                             x=x,
-                                             y=y,
-                                             i=i,
-                                             pos_in_system=positions[i],
-                                             current_population=size*20,
-                                             max_population=size*200,
-                                             size=size)) # create is the same as new() and add()
-    elif bonus <= 10:
-        for i in range(planets_in_system):
-            size = planet_size_distribution()
-            bonus = np.random.randint(1,3)
-            bonus_no = 0
-            if bonus == 1:
-                bonus_no = np.random.randint(10,101)
-            planet_buffer_fill.append(Planet(home_planet=False,
-                                             x=x,
-                                             y=y,
-                                             i=i,
-                                             pos_in_system=positions[i],
-                                             current_population=size*20,
-                                             max_population=size*200,
-                                             bonus_solar=bonus_no,
-                                             size=size)) # create is the same as new() and add()
-    elif bonus <= 12:
-        for i in range(planets_in_system):
-            size = planet_size_distribution()
-            bonus = np.random.randint(1,3)
-            bonus_no = 0
-            if bonus == 1:
-                bonus_no = np.random.randint(10,101)
-            planet_buffer_fill.append(Planet(home_planet=False,
-                                             x=x,
-                                             y=y,
-                                             i=i,
-                                             pos_in_system=positions[i],
-                                             current_population=size*20,
-                                             max_population=size*200,
-                                             bonus_mineral=bonus_no,
-                                             size=size)) # create is the same as new() and add()
-    elif bonus <= 14:
-        for i in range(planets_in_system):
-            size = planet_size_distribution()
-            bonus = np.random.randint(1,4)
-            bonus_no = 0
-            if bonus == 1:
-                bonus_no = np.random.randint(10,101)
-            planet_buffer_fill.append(Planet(home_planet=False,
-                                             x=x,
-                                             y=y,
-                                             i=i,
-                                             pos_in_system=positions[i],
-                                             current_population=size*20,
-                                             max_population=size*200,
-                                             bonus_crystal=bonus_no,
-                                             size=size)) # create is the same as new() and add()
-    else:
-        for i in range(planets_in_system):
-            size = planet_size_distribution()
-            bonus = np.random.randint(1,4)
-            bonus_no = 0
-            if bonus == 1:
-                bonus_no = np.random.randint(10,101)
-            planet_buffer_fill.append(Planet(home_planet=False,
-                                             x=x,
-                                             y=y,
-                                             i=i,
-                                             pos_in_system=positions[i],
-                                             current_population=size*20,
-                                             max_population=size*200,
-                                             bonus_ectrolium=bonus_no,
-                                             size=size)) # create is the same as new() and add() 
-    return planet_buffer_fill
+    system = System.objects.filter(x=x, y=y).first()
+    if system is None:
+        planet_buffer_fill = []
+        planets_in_system = np.random.randint(1,9) # max of 8 planets per system with the way we are visualizing it
+        positions = random_combination(range(8), planets_in_system)
+        bonus = np.random.randint(1,17)
+        
+        sid = np.random.randint(1,5)
+        if sid == 1:
+            simg = "/static/map/s1.png"
+        if sid == 2:
+            simg = "/static/map/s2.png"
+        if sid == 3:
+            simg = "/static/map/s3.png"
+        if sid == 4:
+            simg = "/static/map/s4.png"
+        if sid == 5:
+            simg = "/static/map/s5.png"
+        
+        System.objects.create(x=x, y=y, img=simg)
+        
+        if bonus <= 7:
+            for i in range(planets_in_system):
+                size = planet_size_distribution()
+                planet_buffer_fill.append(Planet(home_planet=False,
+                                                 x=x,
+                                                 y=y,
+                                                 i=i,
+                                                 pos_in_system=positions[i],
+                                                 current_population=size*20,
+                                                 max_population=size*200,
+                                                 size=size)) # create is the same as new() and add()
+        elif bonus <= 10:
+            for i in range(planets_in_system):
+                size = planet_size_distribution()
+                bonus = np.random.randint(1,3)
+                bonus_no = 0
+                if bonus == 1:
+                    bonus_no = np.random.randint(10,101)
+                planet_buffer_fill.append(Planet(home_planet=False,
+                                                 x=x,
+                                                 y=y,
+                                                 i=i,
+                                                 pos_in_system=positions[i],
+                                                 current_population=size*20,
+                                                 max_population=size*200,
+                                                 bonus_solar=bonus_no,
+                                                 size=size)) # create is the same as new() and add()
+        elif bonus <= 12:
+            for i in range(planets_in_system):
+                size = planet_size_distribution()
+                bonus = np.random.randint(1,3)
+                bonus_no = 0
+                if bonus == 1:
+                    bonus_no = np.random.randint(10,101)
+                planet_buffer_fill.append(Planet(home_planet=False,
+                                                 x=x,
+                                                 y=y,
+                                                 i=i,
+                                                 pos_in_system=positions[i],
+                                                 current_population=size*20,
+                                                 max_population=size*200,
+                                                 bonus_mineral=bonus_no,
+                                                 size=size)) # create is the same as new() and add()
+        elif bonus <= 14:
+            for i in range(planets_in_system):
+                size = planet_size_distribution()
+                bonus = np.random.randint(1,4)
+                bonus_no = 0
+                if bonus == 1:
+                    bonus_no = np.random.randint(10,101)
+                planet_buffer_fill.append(Planet(home_planet=False,
+                                                 x=x,
+                                                 y=y,
+                                                 i=i,
+                                                 pos_in_system=positions[i],
+                                                 current_population=size*20,
+                                                 max_population=size*200,
+                                                 bonus_crystal=bonus_no,
+                                                 size=size)) # create is the same as new() and add()
+        else:
+            for i in range(planets_in_system):
+                size = planet_size_distribution()
+                bonus = np.random.randint(1,4)
+                bonus_no = 0
+                if bonus == 1:
+                    bonus_no = np.random.randint(10,101)
+                planet_buffer_fill.append(Planet(home_planet=False,
+                                                 x=x,
+                                                 y=y,
+                                                 i=i,
+                                                 pos_in_system=positions[i],
+                                                 current_population=size*20,
+                                                 max_population=size*200,
+                                                 bonus_ectrolium=bonus_no,
+                                                 size=size)) # create is the same as new() and add() 
+        return planet_buffer_fill
 
 
 class Command(BaseCommand): # must be called command, use file name to name the functionality
@@ -137,6 +154,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         MapSettings.objects.all().delete()
         Scouting.objects.all().delete()
         Specops.objects.all().delete()
+        System.objects.all().delete()
         Empire.objects.all().delete()  # remove all empires -remove after players
         planet_buffer = [] # MUCH quicker to save them all at once, like 100x faster
         empires_buffer = []
@@ -148,13 +166,6 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         game_round.artetimer = 144
         game_round.artedelay = 5
         game_round.save()
-
-        bots = Bot.objects.all()
-        for b in bots:
-            b.ob = 1
-            b.oba = 300
-            b.save()
-        botattack.objects.all().delete()
 
         # We also need to purge all the non-needed info of players, without actualy deleting them!
         theta = 0
@@ -182,6 +193,20 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                                             max_population=size*population_size_factor,
                                             total_buildings=200,
                                             size=size)) # create is the same as new() and add()
+                                            
+                if i == 0:
+                    sid = np.random.randint(1,5)
+                    if sid == 1:
+                        simg = "/static/map/s1.png"
+                    if sid == 2:
+                        simg = "/static/map/s2.png"
+                    if sid == 3:
+                        simg = "/static/map/s3.png"
+                    if sid == 4:
+                        simg = "/static/map/s4.png"
+                    if sid == 5:
+                        simg = "/static/map/s5.png"
+                    System.objects.create(x=home_x, y=home_y, home=True, img=simg)
 
 
             # Now add N systems in a small area around the home system
@@ -316,53 +341,52 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             status.economy_flag = 0
             status.military_flag = 0
             
-            #if status.id == 1:
-            #    aemp = Empire.objects.get(number=0)
-            #    aemp.numplayers = 1
-            #    aemp.planets = 1
-            #    aemp.password = 123456
-            #    aemp.save()
-            #    ahp = Planet.objects.get(x=aemp.x, y =aemp.y, i=0)
-            #    ahp.owner = status.user
-            #    ahp.current_population = 9000
-            #    ahp.max_population = 90000
-            #    ahp.solar_collectors = 100
-            #    ahp.mineral_plants = 50
-            #    ahp.refinement_stations = 25
-            #    ahp.crystal_labs = 25
-            #    ahp.portal = True
-            #    ahp.save()
-            #    status.home_planet = ahp
-            #    status.race = 'FH'
-            #    status.user_name = "Admin"
-            #    status.num_planets = 1
-            #    status.empire = aemp
-            #    status.empire_role = 'PM'
+            if status.id == 1:
+                aemp = Empire.objects.get(number=0)
+                aemp.numplayers = 1
+                aemp.planets = 1
+                aemp.password = 123456
+                aemp.save()
+                ahp = Planet.objects.get(x=aemp.x, y =aemp.y, i=0)
+                ahp.owner = status.user
+                ahp.current_population = 9000
+                ahp.max_population = 90000
+                ahp.solar_collectors = 100
+                ahp.mineral_plants = 50
+                ahp.refinement_stations = 25
+                ahp.crystal_labs = 25
+                ahp.portal = True
+                ahp.save()
+                status.home_planet = ahp
+                status.race = 'FH'
+                status.user_name = "Admin"
+                status.num_planets = 1
+                status.empire = aemp
+                status.empire_role = 'PM'
             
             status.save()
 
         settings()
-        systems()
         artifacts()
         tgeneral = Artefacts.objects.get(name="The General")
         if tgeneral.effect3 == 1:
             gsyst = System.objects.get(x=tgeneral.on_planet.x, y=tgeneral.on_planet.y)
             tgeneral.effect1 = gsyst.id
             tgeneral.save()
-        msg = "The Regular Round has been Reset! Now 1 man empires and a larger Map. Minimum planet size has been increased. Round will start this Friday July 26th at 2pm UTC."
+        msg = "The Regular Round has been Reset, start time undetermined so far. Potentially looking at a faster fast tick after the current one, while empires are filled."
         NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
-        #dmsg = "<@&1201666532753547315> " + str(msg)
-        #webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
-        #webhook.send(dmsg)
-        #webhk = Webhook.from_url("https://discord.com/api/webhooks/1227218151629000744/MeckPYnnT6hoiznfBz5oxm6pjWdgCXxVLOmLf7kFa78cYpimyDNK1BxgBdQOyZgD9qgu", adapter=RequestsWebhookAdapter())
-        #webhk.send(dmsg)
-        #subject = "A new round is starting soon!"
-        #message = "Hello! \nCan you conquer the Galaxy? \n" + str(msg) + "\n\n https://ectroverse.org"
-        #recievers = []
-        #for user in User.objects.all():
-        #    recievers.append(user.email)
+        dmsg = "<@&1201666532753547315> " + str(msg)
+        webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
+        webhook.send(dmsg)
+        webhk = Webhook.from_url("https://discord.com/api/webhooks/1227218151629000744/MeckPYnnT6hoiznfBz5oxm6pjWdgCXxVLOmLf7kFa78cYpimyDNK1BxgBdQOyZgD9qgu", adapter=RequestsWebhookAdapter())
+        webhk.send(dmsg)
+        subject = "A new round is starting soon!"
+        message = "Hello! \nCan you conquer the Galaxy? \n" + str(msg) + "\n\n https://ectroverse.org"
+        recievers = []
+        for user in User.objects.all():
+            recievers.append(user.email)
 
-        #send_mail(subject, message, "admin@ectroverse.co.uk", recievers)
+        send_mail(subject, message, "admin@ectroverse.co.uk", recievers)
 
         print("Generating planets and resetting users took " + str(time.time() - start_t) + "seconds")
 
