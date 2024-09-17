@@ -19,7 +19,7 @@ left to do:
 0. Copy .env.template to .env (`cp .env.template .env`) and change the secret key if you care about security
 1. `docker-compose up -d`
 2. `docker exec -it ectroversedjango_python_1 /bin/bash`
-3. `python manage.py makemigrations app` (if you are loading an older db, check below in readme, don't do later steps)
+3. `python manage.py makemigrations` (if you are loading an older db, check below in readme, don't do later steps)
 4. `python manage.py migrate`
 5. `python manage.py createsuperuser` create a user named admin, with whatever pass you want, you can skip email
 6. `python manage.py collectstatic --noinput`
