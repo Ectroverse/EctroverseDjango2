@@ -374,11 +374,11 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         settings()
         msg = "The Fast Round has been Reset,  Artefacts have been reworked, somewhat. Round to start tomorrow, 30th September at 3pm UTC."
         NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
-        msg = "<@&1201666532753547315> " + str(msg)
-        webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
-        webhook.send(msg)
-        webhk = Webhook.from_url("https://discord.com/api/webhooks/1227218151629000744/MeckPYnnT6hoiznfBz5oxm6pjWdgCXxVLOmLf7kFa78cYpimyDNK1BxgBdQOyZgD9qgu", adapter=RequestsWebhookAdapter())
-        webhk.send(msg)
+        msg = str(msg)
+        webhook = Webhook.from_url("https://discord.com/api/webhooks/ + YOUR WEBHOOk/BOT", adapter=RequestsWebhookAdapter())
+        webhook.send(dmsg)
+        webhk = Webhook.from_url("https://discord.com/api/webhooks/ + YOUR WEBHOOK/BOT", adapter=RequestsWebhookAdapter())
+        webhk.send(dmsg)
         
         print("Generating Galaxy Two and resetting users took " + str(time.time() - start_t) + "seconds")
 
