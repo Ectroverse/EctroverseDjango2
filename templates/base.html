@@ -42,7 +42,12 @@ body
 	.content-mobile-menu, .content-mobile-menu .content-mobile {display: block;  width: fit-content;}
 	.left_menu_large_scrn {display:none;}
 	.right_side{
+	{% if bare == "Yes" %}
+	width: 100%;
+	height: 100%
+	{% else %}
 	width: fit-content;
+	{% endif %}
 	}
 
 	.left_box, .right_box {
@@ -245,6 +250,11 @@ onload="startTime();">
 
 {% if user.is_authenticated %}
 
+{% if bare == "Yes" %}
+
+  <div class="right_side">
+
+{% else %}
 
 <div class="parent_container">
 <div class="content-wrap">
@@ -341,15 +351,16 @@ onload="startTime();">
 
   </div>
 
+
+
   <div class="right_side">
        {% include "header.html" %}
+{% endif %}
 	<!-- Main area content -->
 	{% include "box_top.html" with heading=page_title minwidth="300px" textalign="center"  %}
 		{% block content %}
 		{% endblock %}
 	{% include "box_bottom.html" %}
-
-
 
 {% else %}
 

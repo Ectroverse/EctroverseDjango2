@@ -26,10 +26,10 @@ public class ProcessTick
 				+ " pop_rc DOUBLE PRECISION, race_pop_growth DOUBLE PRECISION, user_id IN \"PLANETS\".ID%TYPE)"
 				+ "LANGUAGE SQL"
 				+ " AS $$"
-				+ " UPDATE \"PLANETS\" SET max_population = (" + 
-				+ building_production_cities + " * cities +  size * " + population_size_factor + ") *pop_rc WHERE owner_id = user_id;" 
+				+ " UPDATE \"PLANETS\" SET max_population = ((" + 
+				+ building_production_cities + " * cities +  size * " + population_size_factor + ") *pop_rc) WHERE owner_id = 1;" 
 				+ " UPDATE \"PLANETS\" SET current_population = "
-				+ "greatest(least(current_population + current_population * pop_rc * race_pop_growth, max_population),100) WHERE owner_id = user_id;" 
+				+ "(greatest(least(current_population + current_population * pop_rc * race_pop_growth, max_population),3000)) WHERE owner_id = 1;" 
 				+ " $$;";
 			
 			Statement statementSP = tmpCon.createStatement();
@@ -200,7 +200,9 @@ public class ProcessTick
 		ResultSet GL = statement.executeQuery("SELECT ticks_left FROM galtwo_artefacts WHERE name = 'The General' ");
 		GL.next();
 		int GLA = GL.getInt("ticks_left");
-
+		ResultSet TJ = statement.executeQuery("SELECT ticks_left FROM app_artefacts WHERE name = 'Tyrs Justice' ");
+		TJ.next();
+		int TJA = TJ.getInt("ticks_left");
 		
 		if(TFA >= 1){
 		    statement.execute("UPDATE galtwo_artefacts SET ticks_left = ticks_left - 1 WHERE name = 'Terraformer';");
@@ -229,7 +231,13 @@ public class ProcessTick
 		if(GLA >= 1){
 		    statement.execute("UPDATE galtwo_artefacts SET ticks_left = ticks_left - 1 WHERE name = 'The General';");
 		    }
-					
+		
+		//update justic
+		
+		if(TJA >= 1){
+		    statement.execute("UPDATE galtwo_artefacts SET ticks_left = ticks_left - 1 WHERE name = 'Tyrs Justice';");
+		    }
+		
 		//update fleet construction time
 		statement.execute("UPDATE galtwo_unitconstruction SET ticks_remaining = ticks_remaining - 1;");
 		
@@ -426,6 +434,8 @@ public class ProcessTick
 				(racebonus * population / popcount) )  / 100
 				));				
 				
+				double raceMax = race_info.getOrDefault(researchNames[i][3], 200.0);
+				
 				long rpoints = 0;
 				ResultSet rabbitSet = statement4.executeQuery("SELECT * FROM galtwo_artefacts WHERE name = 'Rabbit Theorum' AND empire_holding_id = " + empireID);
 			    while (rabbitSet.next()){
@@ -437,16 +447,22 @@ public class ProcessTick
 				    rc += rpoints;}
 			    }
 				
-				rc = Math.max(0, rc);
-				totalRcPoints += rc;
-				userStatusUpdateStatement.setLong(15 + i, rc);
-				double raceMax = race_info.getOrDefault(researchNames[i][3], 200.0);
+				long ppoints = 0;
 				
 				ResultSet quantumSet = statement4.executeQuery("SELECT * FROM galtwo_artefacts WHERE name = 'Playboy Quantum' AND empire_holding_id = " + empireID);
 			    while (quantumSet.next()){
 				    if (i == 7){
-				    raceMax += 50.0;}
+				    raceMax += 100;
+				    ppoints = (long) (research_modifier * (enlightenmentResearchFactor * 1.2 * race_info.get(researchNames[i][1])  * userIntValues.get(researchNames[i][2])
+				    * (userPlanetsUpdate.getResearchProduction() + userLongValues.get("current_research_funding")/100 + 
+				    (racebonus * population / popcount) )  / 100
+				    ));
+				    rc += ppoints/2;}
 			    }
+				
+				rc = Math.max(0, rc);
+				totalRcPoints += rc;
+				userStatusUpdateStatement.setLong(15 + i, rc);
 				
 				long nw = userLongValues.get("networth");
 				int rcPercent = (int) Math.floor(raceMax * (1.0 - Math.exp(rc / (-10.0 * nw))));
@@ -543,10 +559,22 @@ public class ProcessTick
 				units_upkeep += (long)(units_upkeep_costs[i] * unitsSums[i]);
 				networth += (long)(unitsSums[i] * units_nw[i]);
 			}
+			
+			//general with might
+			
+			ResultSet GEN = statement.executeQuery("SELECT empire_holding_id FROM galtwo_artefacts WHERE name = 'The General' ");
+		    GEN.next();
+		    int GENM = GEN.getInt("empire_holding_id");
+			
 			//Military might artefact
 			artefactSet = statement4.executeQuery("SELECT * FROM galtwo_artefacts WHERE name = 'Military Might' AND empire_holding_id = " + empireID);
 			while (artefactSet.next()){
+				if (GENM == empireID){
+					units_upkeep *= 1.0 - (artefactSet.getInt("effect1")*2) / 100.0;
+				}
+				else{
 				units_upkeep *= 1.0 - artefactSet.getInt("effect1") / 100.0;
+				}
 			}
 			
 			userStatusUpdateStatement.setLong(35, units_upkeep);

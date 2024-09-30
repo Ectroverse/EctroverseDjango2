@@ -37,6 +37,7 @@ def give_first_planet(user, status, planet):
     MapSettings.objects.create(user=status.user, map_setting="YP", color_settings="B")
     MapSettings.objects.create(user=status.user, map_setting="YR", color_settings="Y")
     MapSettings.objects.create(user=status.user, map_setting="UE", color_settings="G")
+    MapSettings.objects.create(user=status.user, map_setting="SS", color_settings="W")
     MapSettings.objects.create(user=status.user, map_setting="SC", color_settings="W")
 
 def give_first_fleet(main_fleet):
@@ -70,6 +71,18 @@ def find_bounding_circle(systems):
     # algorithm would have an artificially limited number of point it could process.
     C, r2 = miniball.get_bounding_ball(S)
     return C
+
+def travel_speed(status):
+    speed = race_info_list[status.get_race_display()]["travel_speed"]
+    speed_boost_enlightement = 1
+    if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
+        en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
+        speed_boost_enlightement = (1 + en.specop_strength / 100)
+    speed *= speed_boost_enlightement
+    bhole_art = Artefacts.objects.get(name="Blackhole")
+    if bhole_art.empire_holding == status.empire:
+        speed *= 1.6
+    return speed
 
 # option value="0" Attack the planet
 # option value="1" Station on planet
@@ -312,11 +325,7 @@ def send_agents_ghosts(status, agents, ghost, x, y, i, specop):
         return "You need at least one portal to send the fleet from!"
     best_portal_planet = find_nearest_portal(x, y, portal_planets, status)
     min_dist = np.sqrt((best_portal_planet.x - x) ** 2 + (best_portal_planet.y - y) ** 2)
-    speed_boost_enlightement = 1
-    if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed").exists():
-        en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-        speed_boost_enlightement *= (1 + en.specop_strength / 100)
-    speed = race_info_list[status.get_race_display()]["travel_speed"]* speed_boost_enlightement
+    speed = travel_speed(status)
     fleet_time = max(0,int(np.floor(min_dist / speed)))
     agent_fleet = Fleet.objects.create(owner=status.user,
                          command_order=6,
@@ -354,11 +363,7 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
         return "You need at least one portal to send the fleet from!"
     best_portal_planet = find_nearest_portal(x, y, portal_planets, status)
     min_dist = np.sqrt((best_portal_planet.x - x) ** 2 + (best_portal_planet.y - y) ** 2)
-    speed_boost_enlightement = 1
-    if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed").exists():
-        en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-        speed_boost_enlightement *= (1 + en.specop_strength / 100)
-    speed = race_info_list[status.get_race_display()]["travel_speed"]* speed_boost_enlightement
+    speed = travel_speed(status)
     fleet_time = max(0,int(np.floor(min_dist / speed)))
     ghost_fleet = Fleet.objects.create(owner=status.user,
                          command_order=7,
@@ -378,17 +383,18 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     if fleet_time < 1:
         if ghost > 0:
             msg = perform_incantation(ghost_fleet)
-            main_fleet.ghost += ghost_fleet.ghost
-            main_fleet.save()
-            ghost_fleet.delete()
+            if specop != "Call to Arms":
+                main_fleet.ghost += ghost_fleet.ghost
+                main_fleet.save()
+                ghost_fleet.delete()
     return msg
 
 def build_on_planet(status, planet, building_list_dict):
     # Make sure its owned by user
 
     # Create list of building classes, it's making 1 object of each
-    building_list = [SolarCollectors(), FissionReactors(), MineralPlants(), CrystalLabs(), RefinementStations(),
-                     Cities(), ResearchCenters(), DefenseSats(), ShieldNetworks(), Portal()]
+    building_list = [SolarCollector(), FissionReactor(), MineralPlant(), CrystalLab(), RefinementStation(),
+                     Citie(), ResearchCenter(), DefenseSat(), ShieldNetwork(), Portals()]
 
     # Might be a cleaner way to do it that ties it more directly with the model
 
@@ -412,7 +418,7 @@ def build_on_planet(status, planet, building_list_dict):
                 if artesn.empire_holding == status.empire:
                     if building.building_index == 8:
                         tech = 140
-                total_resource_cost, penalty = building.calc_cost(num, status.research_percent_construction,
+                total_resource_cost, penalty = building.calc_costs(num, status.research_percent_construction,
                                                                   tech, status)
 
                 if not total_resource_cost:
@@ -426,7 +432,7 @@ def build_on_planet(status, planet, building_list_dict):
                 total_buildings = planet.total_buildings - (planet.defense_sats + planet.shield_networks + pportal)
                 
                 total_resource_cost = ResourceSet(total_resource_cost)  # convert to more usable object
-                if isinstance(building, Portal):
+                if isinstance(building, Portals):
                     ob_factor = 1
                 else:
                     ob_factor = calc_overbuild_multi(planet.size,
@@ -439,11 +445,11 @@ def build_on_planet(status, planet, building_list_dict):
                     msg += 'Not enough resources to build ' + building.label + '<br>'
                     continue
 
-                if isinstance(building, Portal) and planet.portal:
+                if isinstance(building, Portals) and planet.portal:
                     msg += '<br>A portal is already on this planet!<br>'
                     continue
 
-                if isinstance(building, Portal) and planet.portal_under_construction:
+                if isinstance(building, Portals) and planet.portal_under_construction:
                     msg += '<br>A portal is already under construction on this planet!<br>'
                     continue
                 

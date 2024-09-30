@@ -155,6 +155,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         Scouting.objects.all().delete()
         Specops.objects.all().delete()
         System.objects.all().delete()
+        Sensing.objects.all().delete()
         Empire.objects.all().delete()  # remove all empires -remove after players
         planet_buffer = [] # MUCH quicker to save them all at once, like 100x faster
         empires_buffer = []
@@ -368,12 +369,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
 
         settings()
         artifacts()
-        tgeneral = Artefacts.objects.get(name="The General")
-        if tgeneral.effect3 == 1:
-            gsyst = System.objects.get(x=tgeneral.on_planet.x, y=tgeneral.on_planet.y)
-            tgeneral.effect1 = gsyst.id
-            tgeneral.save()
-        msg = "The Regular Round has been Reset, start time undetermined so far. Potentially looking at a faster fast tick after the current one, while empires are filled."
+        msg = "The Regular Round has been Reset, starting Tuesday 1st October at 3pm UTC."
         NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
         dmsg = "<@&1201666532753547315> " + str(msg)
         webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())

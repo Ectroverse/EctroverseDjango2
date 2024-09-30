@@ -18,7 +18,6 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         
         if arte.empire_holding != None:
             user = UserStatus.objects.filter(empire=arte.empire_holding).first()
-            users = UserStatus.objects.filter(empire=arte.empire_holding)
             system = random.choice(System.objects.filter(home=False))
             planets = Planets.objects.filter(x=system.x, y=system.y).order_by("i")
             planet = Planets.objects.get(x=system.x, y=system.y, i=0)
@@ -71,33 +70,18 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                     news_message += "\nArtefact: Present, the " + p.artefact.name
                     news_message += "\n"
                     
-            for u in users:
-                if u.id == user.id:
-                    News.objects.create(user1=User.objects.get(id=u.id),
-                            user2=User.objects.get(id=u.id),
-                            empire1=user.empire,
-                            fleet1="Dutchman",
-                            news_type='DU',
-                            date_and_time=datetime.now(),
-                            is_personal_news=True,
-                            planet = planet,
-                            is_empire_news=True,
-                            extra_info=news_message,
-                            tick_number=RoundStatus.objects.get().tick_number
-                            )
-                else:
-                    News.objects.create(user1=User.objects.get(id=u.id),
-                            user2=User.objects.get(id=u.id),
-                            empire1=user.empire,
-                            fleet1="Dutchman",
-                            news_type='DU',
-                            date_and_time=datetime.now(),
-                            is_personal_news=True,
-                            planet = planet,
-                            is_empire_news=False,
-                            extra_info=news_message,
-                            tick_number=RoundStatus.objects.get().tick_number
-                            )
+            News.objects.create(user1=User.objects.get(id=user.id),
+                    user2=User.objects.get(id=user.id),
+                    empire1=user.empire,
+                    fleet1="Dutchman",
+                    news_type='DU',
+                    date_and_time=datetime.now(),
+                    is_personal_news=True,
+                    planet = planet,
+                    is_empire_news=True,
+                    extra_info=news_message,
+                    tick_number=RoundStatus.objects.get().tick_number
+                    )
                             
             ticks = random.randint(288,720)
             arte.ticks_left = ticks

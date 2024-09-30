@@ -23,7 +23,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             perform_operation(agent_fleet)
             # (operation, agents, user1, planet):
             status = UserStatus.objects.get(id=agent_fleet.owner.id)
-            speed = race_info_list[status.get_race_display()]["travel_speed"]
+            speed = travel_speed(status)
 
             # send agents home after operation
             portals = Planet.objects.filter(owner=agent_fleet.owner.id, portal=True)
@@ -45,7 +45,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
 
             perform_incantation(ghost_fleet)
             status = UserStatus.objects.get(id=ghost_fleet.owner.id)
-            speed = race_info_list[status.get_race_display()]["travel_speed"]
+            speed = travel_speed(status)
 
             # send home
             if ghost_fleet.specop == "Vortex Portal":
@@ -97,22 +97,24 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             elif int(arte_timer.artetimer) >= 1:
                 arte_timer.artetimer -= 1
                 arte_timer.save()
-                time_left = arte_timer.artetimer * 10
-                now = datetime.now()
-                now_plus_10 = now + timedelta(minutes = time_left)
-                fast.round_start = now_plus_10
-                fast.save()
+                if fast.is_running == False:
+                    time_left = arte_timer.artetimer * 10
+                    now = datetime.now()
+                    now_plus_10 = now + timedelta(minutes = time_left)
+                    fast.round_start = now_plus_10
+                    fast.save()
                 if arte_timer.artetimer == 143:
                     msg = "All Artefacts held by " + str(holding) + "! Round will end in " + str(arte_timer.artetimer) + " weeks!"
         else:
             if arte_timer.artedelay > 0 and arte_timer.artetimer < 144:
                 arte_timer.artedelay -= 1
                 arte_timer.save()
-                time_left = (arte_timer.artetimer + arte_timer.artedelay) * 10
-                now = datetime.now()
-                now_plus_10 = now + timedelta(minutes = time_left)
-                fast.round_start = now_plus_10
-                fast.save()
+                if fast.is_running == False:
+                    time_left = (arte_timer.artetimer + arte_timer.artedelay) * 10
+                    now = datetime.now()
+                    now_plus_10 = now + timedelta(minutes = time_left)
+                    fast.round_start = now_plus_10
+                    fast.save()
                 if arte_timer.artedelay == 4:
                     msg = "Artefact/s lost! Timer will reset in 5 weeks!"
                 
@@ -132,9 +134,11 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             arte_timer.is_running = False
             arte_timer.round_start = None
             arte_timer.save()
-            fast.is_running = True
-            fast.save()
-            msg = "Congratulations " + str(holding) + "! Fast galaxy has now started, Good Luck! New Regular Round will be announced soon!"
+            msg = "Congratulations " + str(holding) + "! New Regular Round will be announced soon! "
+            if fast.is_running == False:
+                fast.is_running = True
+                fast.save()
+                msg += "Fast galaxy has now started, Good Luck!"
             
         if msg != '':
             NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)

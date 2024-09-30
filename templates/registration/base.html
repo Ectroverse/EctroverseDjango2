@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+{% load mathfilters %}
+
+<head>
+<!-- Favicon -->
+<link rel="icon" type="image/png" href="{% static 'icon.jpg' %}">
+
+{% block title %}<title>Ectroverse</title>{% endblock %}
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+
+
+<!-- Add additional CSS in static file -->
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+<!-- Bootstrap stuff -->
+<!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"> -->
+<!--<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">-->
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>-->
+
+<!-- Our CSS should come after everything else -->
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+
+<style type="text/css">
+body
+{
+    background-image:url("/static/background.gif");
+}
+
+
+
+@media all and (max-width: 660px) {
+	.hide_pop {display: none;}
+	.content-desktop {display: none;}
+	.content-mobile-menu, .content-mobile-menu .content-mobile {display: block;  width: fit-content;}
+	.left_menu_large_scrn {display:none;}
+	.right_side{
+	width: fit-content;
+	}
+
+	.left_box, .right_box {
+		width: 100%;
+		}
+
+	.center_box_inside {
+		text-align: left;
+	}
+
+	.show_only_on_wide_scrn{
+		display: none;
+	}
+
+}
+
+@media all and (min-width: 661px) {
+	.left_menu_large_scrn{
+	min-width: 175px;
+	}
+	.right_side{
+	left: 180px;
+	right: 0px;
+	}
+	.show_only_on_mobile{
+		display: none;
+	}
+}
+
+@media all and (min-width: 661px) and (max-width: 837px) {
+	.content-mobile {display: block;}
+	.content-desktop, .content-mobile-menu {display: none;}
+}
+
+@media all and (min-width: 838px){
+	.content-desktop {display: block;}
+	.content-footer {display: block; position: absolute;
+            bottom: 0px;}
+	.content-mobile, .content-mobile-menu {display: none;}
+
+}
+
+/* sidebar */
+
+.headerplanets{
+  vertical-align: middle;
+}
+
+.nav_top{
+ position: relative;
+ width: 150px;
+ height: 40px;
+  content:url({% static 'files_004' %});
+}
+
+.nav_hq{
+  position:relative;
+  width: 150px;
+  height: 20px;
+    background-image:url({% static 'files_010' %});
+}
+
+.nav_body{
+  position: relative;
+  width: 150px;
+  display: block;
+  overflow: auto;
+    background-image:url({% static 'files_013' %});
+}
+
+.nav_bottom{
+  position: relative;
+  width: 150px;
+  height: 20px;
+    content:url({% static 'files_022' %});
+}
+
+.nav_footer{
+  position: relative;
+  width: 150px;
+  height: 75px;
+    content:url({% static 'files_014.jpg' %});
+}
+
+</style>
+
+<script>
+var countDownDate = new Date("{{round.round_start|date:'F d, y H:i:s'}} GMT+00:00").getTime();
+var x = setInterval(function() {
+
+  var now = new Date().getTime();
+
+  var distance = countDownDate - now;
+
+  var message = "Round Starts in: "
+
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  if(seconds < 0){
+	distance = now - countDownDate;
+	message = "Time Elasped: "}
+
+  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+	var timer = ''
+  if(days > 0){
+	timer = days + "d "
+	}
+  if(hours > 0){
+	timer += hours + "h "
+  }
+  if(minutes > 0){
+	timer += minutes + "m " 
+	}
+  timer += seconds + "s "
+  document.getElementById("roundstart").innerHTML = timer;
+  document.getElementById("roundstart2").innerHTML = message + timer;
+
+  // If the count down is finished, write some text
+  //if (distance < 0) {
+    //clearInterval(x);
+    //document.getElementById("roundstart").innerHTML = "Round Started!";
+  //}
+}, 1000);
+</script>
+
+{% if status.galsel == 1 %}
+<script>
+
+ function startTime() {
+  var today = new Date();
+  var m = today.getMinutes();
+  var s = today.getSeconds();
+  m_left = 9 - (m % 10);
+  s_left = 59 - (s % 60);
+  s_left = fixTimeDigits(s_left);
+  document.getElementById('headerTime1').innerHTML = m_left + ":" + s_left;
+  document.getElementById('headerTime2').innerHTML = m_left + ":" + s_left;
+  m_left + ":" + s_left;
+  var t = setTimeout(startTime, 600);
+
+}
+
+function fixTimeDigits(s_left) {
+  if (s_left < 10) {s_left = "0" + s_left};  // add zero in front of numbers < 10
+  return s_left;
+}
+
+function toggleForm(form_name) {
+		var selectElements = document.querySelectorAll('input[type=checkbox]');
+		for(var i = 0; i < selectElements.length; i++) {
+			selectElements[i].checked = !selectElements[i].checked;
+		}
+	}
+
+function changeslider(newValue,field) {
+	window.document.getElementById(field).value=newValue;
+}
+
+
+</script>
+{% elif status.galsel == 2 %}
+<script>
+
+ function startTime() {
+  var today = new Date();
+  var s = today.getSeconds();
+  s_left = 14 - (s % 15);
+  //s_left = fixTimeDigits(s_left);
+  document.getElementById('headerTime1').innerHTML = s_left;
+  document.getElementById('headerTime2').innerHTML = s_left;
+  var t = setTimeout(startTime, 60);
+
+}
+
+function toggleForm(form_name) {
+		var selectElements = document.querySelectorAll('input[type=checkbox]');
+		for(var i = 0; i < selectElements.length; i++) {
+			selectElements[i].checked = !selectElements[i].checked;
+		}
+	}
+
+function changeslider(newValue,field) {
+	window.document.getElementById(field).value=newValue;
+}
+
+</script>
+{% endif %}
+
+</head>
+
+
+<body style="
+   width:100%;
+   margin:0 0 50px 0;
+   max-width:100%;
+   overflow-x:hidden;"
+onload="startTime();">
+
+{% if user.is_authenticated %}
+
+
+<div class="parent_container">
+<div class="content-wrap">
+		<div class="left_menu_large_scrn"> <!-- Hide on mobile -->
+        <!-- Sidebar content -->
+	<div class="nav_top"></div>
+        <div class="nav_hq">
+		<div class="nav_head">
+          	<b><font size="2" face="Tahoma">
+			{% if status.galsel == 1 %}
+          	<a href="/headquarters">Headquarters</a></font></b>
+        	</div>
+	</div>
+        <div class="nav_body">
+		<div class="nav_navi">
+          	<b><font size="2" face="Tahoma">
+                        <a href="/council">Council</a><br>
+                        <a href="/units">Units</a><br>
+                        <a href="/planets">Planets</a><br>
+                        {% if status.empire.numplayers > 1 %}
+                        -<a href="/offer">Offer</a><br>
+                        {% endif %}
+                        <a href="/empire{{status.empire_id}}">Empire</a><br>
+						{% if status.empire.numplayers > 1 %}
+                        -<a href="/famaid">Send aid</a><br>
+                        -<a href="/famgetaid">Receive aid</a><br>
+						{% endif %}
+                        -<a href="/famnews">News</a><br>
+                        -<a href="/relations">Relations</a><br>
+                        <a href="/fleets">Fleets</a><br>
+                        <a href="/map">Full Map</a>&nbsp; <a href="/guide/map"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a><br>
+						-<a href="/map_settings">Map settings</a><br>
+                        -<a href="/scouting">Scouting</a><br>
+						-<a href="/smap">Base Map</a><br>
+                        <a href="/research">Research</a><br>
+                        <a href="/specops">Operations</a><br></font>
+            		<img src="/static/files_017" height="15">
+            		<font size="2" face="Tahoma">
+        				<a href="/messages">Messages</a><br>
+                        <a href="/ranking">Faction Rank</a><br>
+                        <a href="/empire_ranking">Empire Rank</a><br>
+                        <a href="/account{{status.id}}">Account</a>
+			{% elif status.galsel == 2 %}
+          	<a href="/galtwo/headquarters">Headquarters</a></font></b>
+        	</div>
+	</div>
+        <div class="nav_body">
+		<div class="nav_navi">
+          	<b><font size="2" face="Tahoma">
+                        <a href="/galtwo/council">Council</a><br>
+                        <a href="/galtwo/units">Units</a><br>
+                        <a href="/galtwo/planets">Planets</a><br>
+                        <a href="/galtwo/empire{{status.empire_id}}">Empire</a><br>
+                        -<a href="/galtwo/famnews">News</a><br>
+                        -<a href="/galtwo/relations">Relations</a><br>
+                        <a href="/galtwo/fleets">Fleets</a><br>
+                        <a href="/galtwo/map">Full Map</a>&nbsp; <a href="/guide/map"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a><br>
+						-<a href="/galtwo/map_settings">Map settings</a><br>
+                        -<a href="/galtwo/scouting">Scouting</a><br>
+						-<a href="/galtwo/smap">Base Map</a><br>
+                        <a href="/galtwo/research">Research</a><br>
+                        <a href="/galtwo/specops">Operations</a><br></font>
+            		<img src="/static/files_017" height="15">
+            		<font size="2" face="Tahoma">
+        				<a href="/galtwo/messages">Messages</a><br>
+                        <a href="/galtwo/ranking">Faction Rank</a><br>
+                        <a href="/galtwo/empire_ranking">Empire Rank</a><br>
+                        <a href="/galtwo/account{{status.id}}">Account</a>			
+			{% endif %}			
+                        <img src="/static/files_017" height="15"><br>
+                        <a href="/portal">Portal</a>
+                        <img src="/static/files_017" height="15"><br>						
+                        <a href="https://discord.com/invite/U5FHwaEeCN" target="_blank">Discord</a><br>
+                        <a href="/guide">Guide</a><br></font></b>
+                        
+            {% if status.galsel == 1 %}
+					<img src="/static/files_017" height="15">
+					<form action="/search" method="POST">{% csrf_token %}
+					<input type="text" name="u_inp" size="10"> <br>
+					<input type="submit" value="Search"></form>
+			{% elif status.galsel == 2 %}
+					<img src="/static/files_017" height="15">
+					<form action="/galtwo/search" method="POST">{% csrf_token %}
+					<input type="text" name="u_inp" size="10"> <br>
+					<input type="submit" value="Search"></form>
+			{% endif %}		
+			
+        	</div>
+	</div>
+
+	<div class="nav_bottom"></div>
+	<div class="nav_footer"></div>
+
+
+  </div>
+
+  <div class="right_side">
+       {% include "header.html" %}
+	<!-- Main area content -->
+	{% include "box_top.html" with heading=page_title minwidth="300px" textalign="center"  %}
+		{% block content %}
+		{% endblock %}
+	{% include "box_bottom.html" %}
+
+
+
+{% else %}
+
+YOU SHOULD NEVER BE ABLE TO GET TO THIS PAGE!! THE VIEW REQUIRES AUTHENTICATION!
+
+{% endif %}
+<br><br><br>
+{% include "footer.html" %}
+</div>
+
+</body>
+</html>

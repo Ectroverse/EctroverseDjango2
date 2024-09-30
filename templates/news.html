@@ -207,6 +207,10 @@
 			but the planet was already habited. The ship is now awaiting your orders in this solar system.
 			<br><br>
 		{% endif %}
+		{% if n.news_type == 'DU' %}
+			{{n.extra_info|linebreaksbr}}
+			<br><br>
+		{% endif %}
 		{% if n.news_type == 'E' %}{% if n.extra_info == "1" %}
 			<a href="/galtwo/account{{n.user2.id}}">{{n.user2.galtwouser.user_name}}</a> has offered you the <a href="/galtwo/planet{{n.planet.id}}">planet {{n.planet.x}},{{n.planet.y}}:{{n.planet.i}}</a>
 			<form action="/headquarters" id="offer_planet" method="post">

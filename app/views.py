@@ -46,6 +46,7 @@ from django.urls import include, path, re_path
 
 # Remember that Django uses the word View to mean the Controller in MVC.  Django's "Views" are the HTML templates. Models are models.
 
+bare = "No"
 
 def race_check(user):
     userstatus = get_object_or_404(UserStatus, user=user)
@@ -76,9 +77,9 @@ def index(request):
     year = tick_time // 52
     no_planets = Planet.objects.all().count()
     no_system = System.objects.all().count()
-    no_empires = Empire.objects.all().count()
+    no_empires = Empire.objects.all().exclude(number=0).count()
     no_players = UserStatus.objects.exclude(user_name='').exclude(user_name='user-display-name').exclude(id__in=adminz).exclude(id=1).count()
-    avail_spots = ((no_empires * players_per_empire) - no_players) - (len(adminz)+players_per_empire)
+    avail_spots = ((no_empires * players_per_empire) - no_players)
     avail_planets = Planet.objects.filter(owner=None).count()
     time_tick = RoundStatus.objects.filter().first()
     online_now = 0
@@ -93,9 +94,9 @@ def index(request):
     year2 = tick_time2 // 52
     no_planets2 = Planets.objects.all().count()
     no_system2 = Systems.objects.all().count()
-    no_empires2 = Empires.objects.all().count()
+    no_empires2 = Empires.objects.all().exclude(number=0).count()
     no_players2 = TwoStatus.objects.exclude(user_name='').exclude(user_name='user-display-name').exclude(id__in=adminz).exclude(id=1).count()
-    avail_spots2 = (no_empires2 - no_players2) - (len(adminz)+players_per_empire)
+    avail_spots2 = (no_empires2 - no_players2)
     avail_planets2 = Planets.objects.filter(owner=None).count()
     time_tick2 = StatusRound.objects.filter().first()
     roun2 = StatusRound.objects.filter().first()
@@ -296,12 +297,7 @@ def offer(request):
                                                  portal_planets, status)
             min_dist = np.sqrt((portal.x - p.x) ** 2 +
                            (portal.y - p.y) ** 2)
-            speed = race_info_list[status.get_race_display()]["travel_speed"]
-            speed_boost_enlightement = 1
-            if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
-                en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-                speed_boost_enlightement = (1 + en.specop_strength / 100)
-            speed *= speed_boost_enlightement
+            speed = travel_speed(status)
             travel_time = max(0,int(np.floor(min_dist / speed)))
         else:
             travel_time = "No Portals!"
@@ -616,11 +612,7 @@ def scouting(request):
                     msg += "\nYou need at least one portal to send the fleet from!"
                 best_portal_planet = find_nearest_portal(p.x, p.y, portal_planets, status)
                 min_dist = np.sqrt((best_portal_planet.x - p.x) ** 2 + (best_portal_planet.y - p.y) ** 2)
-                speed_boost_enlightement = 1
-                if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed").exists():
-                    en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-                    speed_boost_enlightement *= (1 + en.specop_strength / 100)
-                speed = race_info_list[status.get_race_display()]["travel_speed"]* speed_boost_enlightement
+                speed = travel_speed(status)
                 fleet_time = max(0,int(np.floor(min_dist / speed)))
                 fleet_id = Fleet.objects.create(owner=status.user,
                      command_order=10,
@@ -672,7 +664,7 @@ def scouting(request):
                }
     return render(request, "scouting.html", context)
 
-
+@xframe_options_exempt
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
 def battle(request, fleet_id):
@@ -1158,12 +1150,14 @@ def map(request, *args):
     show_s = None
     show_t = 'Red'
     show_p = None
+    show_arts = None
     if args:
         if args[0] == "portmap":
             show_p = True
+        elif args[0] == "artmap":
+            show_arts = True
         elif UserStatus.objects.filter(id=args[0]):
             tuser = UserStatus.objects.get(id=args[0])
-        
         elif System.objects.filter(id=args[0]):
             show_s = System.objects.get(id=args[0])
 
@@ -1197,7 +1191,7 @@ def map(request, *args):
             minY=s.y
             
     if show_s != None:
-        mapgen[show_s.x*10000+show_s.y]['show']= "white"
+        mapgen[show_s.x*10000+show_s.y]['show']= "gold"
     
     planets = Planet.objects.order_by('x','y','i')
     scouted_planets = Scouting.objects.filter(empire=status.empire, scout__gte=1.0).values_list("planet_id", flat=True)
@@ -1379,10 +1373,12 @@ def map(request, *args):
     for art in artis:
         if status.id == 1:
             mapgen[art.on_planet.x*10000+art.on_planet.y]["imgarti"]=art.image 
-            mapgen[art.on_planet.x*10000+art.on_planet.y]['show']= "white" 
+            mapgen[art.on_planet.x*10000+art.on_planet.y]['show']= "gold" 
         else:
             if Scouting.objects.filter(empire=request.user.userstatus.empire,  scout__gte=1.0,  planet=art.on_planet).exists():
                 mapgen[art.on_planet.x*10000+art.on_planet.y]["imgarti"]=art.image
+                if show_arts == True:
+                    mapgen[art.on_planet.x*10000+art.on_planet.y]["show"]="gold"
                 
     context = {"status": status,
                "round": RoundStatus.objects.filter().first,
@@ -1417,6 +1413,11 @@ def tmap(request, player_id):
 @user_passes_test(race_check, login_url="/choose_empire_race")
 def pmap(request):
     return map(request, "portmap")
+
+@login_required
+@user_passes_test(race_check, login_url="/choose_empire_race")
+def amap(request):
+    return map(request, "artmap")
     
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
@@ -1720,10 +1721,10 @@ def planets(request):
                "page_title": "Planets"}
     return render(request, "planets.html", context)
 
-
+@xframe_options_exempt
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
-def planet(request, planet_id):
+def planet(request, planet_id, *args):
     status = get_object_or_404(UserStatus, user=request.user)
     planet = get_object_or_404(Planet, pk=planet_id)
     attack_cost = None
@@ -1768,12 +1769,7 @@ def planet(request, planet_id):
                                              portal_planets, status)
         min_dist = np.sqrt((portal.x - planet.x) ** 2 +
                        (portal.y - planet.y) ** 2)
-        speed = race_info_list[status.get_race_display()]["travel_speed"]
-        speed_boost_enlightement = 1
-        if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
-            en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-            speed_boost_enlightement = (1 + en.specop_strength / 100)
-        speed *= speed_boost_enlightement
+        speed = travel_speed(status)
         travel_time = max(0,int(np.floor(min_dist / speed)))
     else:
         travel_time = "No Portals!"
@@ -1885,6 +1881,10 @@ def planet(request, planet_id):
             
     player_list = UserStatus.objects.filter(empire=status.empire)
     
+    bare = "No"
+    if args:
+        bare = "Yes"
+    
     context = {"status": status,
                "round": RoundStatus.objects.filter().first,
                "planet": planet,
@@ -1899,453 +1899,28 @@ def planet(request, planet_id):
                "player_list": player_list,
                "news": news,
                "msg": msg,
+               "bare": bare,
                "offd_to": offd_to,
                "error": error,
                "stationed": stationed}
+    
     return render(request, "planet.html", context)
 
 @xframe_options_exempt
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
 def plant(request, planet_id):
-    status = get_object_or_404(UserStatus, user=request.user)
-    planet = get_object_or_404(Planet, pk=planet_id)
-    attack_cost = None
-    error = None
-    if planet.owner:  # if planet is owned by someone, grab that owner's status, in order to get faction and other info of owner
-        planet_owner_status = UserStatus.objects.get(user=planet.owner)
-        attack_cost = battleReadinessLoss(status, planet_owner_status, planet)
-    else:
-        planet_owner_status = None
-	
-    specops = "No"
-    if Specops.objects.filter(user_to=planet.owner, name="Dark Web").exists():
-        specops = "Webs"
-        
-    if Specops.objects.filter(planet=planet, name="Planetary Beacon").exists():
-        specops = "Beacon"
-        
-    system = System.objects.get(x=planet.x, y=planet.y)
-    system = system.id
-    
-    con = []
-    if planet.buildings_under_construction > 0: 
-        for build in Construction.objects.filter(planet=planet):
-            con.append({"number": build.n, "building": build.get_building_type_display})
-    
-    stationed = []
-    if Fleet.objects.filter(owner=status.user, on_planet=planet, command_order=8):
-        main_fleet = Fleet.objects.get(owner=status.user, on_planet=planet, command_order=8)
-        for unit in unit_info["unit_list"]:
-            num = getattr(main_fleet, unit)
-            if num:
-                stationed.append({"name": unit_info[unit]["label"], "value": num})
-                
-    portal_planets = Planet.objects.filter(owner=status.user, portal=True)
-    if portal_planets:
-        portal = find_nearest_portal(planet.x, planet.y,
-                                             portal_planets, status)
-        min_dist = np.sqrt((portal.x - planet.x) ** 2 +
-                       (portal.y - planet.y) ** 2)
-        speed = race_info_list[status.get_race_display()]["travel_speed"]
-        speed_boost_enlightement = 1
-        if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
-            en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-            speed_boost_enlightement = (1 + en.specop_strength / 100)
-        speed *= speed_boost_enlightement
-        travel_time = max(0,int(np.floor(min_dist / speed)))
-    else:
-        travel_time = "No Portals!"
-    msg = ''
-    news = News.objects.filter(planet=planet, user2=status.user, news_type='E', extra_info="1")
-    exploration_cost = calc_exploration_cost(status)
-    offd_to = ''
-    if news:
-        news = News.objects.get(planet=planet, user2=status.user, news_type='E', extra_info="1")
-        offd_to = news.user1.userstatus.user_name
-            
-    offerp = request.POST.get("offer_planet", False)
-    if offerp:
-        if planet.home_planet == False:
-            stat2 = request.POST.get('player', False)
-            change = request.POST.get('offer', False)
-            status2 = UserStatus.objects.get(id=stat2)
-            if change == "1": 
-                if news:
-                    for news in news:
-                        news.user1 = status2.user
-                        news.is_read =False
-                        news.save()
-                else:
-                    News.objects.create(user1=status2.user,
-                        user2=status.user,
-                        empire1=status.empire,
-                        news_type='E',
-                        date_and_time=datetime.datetime.now(),
-                        planet=planet,
-                        extra_info="1",
-                        is_personal_news=True,
-                        is_empire_news=True,
-                        tick_number=RoundStatus.objects.get().tick_number)
-                        
-                msg += "Planet offered to: " + str(status2.user_name)
-            elif change == "2":                
-                if news:
-                    for news in news:
-                        news.user2 = status2.user
-                        news.delete()
-                    msg += "Planet removed from offering"
-        else:
-            msg += "You cannot offer you home planet"
-     
-    main_fleet = Fleet.objects.get(owner=status.user, main_fleet=True)
-    expp = request.POST.get("explore_planet", False)
-    if expp:
-            pid = request.POST.get('id_planet', False)
-            if main_fleet.exploration > 0:
-                if status.fleet_readiness >= 0:
-                    setattr(main_fleet, 'exploration', getattr(main_fleet, 'exploration') - 1)
-
-                    fleet = Fleet.objects.create(owner=request.user,
-                                                 command_order=10,
-                                                 x=planet.x,
-                                                 y=planet.y,
-                                                 i=planet.i,
-                                                 ticks_remaining=travel_time,
-                                                 current_position_x=portal.x,
-                                                 current_position_y=portal.y,
-                                                 target_planet=planet,
-                                                 exploration=1)
-                    status.fleet_readiness -= exploration_cost 
-                    status.save()
-                    main_fleet.save()
-                    fleets_tmp = []
-                    if travel_time == 0:
-                        fleets_tmp.append(fleet)
-                        explore_planets(fleets_tmp)
-                        request.session['error'] = "Planet Explored!"
-                        
-                        return redirect(request.META['HTTP_REFERER'])
-
-                    else:
-                        msg += "Your Exploration Team will arrive in " + str(travel_time) + " weeks!"
-                else:
-                    msg += "Your forces are to tired to send an Exploration Ship"
-            else:
-                msg += "You dont have any Exploration Ships!"
-    
-    hover = request.POST.get("hover_planet", False)            
-    if hover:
-            pid = request.POST.get('id_planet', False)
-            if main_fleet.exploration > 0:
-                if status.fleet_readiness >= 0:
-                    setattr(main_fleet, 'exploration', getattr(main_fleet, 'exploration') - 1)
-
-                    fleet = Fleet.objects.create(owner=request.user,
-                                                 command_order=2,
-                                                 x=planet.x,
-                                                 y=planet.y,
-                                                 i=planet.i,
-                                                 ticks_remaining=travel_time,
-                                                 current_position_x=portal.x,
-                                                 current_position_y=portal.y,
-                                                 target_planet=planet,
-                                                 exploration=1)
-                    status.fleet_readiness -= exploration_cost 
-                    status.save()
-                    main_fleet.save()
-                    if travel_time == 0:
-                        msg += "Your Exploration Team has arrived!"
-
-                    else:
-                        msg += "Your Exploration Team will arrive in " + str(travel_time) + " weeks!"
-                else:
-                    msg += "Your forces are to tired to send an Exploration Ship"
-            else:
-                msg += "You dont have any Exploration Ships!"
-        
-    player_list = UserStatus.objects.filter(empire=status.empire)
-
-    context = {"status": status,
-               "round": RoundStatus.objects.filter().first,
-               "planet": planet,
-               "attack_cost": attack_cost,
-               "specops": specops,
-               "system": system,
-               "planet_owner_status": planet_owner_status,
-               "page_title": "Planet " + str(planet.x) + ',' + str(planet.y) + ':' + str(planet.i),
-               "con": con, 
-               "exploration_cost": exploration_cost,
-               "travel_time": travel_time,
-               "player_list": player_list,
-               "news": news,
-               "msg": msg,
-               "stationed": stationed}
-    return render(request, "plant.html", context)
+    return planet(request, planet_id, "short")
 
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
 def system(request, system_id):
-    status = get_object_or_404(UserStatus, user=request.user)
-    system = get_object_or_404(System, pk=system_id)
-    planet = Planet.objects.filter(x=system.x, y=system.y)
-    mapgen = {}
-    scouted_planets = Scouting.objects.filter(empire=status.empire, scout__gte=1.0).values_list("planet_id", flat=True)
-    users = UserStatus.objects.filter(empire=status.empire).values_list("user", flat=True)
-    fleets = Fleet.objects.filter(owner__in=users, x=system.x, y=system.y)
-    
-    title = ''
-    for p in planet:
-        mapgen[p.id*10000]={"id" : p.id, "owner" : "", "color" : "None", "color2" : "None", "color3" : "None", "color4" : "None", "gradient": "", "x":"","y":"", "i": "", "imgp" : "", "scout": "", "port": "", "sta": ""}
-    main_fleet = Fleet.objects.get(owner=request.user, main_fleet=True)
-    msg = ""
-    if request.method == 'POST' and 'explore_all' in request.POST:
-        msg = "Results:"
-        for p in planet:
-            if p.owner == None and p.home_planet == False:
-                if main_fleet.exploration == 0:
-                    msg += "\nYou do not have any Exploration Ships left!"
-                elif status.fleet_readiness <= 0:
-                    msg += "\nYour forces are to tired to send an Exploration Ship!"
-                else:
-                    portal_planets = Planet.objects.filter(owner=status.user, portal=True)
-                    if not portal_planets:
-                        msg += "\nYou need at least one portal to send the fleet from!"
-                    best_portal_planet = find_nearest_portal(p.x, p.y, portal_planets, status)
-                    min_dist = np.sqrt((best_portal_planet.x - p.x) ** 2 + (best_portal_planet.y - p.y) ** 2)
-                    speed_boost_enlightement = 1
-                    if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed").exists():
-                        en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-                        speed_boost_enlightement *= (1 + en.specop_strength / 100)
-                    speed = race_info_list[status.get_race_display()]["travel_speed"]* speed_boost_enlightement
-                    fleet_time = max(0,int(np.floor(min_dist / speed)))
-                    fleet_id = Fleet.objects.create(owner=status.user,
-                         command_order=10,
-                         target_planet=p,
-                         x=p.x,
-                         y=p.y,
-                         i=p.i,
-                         ticks_remaining=fleet_time,
-                         current_position_x=best_portal_planet.x,
-                         current_position_y=best_portal_planet.y,
-                         exploration=1)
-                    msg += "\nExploration ship sent to " + str(p.x) + "," + str(p.y) + ":" + str(p.i)
-                    main_fleet.exploration -= 1
-                    main_fleet.save()
-                    exploration_cost = calc_exploration_cost(status)
-                    status.fleet_readiness -= exploration_cost
-                    status.save()
-        fleets_buffer = Fleet.objects.filter(main_fleet=False, ticks_remaining__lt=1, command_order=10)
-        explore_planets(fleets_buffer)
-    if request.method == 'POST' and 'observe_all' in request.POST:
-        msg = "Results:"
-        for p in planet:
-            if p.owner == None and p.id not in scouted_planets:
-                main_fleet = Fleet.objects.get(owner=request.user, main_fleet=True)
-                agents = int(request.POST.get('obsagents', 0)) 
-                if main_fleet.agent < agents:
-                    msg += "\nYou do not have enough Agents!"
-                else:
-                    msg += "\nAgents sent! \n" 
-                    msg += send_agents_ghosts(status, int(agents), 0,
-                                             p.x, p.y, p.i, "Observe Planet")
-    
-    if request.method == 'POST' and 'survey_syst' in request.POST:
-        msg = "Results:"
-        for p in planet:
-            main_fleet = Fleet.objects.get(owner=request.user, main_fleet=True)
-            ghosts = int(request.POST.get('survghosts', 0)) 
-            if main_fleet.ghost < ghosts:
-                msg += "\nYou do not have enough Ghost Ships!"
-            else:
-                msg += "\nGhost Ships sent! \n" 
-                msg += send_ghosts(status, 0, int(ghosts),
-                                         p.x, p.y, p.i, "Survey System")
-            break
-    
-    settings = MapSettings.objects.filter(user=status.id)
-    scouted_planets = Scouting.objects.filter(empire=status.empire, scout__gte=1.0).values_list("planet_id", flat=True)
- 
-    grad = 0
-    for p in planet:
-        key=p.id*10000
-        mapgen[p.id*10000]["gradient"]="gradient"+str(grad)
-        grad+=1
-        mapgen[p.id*10000]["i"] = p.i
-        if p.owner == status.user and p.portal == True:
-            mapgen[p.id*10000]["portal"] = "/static/buildings/Portal.png"
-        
-        if p.owner == None:
-            if p.home_planet == True:
-                mapgen[p.id*10000]["owner"] = "Unavailable"
-            else:
-                mapgen[p.id*10000]["owner"] = "Unexplored"
-        else:
-            owner = UserStatus.objects.get(user=p.owner)
-            mapgen[p.id*10000]["owner"] = owner.user_name
-            
-        if p.id % 10 == 1:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p00.png"
-        if p.id % 10 == 2:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p11.png"
-        if p.id % 10 == 3:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p01.png"
-        if p.id % 10 == 4:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p10.png"
-        if p.id % 10 == 5:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p03.png"
-        if p.id % 10 == 6:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p04.png"
-        if p.id % 10 == 7:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p05.png"
-        if p.id % 10 == 8:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p06.png"
-        if p.id % 10 == 9:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p07.png"
-        if p.id % 10 == 0:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p08.png"
-        if p.artefact != None and p.id in scouted_planets or p.artefact != None and status.id == 1:
-            mapgen[p.id*10000]["imgp"] = p.artefact.image
-            
-        if p.i == 0:                                
-            mapgen[p.id*10000]["x"] = 4
-            mapgen[p.id*10000]["y"] = 50
-            if p.home_planet == True:
-                emp = Empire.objects.get(x=p.x, y=p.y)
-                title = "Home System of " + str(emp.name_with_id) + ": " + str(system.x) + ',' + str(system.y)
-            else:
-                title = "System " + str(system.x) + ',' + str(system.y)
-        if p.i == 1:                             
-            mapgen[p.id*10000]["x"] = 19
-            mapgen[p.id*10000]["y"] = 19
-        if p.i == 2:                                
-            mapgen[p.id*10000]["x"] = 50
-            mapgen[p.id*10000]["y"] = 6
-        if p.i == 3:                                 
-            mapgen[p.id*10000]["x"] = 81
-            mapgen[p.id*10000]["y"] = 19
-        if p.i == 4:                                 
-            mapgen[p.id*10000]["x"] = 96
-            mapgen[p.id*10000]["y"] = 50
-        if p.i == 5:                                
-            mapgen[p.id*10000]["x"] = 81
-            mapgen[p.id*10000]["y"] = 81
-        if p.i == 6:                                 
-            mapgen[p.id*10000]["x"] = 50
-            mapgen[p.id*10000]["y"] = 93
-        if p.i == 7:                                 
-            mapgen[p.id*10000]["x"] = 19
-            mapgen[p.id*10000]["y"] = 81
-
-        for setting in settings:
-            color = setting.get_color_settings_display
-            if setting.map_setting == "UE":
-                if p.owner == None:
-                    if mapgen[p.id*10000]["color"]== "None":
-                        mapgen[p.id*10000]["color"]=color
-                    elif mapgen[p.id*10000]["color2"]== "None":
-                        mapgen[p.id*10000]["color2"]=color
-                    elif mapgen[p.id*10000]["color3"]== "None":
-                        mapgen[p.id*10000]["color3"]=color
-                    else:
-                        mapgen[p.id*10000]["color4"]=color
-        
-            if setting.map_setting == "YP":
-                if p.owner == status.user:
-                    if mapgen[p.id*10000]["color"]== "None":
-                        mapgen[p.id*10000]["color"]=color
-                    elif mapgen[p.id*10000]["color2"]== "None":
-                        mapgen[p.id*10000]["color2"]=color
-                    elif mapgen[p.id*10000]["color3"]== "None":
-                        mapgen[p.id*10000]["color3"]=color
-                    else:
-                        mapgen[p.id*10000]["color4"]=color
-                       
-            if setting.map_setting == "YE":
-                
-                if p.owner != None and p.owner.userstatus.empire == status.empire:
-                    if mapgen[p.id*10000]["color"]== "None":
-                        mapgen[p.id*10000]["color"]=color
-                    elif mapgen[p.id*10000]["color2"]== "None":
-                        mapgen[p.id*10000]["color2"]=color
-                    elif mapgen[p.id*10000]["color3"]== "None":
-                        mapgen[p.id*10000]["color3"]=color
-                    else:
-                        mapgen[p.id*10000]["color4"]=color
-                
-            if setting.map_setting == "PF":
-                if p.owner != None and p.owner.id == setting.faction.id:
-                    if mapgen[p.id*10000]["color"]== "None":
-                        mapgen[p.id*10000]["color"]=color
-                    elif mapgen[p.id*10000]["color2"]== "None":
-                        mapgen[p.id*10000]["color2"]=color
-                    elif mapgen[p.id*10000]["color3"]== "None":
-                        mapgen[p.id*10000]["color3"]=color
-                    else:
-                        mapgen[p.id*10000]["color4"]=color
-            
-            if setting.map_setting == "PE":
-                if p.owner != None:
-                    owner = UserStatus.objects.get(user=p.owner)
-                    if owner.empire == setting.empire:
-                        if mapgen[p.id*10000]["color"]== "None":
-                            mapgen[p.id*10000]["color"]=color
-                        elif mapgen[p.id*10000]["color2"]== "None":
-                            mapgen[p.id*10000]["color2"]=color
-                        elif mapgen[p.id*10000]["color3"]== "None":
-                            mapgen[p.id*10000]["color3"]=color
-                        else:
-                            mapgen[p.id*10000]["color4"]=color
-            
-            if setting.map_setting == "SC":
-                if p.id in scouted_planets:
-                   mapgen[p.id*10000]["scout"]=color
-            
-            if Fleet.objects.filter(owner=status.user, on_planet=p, command_order=8):
-                mapgen[p.id*10000]["sta"] = "/static/units/forward-field.png"
-    
-    portal_xy_list = Planet.objects.filter(portal=True, owner=status.user.id).values_list('x', 'y')
-    if Specops.objects.filter(user_to=status.user, name='Vortex Portal').exists():
-        for vort in Specops.objects.filter(user_to=status.user, name='Vortex Portal'):
-            vort_por = Planet.objects.filter(id=vort.planet.id).values_list('x', 'y')
-            portal_xy_list = portal_xy_list | vort_por
-    
-    sys_cov = min(100, int(100.0 * battlePortalCalc(system.x, system.y, portal_xy_list, status.research_percent_portals, status)))
-    
-    portal_planets = Planet.objects.filter(owner=status.user, portal=True)
-    if portal_planets:
-        portal = find_nearest_portal(system.x, system.y,
-                                             portal_planets, status)
-        min_dist = np.sqrt((portal.x - system.x) ** 2 +
-                       (portal.y - system.y) ** 2)
-        speed = race_info_list[status.get_race_display()]["travel_speed"]
-        speed_boost_enlightement = 1
-        if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
-            en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-            speed_boost_enlightement = (1 + en.specop_strength / 100)
-        speed *= speed_boost_enlightement
-        dist = round((min_dist / speed) - 0.001,2)
-        travel_time = max(0,int(np.floor(min_dist / speed)))
-    else:
-        travel_time = "No Portals!"
-    narti = Artefacts.objects.get(name="The General")
-    context = {"status": status,
-               "msg": msg,
-               "round": RoundStatus.objects.filter().first,
-               "mapgen": mapgen,
-               "system": system,
-               "scouted_planets": scouted_planets,
-               "sys_cov": sys_cov,
-               "travel_time": travel_time,
-               "page_title": title,
-               "narti": narti, 
-               "fleets": fleets}  
-    return render(request, "system.html", context)           
+    return syst(request, system_id, "short")           
 
 @xframe_options_exempt
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
-def syst(request, system_id):
+def syst(request, system_id, *args):
     status = get_object_or_404(UserStatus, user=request.user)
     system = get_object_or_404(System, pk=system_id)
     planet = Planet.objects.filter(x=system.x, y=system.y)
@@ -2372,11 +1947,7 @@ def syst(request, system_id):
                         msg += "\nYou need at least one portal to send the fleet from!"
                     best_portal_planet = find_nearest_portal(p.x, p.y, portal_planets, status)
                     min_dist = np.sqrt((best_portal_planet.x - p.x) ** 2 + (best_portal_planet.y - p.y) ** 2)
-                    speed_boost_enlightement = 1
-                    if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed").exists():
-                        en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-                        speed_boost_enlightement *= (1 + en.specop_strength / 100)
-                    speed = race_info_list[status.get_race_display()]["travel_speed"]* speed_boost_enlightement
+                    speed = travel_speed(status)
                     fleet_time = max(0,int(np.floor(min_dist / speed)))
                     fleet_id = Fleet.objects.create(owner=status.user,
                          command_order=10,
@@ -2579,12 +2150,7 @@ def syst(request, system_id):
                                              portal_planets, status)
         min_dist = np.sqrt((portal.x - system.x) ** 2 +
                        (portal.y - system.y) ** 2)
-        speed = race_info_list[status.get_race_display()]["travel_speed"]
-        speed_boost_enlightement = 1
-        if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
-            en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-            speed_boost_enlightement = (1 + en.specop_strength / 100)
-        speed *= speed_boost_enlightement
+        speed = travel_speed(status)
         
         travel_time = max(0,int(np.floor(min_dist / speed)))
     else:
@@ -2629,296 +2195,20 @@ def syst(request, system_id):
                "suvfl": suvfl,
                "hovfl": hovfl,
                "fleets": fleets,
-               "page_title": title}  
-    return render(request, "syst.html", context)    
+               "page_title": title} 
+    if args:
+        if args[0] == "short":
+            return render(request, "system.html", context)
+        else:
+            return render(request, "msyst.html", context)
+    else:
+        return render(request, "syst.html", context)    
  
 @xframe_options_exempt
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
 def msyst(request, system_id):
-    status = get_object_or_404(UserStatus, user=request.user)
-    system = get_object_or_404(System, pk=system_id)
-    planet = Planet.objects.filter(x=system.x, y=system.y)
-    mapgen = {}
-    title = ''
-    scouted_planets = Scouting.objects.filter(empire=status.empire, scout__gte=1.0).values_list("planet_id", flat=True)
-    users = UserStatus.objects.filter(empire=status.empire).values_list("user", flat=True)
-    fleets = Fleet.objects.filter(owner__in=users, x=system.x, y=system.y)
-    for p in planet:
-        mapgen[p.id*10000]={"id" : p.id, "owner" : "", "color" : "None", "color2" : "None", "color3" : "None", "color4" : "None", "gradient": "", "x":"","y":"", "i": "", "imgp" : "", "scout": "", "port": "", "sta": ""}
-    main_fleet = Fleet.objects.get(owner=request.user, main_fleet=True)
-    msg = ""
-    if request.method == 'POST' and 'explore_all' in request.POST:
-        msg = "Results:"
-        for p in planet:
-            if p.owner == None and p.home_planet == False:
-                if main_fleet.exploration == 0:
-                    msg += "\nYou do not have any Exploration Ships left!"
-                elif status.fleet_readiness <= 0:
-                    msg += "\nYour forces are to tired to send an Exploration Ship!"
-                else:
-                    portal_planets = Planet.objects.filter(owner=status.user, portal=True)
-                    if not portal_planets:
-                        msg += "\nYou need at least one portal to send the fleet from!"
-                    best_portal_planet = find_nearest_portal(p.x, p.y, portal_planets, status)
-                    min_dist = np.sqrt((best_portal_planet.x - p.x) ** 2 + (best_portal_planet.y - p.y) ** 2)
-                    speed_boost_enlightement = 1
-                    if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed").exists():
-                        en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-                        speed_boost_enlightement *= (1 + en.specop_strength / 100)
-                    speed = race_info_list[status.get_race_display()]["travel_speed"]* speed_boost_enlightement
-                    fleet_time = max(0,int(np.floor(min_dist / speed)))
-                    fleet_id = Fleet.objects.create(owner=status.user,
-                         command_order=10,
-                         target_planet=p,
-                         x=p.x,
-                         y=p.y,
-                         i=p.i,
-                         ticks_remaining=fleet_time,
-                         current_position_x=best_portal_planet.x,
-                         current_position_y=best_portal_planet.y,
-                         exploration=1)
-                    msg += "\nExploration ship sent to " + str(p.x) + "," + str(p.y) + ":" + str(p.i)
-                    main_fleet.exploration -= 1
-                    main_fleet.save()
-                    exploration_cost = calc_exploration_cost(status)
-                    status.fleet_readiness -= exploration_cost
-                    status.save()
-        fleets_buffer = Fleet.objects.filter(main_fleet=False, ticks_remaining__lt=1, command_order=10)
-        explore_planets(fleets_buffer)
-    if request.method == 'POST' and 'observe_all' in request.POST:
-        msg = "Results:"
-        for p in planet:
-            if p.owner == None and p.id not in scouted_planets:
-                main_fleet = Fleet.objects.get(owner=request.user, main_fleet=True)
-                agents = int(request.POST.get('obsagents', 0)) 
-                if main_fleet.agent < agents:
-                    msg += "\nYou do not have enough Agents!"
-                else:
-                    msg += "\nAgents sent! \n" 
-                    msg += send_agents_ghosts(status, int(agents), 0,
-                                             p.x, p.y, p.i, "Observe Planet")
-    
-    if request.method == 'POST' and 'survey_syst' in request.POST:
-        msg = "Results:"
-        for p in planet:
-            main_fleet = Fleet.objects.get(owner=request.user, main_fleet=True)
-            ghosts = int(request.POST.get('survghosts', 0)) 
-            if main_fleet.ghost < ghosts:
-                msg += "\nYou do not have enough Ghost Ships!"
-            else:
-                msg += "\nGhost Ships sent! \n" 
-                msg += send_ghosts(status, 0, int(ghosts),
-                                         p.x, p.y, p.i, "Survey System")
-            break
-    
-    settings = MapSettings.objects.filter(user=status.id)
- 
-    grad = 0
-    for p in planet:
-        key=p.id*10000
-        mapgen[p.id*10000]["gradient"]="gradient"+str(grad)
-        grad+=1
-        mapgen[p.id*10000]["i"] = p.i
-        if p.owner == status.user and p.portal == True:
-            mapgen[p.id*10000]["portal"] = "/static/buildings/Portal.png"
-        elif p.owner == status.user and p.portal_under_construction == True:
-            mapgen[p.id*10000]["portal"] = "/static/buildings/portcon.png"
-        
-        if p.owner == None:
-            if p.home_planet == True:
-                mapgen[p.id*10000]["owner"] = "Unavailable"
-            else:
-                mapgen[p.id*10000]["owner"] = "Unexplored"
-        else:
-            owner = UserStatus.objects.get(user=p.owner)
-            mapgen[p.id*10000]["owner"] = owner.user_name
-            
-        if p.id % 10 == 1:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p00.png"
-        if p.id % 10 == 2:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p11.png"
-        if p.id % 10 == 3:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p01.png"
-        if p.id % 10 == 4:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p10.png"
-        if p.id % 10 == 5:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p03.png"
-        if p.id % 10 == 6:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p04.png"
-        if p.id % 10 == 7:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p05.png"
-        if p.id % 10 == 8:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p06.png"
-        if p.id % 10 == 9:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p07.png"
-        if p.id % 10 == 0:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p08.png"
-        if p.artefact != None and p.id in scouted_planets or p.artefact != None and status.id == 1:
-            mapgen[p.id*10000]["imgp"] = p.artefact.image
-            
-        if p.i == 0:                                
-            mapgen[p.id*10000]["x"] = 4
-            mapgen[p.id*10000]["y"] = 50
-            if p.home_planet == True:
-                emp = Empire.objects.get(x=p.x, y=p.y)
-                title = "Home System of " + str(emp.name_with_id) + ": " + str(system.x) + ',' + str(system.y)
-            else:
-                title = "System " + str(system.x) + ',' + str(system.y)
-        if p.i == 1:                             
-            mapgen[p.id*10000]["x"] = 19
-            mapgen[p.id*10000]["y"] = 19
-        if p.i == 2:                                
-            mapgen[p.id*10000]["x"] = 50
-            mapgen[p.id*10000]["y"] = 6
-        if p.i == 3:                                 
-            mapgen[p.id*10000]["x"] = 81
-            mapgen[p.id*10000]["y"] = 19
-        if p.i == 4:                                 
-            mapgen[p.id*10000]["x"] = 96
-            mapgen[p.id*10000]["y"] = 50
-        if p.i == 5:                                
-            mapgen[p.id*10000]["x"] = 81
-            mapgen[p.id*10000]["y"] = 81
-        if p.i == 6:                                 
-            mapgen[p.id*10000]["x"] = 50
-            mapgen[p.id*10000]["y"] = 93
-        if p.i == 7:                                 
-            mapgen[p.id*10000]["x"] = 19
-            mapgen[p.id*10000]["y"] = 81
-
-        for setting in settings:
-            color = setting.get_color_settings_display
-            if setting.map_setting == "UE":
-                if p.owner == None:
-                    if mapgen[p.id*10000]["color"]== "None":
-                        mapgen[p.id*10000]["color"]=color
-                    elif mapgen[p.id*10000]["color2"]== "None":
-                        mapgen[p.id*10000]["color2"]=color
-                    elif mapgen[p.id*10000]["color3"]== "None":
-                        mapgen[p.id*10000]["color3"]=color
-                    else:
-                        mapgen[p.id*10000]["color4"]=color
-        
-            if setting.map_setting == "YP":
-                if p.owner == status.user:
-                    if mapgen[p.id*10000]["color"]== "None":
-                        mapgen[p.id*10000]["color"]=color
-                    elif mapgen[p.id*10000]["color2"]== "None":
-                        mapgen[p.id*10000]["color2"]=color
-                    elif mapgen[p.id*10000]["color3"]== "None":
-                        mapgen[p.id*10000]["color3"]=color
-                    else:
-                        mapgen[p.id*10000]["color4"]=color
-                       
-            if setting.map_setting == "YE":
-                
-                if p.owner != None and p.owner.userstatus.empire == status.empire:
-                    if mapgen[p.id*10000]["color"]== "None":
-                        mapgen[p.id*10000]["color"]=color
-                    elif mapgen[p.id*10000]["color2"]== "None":
-                        mapgen[p.id*10000]["color2"]=color
-                    elif mapgen[p.id*10000]["color3"]== "None":
-                        mapgen[p.id*10000]["color3"]=color
-                    else:
-                        mapgen[p.id*10000]["color4"]=color
-                
-            if setting.map_setting == "PF":
-                if p.owner != None and p.owner.id == setting.faction.id:
-                    if mapgen[p.id*10000]["color"]== "None":
-                        mapgen[p.id*10000]["color"]=color
-                    elif mapgen[p.id*10000]["color2"]== "None":
-                        mapgen[p.id*10000]["color2"]=color
-                    elif mapgen[p.id*10000]["color3"]== "None":
-                        mapgen[p.id*10000]["color3"]=color
-                    else:
-                        mapgen[p.id*10000]["color4"]=color
-            
-            if setting.map_setting == "PE":
-                if p.owner != None:
-                    owner = UserStatus.objects.get(user=p.owner)
-                    if owner.empire == setting.empire:
-                        if mapgen[p.id*10000]["color"]== "None":
-                            mapgen[p.id*10000]["color"]=color
-                        elif mapgen[p.id*10000]["color2"]== "None":
-                            mapgen[p.id*10000]["color2"]=color
-                        elif mapgen[p.id*10000]["color3"]== "None":
-                            mapgen[p.id*10000]["color3"]=color
-                        else:
-                            mapgen[p.id*10000]["color4"]=color
-            
-            if setting.map_setting == "SC":
-                if p.id in scouted_planets:
-                   mapgen[p.id*10000]["scout"]=color
-       
-            if Fleet.objects.filter(owner=status.user, on_planet=p, command_order=8):
-                mapgen[p.id*10000]["sta"] = "/static/units/forward-field.png"
-    
-    portal_xy_list = Planet.objects.filter(portal=True, owner=status.user.id).values_list('x', 'y')
-    if Specops.objects.filter(user_to=status.user, name='Vortex Portal').exists():
-        for vort in Specops.objects.filter(user_to=status.user, name='Vortex Portal'):
-            vort_por = Planet.objects.filter(id=vort.planet.id).values_list('x', 'y')
-            portal_xy_list = portal_xy_list | vort_por
-    
-    sys_cov = min(100, int(100.0 * battlePortalCalc(system.x, system.y, portal_xy_list, status.research_percent_portals, status)))
-    
-    portal_planets = Planet.objects.filter(owner=status.user, portal=True)
-    if portal_planets:
-        portal = find_nearest_portal(system.x, system.y,
-                                             portal_planets, status)
-        min_dist = np.sqrt((portal.x - system.x) ** 2 +
-                       (portal.y - system.y) ** 2)
-        speed = race_info_list[status.get_race_display()]["travel_speed"]
-        speed_boost_enlightement = 1
-        if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
-            en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-            speed_boost_enlightement = (1 + en.specop_strength / 100)
-        speed *= speed_boost_enlightement
-        travel_time = max(0,int(np.floor(min_dist / speed)))
-    else:
-        travel_time = "No Portals!"
-    
-    narti = Artefacts.objects.get(name="The General")
-    empmembs = UserStatus.objects.filter(empire=status.empire).values_list("user", flat=True)
-    expfleets = Fleet.objects.filter(owner__in=empmembs, main_fleet=False, exploration=1, command_order=10)
-    expfl = []
-    for e in expfleets:
-        expfl.append(e.target_planet.id)
-    obsfleets = Fleet.objects.filter(owner__in=empmembs, main_fleet=False, agent__gt=0, specop="Observe Planet")
-    obsfl = []
-    for o in obsfleets:
-        obsfl.append(o.target_planet.id)
-    
-    suvfleets = Fleet.objects.filter(owner__in=empmembs, main_fleet=False, ghost__gt=0, specop="Survey System")
-    suvfl = ""
-    for o in suvfleets:
-        osyst = System.objects.get(x=o.x, y=o.y)
-        if osyst == system:
-            suvfl = "Yes"
-            
-    hovfleets = Fleet.objects.filter(owner__in=empmembs, main_fleet=False, exploration=1, command_order=2)
-    hovexp = Fleet.objects.filter(owner__in=empmembs, main_fleet=False, exploration=1, command_order=10, ticks_remaining=0)
-    hovfleets = hovfleets | hovexp
-    hovfl = []
-    for e in hovfleets:
-        hovfl.append(e.target_planet.id)
-    
-    context = {"status": status,
-               "msg": msg,
-               "round": RoundStatus.objects.filter().first,
-               "mapgen": mapgen,
-                "narti": narti,
-               "expfl": expfl,
-               "obsfl": obsfl,
-               "suvfl": suvfl,
-               "hovfl": hovfl,
-               "system": system,
-               "scouted_planets": scouted_planets,
-               "sys_cov": sys_cov,
-               "travel_time": travel_time,
-               "fleets": fleets,
-               "page_title": title}  
-    return render(request, "msyst.html", context)
+    return syst(request, system_id, "mobile") 
                
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
@@ -3419,6 +2709,9 @@ def empire_ranking(request):
         empartis = max_artis
         relations = Relations.objects.filter(relation_type="W") 
     
+    arte_found = Artefacts.objects.filter(empire_holding__isnull=False).count()
+    tot_arte = Artefacts.objects.filter().exclude(on_planet=None).count()
+    
     context = {"table": table,
                "page_title": "Empire ranking",
                "status": status,
@@ -3429,12 +2722,14 @@ def empire_ranking(request):
                "round_arti_nr": round_arti_nr,
                "relations": relations,
                "all_artis": all_artis,
+               "arte_found": arte_found,
+               "tot_arte": tot_arte,
                "artis": Artefacts.objects.get(name="Ether Gardens"),
                "my_template": my_template,
                "empartis": empartis}
     return render(request, "empire_ranking.html", context)
 
-
+@xframe_options_exempt
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
 def account(request, player_id):
@@ -3692,149 +2987,50 @@ def units(request):
 @user_passes_test(race_check, login_url="/choose_empire_race")
 @xframe_options_exempt
 def fleets_orders(request):
-    status = get_object_or_404(UserStatus, user=request.user)
-    other_fleets = Fleet.objects.filter(owner=status.user.id, main_fleet=False)
-    display_fleet_exploration = Fleet.objects.filter(owner=status.user.id, main_fleet=False, exploration=1)
+    return fleets(request, "short")
 
-    # show errors from fleetsend such as not having enough transports for droids, etc
-    error = None
-    if 'error' in request.session:
-        error = request.session['error']
-        request.session['error'] = ''
-
-    planet_to_template_explore = None
-    if request.method == 'POST' and 'explore_planet' in request.POST:
-        try:
-            pl_id = request.POST.get('explore_planet')
-            planet_to_template_explore = Planet.objects.get(id=pl_id)
-        except Planet.DoesNotExist:
-            planet_to_template_explore = None
-
-    planet_to_template_attack = None
-    if request.method == 'POST' and 'attack_planet' in request.POST:
-        try:
-            pl_id = request.POST.get('attack_planet')
-            planet_to_template_attack = Planet.objects.get(id=pl_id)
-        except Planet.DoesNotExist:
-            planet_to_template_attack = None
-    
-    travel_time = None
-    exploration_cost = None
-    if planet_to_template_explore:
-        exploration_cost = calc_exploration_cost(status)
-        portal_planets = Planet.objects.filter(owner=status.user, portal=True)
-        portal = find_nearest_portal(planet_to_template_explore.x, planet_to_template_explore.y,
-                                             portal_planets, status)
-        min_dist = np.sqrt((portal.x - planet_to_template_explore.x) ** 2 +
-                       (portal.y - planet_to_template_explore.y) ** 2)
-        speed = race_info_list[status.get_race_display()]["travel_speed"]
-        speed_boost_enlightement = 1
-        if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
-            en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-            speed_boost_enlightement = (1 + en.specop_strength / 100)
-        speed *= speed_boost_enlightement
-        travel_time = max(0,int(np.floor(min_dist / speed)))
-        planet_to_template_explore = planet_to_template_explore
-
-    attack_cost = None
-    status2 = None
-    
-    if planet_to_template_attack:
-        status2 = UserStatus.objects.get(id=planet_to_template_attack.owner.id)
-        attack_cost = battleReadinessLoss(status, status2, planet_to_template_attack)
-        portal_planets = Planet.objects.filter(owner=status.user, portal=True)
-        portal = find_nearest_portal(planet_to_template_attack.x, planet_to_template_attack.y,
-                                             portal_planets, status)
-        min_dist = np.sqrt((portal.x - planet_to_template_attack.x) ** 2 +
-                       (portal.y - planet_to_template_attack.y) ** 2)
-        speed = race_info_list[status.get_race_display()]["travel_speed"]
-        speed_boost_enlightement = 1
-        if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
-            en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-            speed_boost_enlightement = (1 + en.specop_strength / 100)
-        speed *= speed_boost_enlightement
-        travel_time = max(0,int(np.floor(min_dist / speed)))
-        planet_to_template_attack = planet_to_template_attack
-
-    # If user changed order after attack or percentages
-    if request.method == 'POST' and 'attack' in request.POST:
-        status.post_attack_order = int(request.POST["attack"])
-        status.long_range_attack_percent = int(request.POST["f0"])
-        status.air_vs_air_percent = int(request.POST["f1"])
-        status.ground_vs_air_percent = int(request.POST["f2"])
-        status.ground_vs_ground_percent = int(request.POST["f3"])
-        status.save()
-
-    main_fleet = Fleet.objects.get(owner=status.user.id, main_fleet=True)  # should only ever be 1
-    main_fleet_list = []
-    send_fleet_list = []  # need to have a separate list that doesnt include agents/psycics/ghosts/explos
-    explo_ships = main_fleet.exploration
-
-    for unit in unit_info["unit_list"]:
-        num = getattr(main_fleet, unit)
-        if num:
-            main_fleet_list.append({"name": unit_info[unit]["label"], "value": num, "i": unit_info[unit]["i"]})
-            if unit not in ['wizard', 'agent', 'ghost', 'exploration']:
-                send_fleet_list.append({"name": unit_info[unit]["label"], "value": num, "i": unit_info[unit]["i"]})
-
-    display_fleet = {}
-    for fleet in other_fleets:
-        display_fleet_inner = {}
-        for unit in unit_info["unit_list"]:
-            if unit not in ['wizard', 'agent', 'ghost', 'exploration']:
-                num = getattr(fleet, unit)
-                if num > 0:
-                    print(unit, num)
-                    display_fleet_inner[unit_info[unit]["label"]] = num
-                    display_fleet[fleet] = display_fleet_inner
-
-    context = {"status": status,
-               "round": RoundStatus.objects.filter().first,
-               "page_title": "Fleets",
-               "main_fleet_list": main_fleet_list,
-               "send_fleet_list": send_fleet_list,
-               "other_fleets": other_fleets,
-               "display_fleet": display_fleet,
-               "display_fleet_exploration": display_fleet_exploration,
-               "explo_ships": explo_ships,
-               "error": error,
-               "planet_to_template_explore": planet_to_template_explore,
-               "planet_to_template_attack": planet_to_template_attack,
-               "exploration_cost": exploration_cost,
-               "owner_of_attacked_pl": status2,
-               "planet": Planet.objects.all(),
-               "attack_cost": attack_cost,
-               "necro": Artefacts.objects.get(name="Scroll of the Necromancer"),
-               "travel_time": travel_time}
-    return render(request, "fleets_orders.html", context)
-
-
+@xframe_options_exempt
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
-def fleets_orders_process(request):
+def fleets_orders_process(request, *args):
     status = get_object_or_404(UserStatus, user=request.user)
     round_params = get_object_or_404(RoundStatus)
 
     if not request.POST:
         request.session['error'] = "Not a right request!"
-        return fleets(request)
+        if args:
+            return fleets(request, "short")
+        else:
+            return fleets(request)
 
     if not "fleet_select_hidden" in request.POST:
         request.session['error'] = "No fleets selected!"
-        return fleets(request)
+        if args:
+            return fleets(request, "short")
+        else:
+            return fleets(request)
     if not "order" in request.POST:
         request.session['error'] = "No order selected!"
-        return fleets(request)
+        if args:
+            return fleets(request, "short")
+        else:
+            return fleets(request)
 
     fleets_id = request.POST.getlist("fleet_select_hidden")
     order = int(request.POST.get("order"))
 
     if (order == 0 or order == 1 or order == 2 or order == 3 or order == 10) and not request.POST.get("X"):
         request.session['error'] = "You must enter x coordinate!"
-        return fleets(request)
+        if args:
+            return fleets(request, "short")
+        else:
+            return fleets(request)
     if (order == 0 or order == 1 or order == 2 or order == 3 or order == 10) and not request.POST.get("Y"):
         request.session['error'] = "You must enter y coordinate!"
-        return fleets(request)
+        if args:
+            return fleets(request, "short")
+        else:
+            return fleets(request)
 
     if order == 0 or order == 1 or order == 2 or order == 3 or order == 10:
         x = int(request.POST.get("X"))
@@ -3842,11 +3038,17 @@ def fleets_orders_process(request):
 
     if (order == 0 or order == 1 or order == 10) and not request.POST.get("I"):
         request.session['error'] = "You must enter planets number!"
-        return fleets(request)
+        if args:
+            return fleets(request, "short")
+        else:
+            return fleets(request)
 
     if (order == 6) and not request.POST.get("split_pct"):
         request.session['error'] = "You must enter fleet split %!"
-        return fleets(request)
+        if args:
+            return fleets(request, "short")
+        else:
+            return fleets(request)
 
     if order == 0 or order == 1 or order == 10:  # if attack planet or station on planet, make sure planet exists and get planet object
         i = request.POST.get("I")
@@ -3854,11 +3056,17 @@ def fleets_orders_process(request):
             planet = Planet.objects.get(x=x, y=y, i=i)
         except Planet.DoesNotExist:
             request.session['error'] = "This planet doesn't exist"
-            return fleets(request)
+            if args:
+                return fleets(request, "short")
+            else:
+                return fleets(request)
     elif order == 2 or order == 3:  # if move to system, make sure x and y are actual coords
         if x < 0 or x >= round_params.galaxy_size or y < 0 or y >= round_params.galaxy_size:
             request.session['error'] = "Coordinates aren't valid"
-            return fleets(request)
+            if args:
+                return fleets(request, "short")
+            else:
+                return fleets(request)
 
     fleets_id2 = Fleet.objects.filter(id__in=fleets_id)
     # print("fleets_id2",fleets_id2)
@@ -3871,7 +3079,7 @@ def fleets_orders_process(request):
     # option value="5" Join main fleet
     # option value="6" Split fleet
 
-    speed = race_info_list[status.get_race_display()]["travel_speed"]
+    speed = travel_speed(status)
     if order == 0 or order == 1:
         for f in fleets_id2:
             generate_fleet_order(f, x, y, speed, order, i)
@@ -3902,7 +3110,10 @@ def fleets_orders_process(request):
         # print(portal_planets)
         if not portal_planets:
             request.session['error'] = "You need at least one portal for fleet to returnto main fleet!"
-            return fleets(request)
+            if args:
+                return fleets(request, "short")
+            else:
+                return fleets(request)
         for f in fleets_id2:
             portal = find_nearest_portal(f.current_position_x, f.current_position_y, portal_planets, status)
             generate_fleet_order(f, portal.x, portal.y, speed, order)
@@ -3920,130 +3131,21 @@ def fleets_orders_process(request):
         # instant explore
         fleets_buffer = Fleet.objects.filter(main_fleet=False, ticks_remaining__lt=1, command_order=10)
         explore_planets(fleets_buffer)
-
-    return fleets(request)
+    if args:
+        return fleets_orders(request)
+    else:
+        return fleets(request)
 
 @xframe_options_exempt
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
 def fleet_orders_process(request):
-    status = get_object_or_404(UserStatus, user=request.user)
-    round_params = get_object_or_404(RoundStatus)
+    return fleets_orders_process(request, "short")
 
-    if not request.POST:
-        request.session['error'] = "Not a right request!"
-        return fleets(request)
-
-    if not "fleet_select_hidden" in request.POST:
-        request.session['error'] = "No fleets selected!"
-        return fleets(request)
-    if not "order" in request.POST:
-        request.session['error'] = "No order selected!"
-        return fleets(request)
-
-    fleets_id = request.POST.getlist("fleet_select_hidden")
-    order = int(request.POST.get("order"))
-
-    if (order == 0 or order == 1 or order == 2 or order == 3 or order == 10) and not request.POST.get("X"):
-        request.session['error'] = "You must enter x coordinate!"
-        return fleets(request)
-    if (order == 0 or order == 1 or order == 2 or order == 3 or order == 10) and not request.POST.get("Y"):
-        request.session['error'] = "You must enter y coordinate!"
-        return fleets(request)
-
-    if order == 0 or order == 1 or order == 2 or order == 3 or order == 10:
-        x = int(request.POST.get("X"))
-        y = int(request.POST.get("Y"))
-
-    if (order == 0 or order == 1 or order == 10) and not request.POST.get("I"):
-        request.session['error'] = "You must enter planets number!"
-        return fleets(request)
-
-    if (order == 6) and not request.POST.get("split_pct"):
-        request.session['error'] = "You must enter fleet split %!"
-        return fleets(request)
-
-    if order == 0 or order == 1 or order == 10:  # if attack planet or station on planet, make sure planet exists and get planet object
-        i = request.POST.get("I")
-        try:
-            planet = Planet.objects.get(x=x, y=y, i=i)
-        except Planet.DoesNotExist:
-            request.session['error'] = "This planet doesn't exist"
-            return fleets(request)
-    elif order == 2 or order == 3:  # if move to system, make sure x and y are actual coords
-        if x < 0 or x >= round_params.galaxy_size or y < 0 or y >= round_params.galaxy_size:
-            request.session['error'] = "Coordinates aren't valid"
-            return fleets(request)
-
-    fleets_id2 = Fleet.objects.filter(id__in=fleets_id)
-    # print("fleets_id2",fleets_id2)
-
-    # option value="0" Attack the planet
-    # option value="1" Station on planet
-    # option value="2" Move to system
-    # option value="3" Merge in system (chose system yourself)
-    # option value="4" Merge in system (auto/optimal)
-    # option value="5" Join main fleet
-    # option value="6" Split fleet
-
-    speed = race_info_list[status.get_race_display()]["travel_speed"]
-    if order == 0 or order == 1:
-        for f in fleets_id2:
-            generate_fleet_order(f, x, y, speed, order, i)
-        # do instant merge of stationed fleets if allready present on that planet
-        fleets_id3 = Fleet.objects.filter(id__in=fleets_id, ticks_remaining__lt=1, command_order=1)
-        station_fleets(request, fleets_id3, status)
-    if order == 2 or order == 3:
-        for f in fleets_id2:
-            generate_fleet_order(f, x, y, speed, order)
-    # mass merge auto
-    if order == 3 or order == 4:
-        systems = []
-        for f in fleets_id2:
-            tmp = []
-            tmp.append(f.current_position_x)
-            tmp.append(f.current_position_y)
-            systems.append(tmp)
-        pos = find_bounding_circle(systems)
-        for f in fleets_id2:
-            generate_fleet_order(f, pos[0], pos[1], speed, order)
-        fleets_id3 = Fleet.objects.filter(id__in=fleets_id, ticks_remaining__lt=1)
-        # do instant merge of fleets allready present in same systems
-        merge_fleets(fleets_id3)
-    # join main fleet
-    if order == 5:
-        portal_planets = Planet.objects.filter(owner=request.user,
-                                               portal=True)  # should always have at least the home planet, unless razed!!!
-        # print(portal_planets)
-        if not portal_planets:
-            request.session['error'] = "You need at least one portal for fleet to returnto main fleet!"
-            return fleets(request)
-        for f in fleets_id2:
-            portal = find_nearest_portal(f.current_position_x, f.current_position_y, portal_planets, status)
-            generate_fleet_order(f, portal.x, portal.y, speed, order, portal.i)
-        # do instant join of fleets allready present in systems with portals
-        main_fleet = Fleet.objects.get(owner=request.user, main_fleet=True)
-        fleets_id3 = Fleet.objects.filter(id__in=fleets_id, ticks_remaining__lt=1)
-        join_main_fleet(main_fleet, fleets_id3)
-    if order == 6:
-        split_pct = int(request.POST.get("split_pct"))
-        total_fleets = Fleet.objects.filter(owner=status.user.id, main_fleet=False)
-        if len(total_fleets) >= 50:
-            request.session['error'] = "You cant have more than 50 fleets out at the same time!"
-            return fleets(request)
-        split_fleets(fleets_id2, split_pct)
-    if order == 10:
-        for f in fleets_id2:
-            generate_fleet_order(f, x, y, speed, order, i)
-        # instant explore
-        fleets_buffer = Fleet.objects.filter(main_fleet=False, ticks_remaining__lt=1, command_order=10)
-        explore_planets(fleets_buffer)
-
-    return fleets_orders(request)
-
+@xframe_options_exempt
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
-def fleets(request):
+def fleets(request, *args):
     status = get_object_or_404(UserStatus, user=request.user)
     other_fleets = Fleet.objects.filter(owner=status.user.id, main_fleet=False)
     display_fleet_exploration = Fleet.objects.filter(owner=status.user.id, main_fleet=False, exploration=1)
@@ -4079,12 +3181,7 @@ def fleets(request):
                                              portal_planets, status)
         min_dist = np.sqrt((portal.x - planet_to_template_explore.x) ** 2 +
                        (portal.y - planet_to_template_explore.y) ** 2)
-        speed = race_info_list[status.get_race_display()]["travel_speed"]
-        speed_boost_enlightement = 1
-        if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
-            en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-            speed_boost_enlightement = (1 + en.specop_strength / 100)
-        speed *= speed_boost_enlightement
+        speed = travel_speed(status)
         travel_time = max(0,int(np.floor(min_dist / speed)))
 
     attack_cost = None
@@ -4098,12 +3195,7 @@ def fleets(request):
                                              portal_planets, status)
         min_dist = np.sqrt((portal.x - planet_to_template_attack.x) ** 2 +
                        (portal.y - planet_to_template_attack.y) ** 2)
-        speed = race_info_list[status.get_race_display()]["travel_speed"]
-        speed_boost_enlightement = 1
-        if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
-            en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-            speed_boost_enlightement = (1 + en.specop_strength / 100)
-        speed *= speed_boost_enlightement
+        speed = travel_speed(status)
         travel_time = max(0,int(np.floor(min_dist / speed)))
         
 
@@ -4145,6 +3237,10 @@ def fleets(request):
     if tgeneral.on_planet != None:
         gsystem = System.objects.get(id=tgeneral.effect1)
     
+    bare = "No"
+    if args:
+        bare = "Yes"
+    
     context = {"status": status,
                "round": RoundStatus.objects.filter().first,
                "page_title": "Fleets",
@@ -4161,12 +3257,15 @@ def fleets(request):
                "owner_of_attacked_pl": status2,
                "planet": Planet.objects.all(),
                "attack_cost": attack_cost,
+               "bare": bare,
                #"necro": Artefacts.objects.get(name="Scroll of the Necromancer"),
                "tgeneral": tgeneral,
                "gsystem": gsystem,
                "travel_time": travel_time}
+    
     return render(request, "fleets.html", context)
 
+@xframe_options_exempt
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
 def tgeneral(request):
@@ -4185,18 +3284,16 @@ def tgeneral(request):
         nsystem = System.objects.get(x=x, y=y)
         min_dist = np.sqrt((gsystem.x - nsystem.x) ** 2 +
                        (gsystem.y - nsystem.y) ** 2)
-        speed = race_info_list[status.get_race_display()]["travel_speed"]
-        speed_boost_enlightement = 1
-        if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
-            en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-            speed_boost_enlightement = (1 + en.specop_strength / 100)
-        speed *= speed_boost_enlightement
+        speed = travel_speed(status)
         travel_time = max(0,int(np.floor(min_dist / speed)))
         tgeneral.effect1 = nsystem.id
         tgeneral.ticks_left = travel_time
         tgeneral.save()
         request.session['error'] = "The General is moving to " + str(nsystem.x) + "," + str(nsystem.y) + " and will arrive in " + str(travel_time) + " weeks!"
-        return fleets(request)
+        if args:
+            return fleets(request, "short")
+        else:
+            return fleets(request)
     else:
         request.session['error'] = "This System doesnt exist!"
         return fleets(request)
@@ -4323,13 +3420,7 @@ def fleetsend(request):
 
     best_portal_planet = find_nearest_portal(x, y, portal_planets, status)
     min_dist = np.sqrt((best_portal_planet.x - x) ** 2 + (best_portal_planet.y - y) ** 2)
-    speed = race_info_list[status.get_race_display()]["travel_speed"]
-    speed_boost_enlightement = 1
-    if Specops.objects.filter(user_to=request.user, name="Enlightenment", extra_effect="Speed").exists():
-        en = Specops.objects.get(user_to=request.user, name="Enlightenment", extra_effect="Speed")
-        speed_boost_enlightement = (1 + en.specop_strength / 100)
-    speed *= speed_boost_enlightement
-    # * specopEnlightemntCalc(id,CMD_ENLIGHT_SPEED);
+    speed = travel_speed(status)
     race = status.race
     fleet_time = max(0,int(np.floor(min_dist / speed)))
 
@@ -4471,13 +3562,7 @@ def fleetssend(request):
 
     best_portal_planet = find_nearest_portal(x, y, portal_planets, status)
     min_dist = np.sqrt((best_portal_planet.x - x) ** 2 + (best_portal_planet.y - y) ** 2)
-    speed = race_info_list[status.get_race_display()]["travel_speed"]
-    speed_boost_enlightement = 1
-    if Specops.objects.filter(user_to=request.user, name="Enlightenment", extra_effect="Speed").exists():
-        en = Specops.objects.get(user_to=request.user, name="Enlightenment", extra_effect="Speed")
-        speed_boost_enlightement = (1 + en.specop_strength / 100)
-    speed *= speed_boost_enlightement
-    # * specopEnlightemntCalc(id,CMD_ENLIGHT_SPEED);
+    speed = travel_speed(status)
     fleet_time = max(0,int(np.floor(min_dist / speed)))
 
     if not 'exploration' in request.POST:
@@ -4996,6 +4081,10 @@ def relations(request):
                                 tick_number=RoundStatus.objects.get().tick_number,
                                 extra_info=n_extra
                                 )
+        if Relations.objects.filter(empire1=rela.empire1, empire2=rela.empire2, relation_type='W'):
+            Relations.objects.filter(empire1=rela.empire1, empire2=rela.empire2, relation_type='W').delete()
+        if Relations.objects.filter(empire1=rela.empire2, empire2=rela.empire1, relation_type='W'):
+            Relations.objects.filter(empire1=rela.empire2, empire2=rela.empire1, relation_type='W').delete()
     elif 'acceptcf' in request.POST:
         rel = request.POST.get('acc_cf', False)
         rela = Relations.objects.get(id=rel)
@@ -5024,6 +4113,10 @@ def relations(request):
                                 tick_number=RoundStatus.objects.get().tick_number,
                                 extra_info=n_extra
                                 )
+        if Relations.objects.filter(empire1=rela.empire1, empire2=rela.empire2, relation_type='W'):
+            Relations.objects.filter(empire1=rela.empire1, empire2=rela.empire2, relation_type='W').delete()
+        if Relations.objects.filter(empire1=rela.empire2, empire2=rela.empire1, relation_type='W'):
+            Relations.objects.filter(empire1=rela.empire2, empire2=rela.empire1, relation_type='W').delete()
     elif 'cancel' in request.POST:
         rel = request.POST.get('can_nap', False)
         rela = Relations.objects.get(id=rel)
@@ -5204,7 +4297,7 @@ def research(request):
                 port += (fpoints * (status.alloc_research_portals/ 100) * race_info["research_bonus_portals"] )
             
             netw = status.networth
-            netw += (rc+fpoints) * 0.002
+            netw += (rc+fpoints) * 0.001
             
             rpmil = int(race_info.get("research_max_military") * (1.0-np.exp(mil / (-10.0 * netw))))
             if status.race == "DW":
@@ -5273,21 +4366,40 @@ def research(request):
 
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
-def specops(request):
+def specops(request, *args):
     status = get_object_or_404(UserStatus, user=request.user)
     race_ops = race_info_list[status.get_race_display()]["op_list"]
     race_spells = race_info_list[status.get_race_display()]["spell_list"]
     race_inca = race_info_list[status.get_race_display()]["incantation_list"]
-
+    
+    user_to_template_specop = None
     planet_to_template_specop = None
+    specop_planet_id = None
+    specop_u_id = None
+    error = None
+    if 'error' in request.session:
+        error = request.session['error']
+        request.session['error'] = None
+    if 'specop_planet_id' in request.session:
+        specop_planet_id = request.session['specop_planet_id']
+        request.session['specop_planet_id'] = None
+    if 'specop_u_id' in request.session:
+        specop_u_id = request.session['specop_u_id']
+        request.session['specop_u_id'] = None
+    
+    if specop_planet_id != None:
+        planet_to_template_specop = Planet.objects.get(id=specop_planet_id)
+    
+    if specop_u_id != None:
+        user_to_template_specop = UserStatus.objects.get(id=specop_u_id)
+    
     if request.method == 'POST' and 'specop_planet' in request.POST:
         try:
             pl_id = request.POST.get('specop_planet')
             planet_to_template_specop = Planet.objects.get(id=pl_id)
         except Planet.DoesNotExist:
             planet_to_template_specop = None
-
-    user_to_template_specop = None
+    
     if planet_to_template_specop is not None:
         if planet_to_template_specop.owner is not None:
             user_to_template_specop = (UserStatus.objects.get(id=planet_to_template_specop.owner.id))
@@ -5311,10 +4423,18 @@ def specops(request):
 
     spells = {}
     for s in psychicop_specs:
+        cloak = Artefacts.objects.get(name="Magus Cloak")
+        if cloak.empire_holding == status.empire:
+            if s not in race_spells and psychicop_specs[s][3] == True:
+                race_spells.append(s)
         if s in race_spells:
             specs = [None] * 8
             for j in range(len(psychicop_specs[s])):
                 specs[j] = psychicop_specs[s][j]
+                if cloak.empire_holding == status.empire and j == 1:
+                    if psychicop_specs[s][3] == True:
+                        c_cost = int(psychicop_specs[s][1] * 0.75)
+                        specs[1] = c_cost
             if user_to_template_specop:
                 specs[6] = specopReadiness(psychicop_specs[s], "Spell", status, user_to_template_specop)
             else:
@@ -5333,7 +4453,7 @@ def specops(request):
             for j in range(len(inca_specs[g])):
                 specs[j] = inca_specs[g][j]
             if user_to_template_specop:
-                ig_incs = ["Survey System", "Sense Artefact", "Vortex Portal", "Planetary Shielding"]
+                ig_incs = ["Survey System", "Sense Artefact", "Vortex Portal", "Planetary Shielding", "Call to Arms"]
                 if g in ig_incs:
                     specs[6] = inca_specs[g][1]
                 else:
@@ -5367,8 +4487,10 @@ def specops(request):
                     if faction is None and psychicop_specs[request.POST['spell']][3] is False:
                         msg = err_msg
                     else:
-                        msg = perform_spell(request.POST['spell'], int(request.POST['unit_ammount']), status, faction)
-                        user_to_template_specop = faction
+                        request.session['error'] = perform_spell(request.POST['spell'], int(request.POST['unit_ammount']), status, faction)
+                        if psychicop_specs[request.POST['spell']][3] is False:
+                            request.session['specop_u_id'] = faction.id    
+                        return redirect(request.META['HTTP_REFERER'])
 
         print(request.POST)
         if 'operation' in request.POST and 'unit_ammount' in request.POST:
@@ -5385,15 +4507,17 @@ def specops(request):
                 except Planet.DoesNotExist:
                     msg = "This planet doesn't exist"
                 if planet:
-                    msg = "Agents sent! \n" + send_agents_ghosts(status, int(request.POST['unit_ammount']), 0,
+                    request.session['error'] = "Agents sent! \n" + send_agents_ghosts(status, int(request.POST['unit_ammount']), 0,
                                              request.POST['X'], request.POST['Y'], request.POST['I'],
                                              request.POST['operation'])
-                    planet_to_template_specop = planet
+                    request.session['specop_planet_id'] = planet.id    
+                    return redirect(request.META['HTTP_REFERER'])
+
         if 'agent_select' in request.POST:
             agent_select = request.POST.getlist('agent_select')
             for agent_id in agent_select:
                 # TODO remake later to 1 function
-                speed = race_info_list[status.get_race_display()]["travel_speed"]
+                speed = travel_speed(status)
                 agent_fleet = Fleet.objects.get(id=agent_id)
                 portal_planets = Planet.objects.filter(owner=request.user, portal=True)
                 portal = find_nearest_portal(agent_fleet.current_position_x, agent_fleet.current_position_y,
@@ -5407,25 +4531,29 @@ def specops(request):
         if 'incantation' in request.POST and 'unit_ammount' in request.POST:
             if int(request.POST['unit_ammount']) > main_fleet.ghost:
                 msg = "You don't have that many ghost ships!"
-            elif request.POST['X'] == "" or request.POST['Y'] == "" or request.POST['I'] == "":
+            elif request.POST['incantation'] != "Call to Arms" and request.POST['X'] == "" or request.POST['incantation'] != "Call to Arms" and request.POST['Y'] == "" or request.POST['incantation'] != "Call to Arms" and request.POST['I'] == "":
                 msg = "You must specify a planet!"
             elif get_op_penalty(status.research_percent_culture, inca_specs[request.POST['incantation']][0]) == -1:
                 msg = "You don't have enough culture research to perform this incantation!"
             else:
                 planet = None
                 try:
-                    planet = Planet.objects.get(x=request.POST['X'], y=request.POST['Y'], i=request.POST['I'])
+                    if request.POST['incantation'] == "Call to Arms":
+                        planet = status.home_planet
+                    else:
+                        planet = Planet.objects.get(x=request.POST['X'], y=request.POST['Y'], i=request.POST['I'])
                 except Planet.DoesNotExist:
                     msg = "This planet doesn't exist"
                 if planet:
-                    msg = "Ghost Ships sent! \n" + send_ghosts(status, 0, int(request.POST['unit_ammount']),
-                                             request.POST['X'], request.POST['Y'], request.POST['I'],
-                                             request.POST['incantation'])
-                    planet_to_template_specop = planet
+                    request.session['error'] = "Ghost Ships sent! \n" + send_ghosts(status, 0, int(request.POST['unit_ammount']),
+                                             planet.x, planet.y, planet.i, request.POST['incantation'])
+                    request.session['specop_planet_id'] = planet.id    
+                    return redirect(request.META['HTTP_REFERER'])
+                    
         if 'ghost_select' in request.POST:
             ghost_select = request.POST.getlist('ghost_select')
             for ghost_id in ghost_select:
-                speed = race_info_list[status.get_race_display()]["travel_speed"]
+                speed = travel_speed(status)
                 ghost_fleet = Fleet.objects.get(id=ghost_id)
                 portal_planets = Planet.objects.filter(owner=request.user, portal=True)
                 portal = find_nearest_portal(ghost_fleet.current_position_x, ghost_fleet.current_position_y,
@@ -5443,12 +4571,22 @@ def specops(request):
     ops_out = Specops.objects.filter(user_from=status.user, specop_type='O')
     spells_in = Specops.objects.filter(user_to=status.user, specop_type='S', stealth=False)
     spells_out = Specops.objects.filter(user_from=status.user, specop_type='S')
-    inca_in = Specops.objects.filter(user_to=status.user, specop_type='G', stealth=False)
+    inca_in = Specops.objects.filter(user_to=status.user, specop_type='G', stealth=False).exclude(name='Planetary Shielding')
     inca_out = Specops.objects.filter(user_from=status.user, specop_type='G')
+    
+    planets = Planet.objects.filter(owner=status.user)
+    p_shields = Specops.objects.filter(name='Planetary Shielding', specop_type='G', planet__in=planets)
+    inca_in = inca_in|p_shields
+    o_shields = Specops.objects.filter(user_to=status.user, name='Planetary Shielding', specop_type='G').exclude(planet__in=planets)
+    inca_out = inca_out|o_shields
 
     template_name = None
     if user_to_template_specop is not None:
         template_name = user_to_template_specop.user_name
+
+    bare = "No"
+    if args:
+        bare = "Yes"
 
     context = {"status": status,
                "round": RoundStatus.objects.filter().first,
@@ -5462,215 +4600,24 @@ def specops(request):
                "ghost_fleets": ghost_fleets,
                "ops_out": ops_out,
                "ops_in": ops_in,
+               "error": error,
                "spells_in": spells_in,
                "spells_out": spells_out,
                "inca_out": inca_out,
                "inca_in": inca_in,
+               "bare": bare,
                "planet_to_template_specop": planet_to_template_specop,
                "user_to_template_specop": template_name,
                }
+    
     return render(request, "specops.html", context)
 
 @xframe_options_exempt
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
 def specs(request):
-    status = get_object_or_404(UserStatus, user=request.user)
-    race_ops = race_info_list[status.get_race_display()]["op_list"]
-    race_spells = race_info_list[status.get_race_display()]["spell_list"]
-    race_inca = race_info_list[status.get_race_display()]["incantation_list"]
-
-    planet_to_template_specop = None
-    if request.method == 'POST' and 'specop_planet' in request.POST:
-        try:
-            pl_id = request.POST.get('specop_planet')
-            planet_to_template_specop = Planet.objects.get(id=pl_id)
-        except Planet.DoesNotExist:
-            planet_to_template_specop = None
-
-    user_to_template_specop = None
-    if planet_to_template_specop is not None:
-        if planet_to_template_specop.owner is not None:
-            user_to_template_specop = (UserStatus.objects.get(id=planet_to_template_specop.owner.id))
-
-    ops = {}
-    for o in agentop_specs:
-        if o in race_ops:
-            specs = [None] * 8
-            for j in range(len(agentop_specs[o])):
-                specs[j] = agentop_specs[o][j]
-            if user_to_template_specop:
-                specs[6] = specopReadiness(agentop_specs[o], "Op", status, user_to_template_specop)
-            else:
-                specs[6] = None
-            arte = Artefacts.objects.get(name="Advanced Robotics")
-            if arte.empire_holding == status.empire:
-                specs[7] = get_op_penalty(status.research_percent_operations, (agentop_specs[o][0]/2))
-            else:
-                specs[7] = get_op_penalty(status.research_percent_operations, agentop_specs[o][0])
-            ops[o] = specs
-
-    spells = {}
-    for s in psychicop_specs:
-        if s in race_spells:
-            specs = [None] * 8
-            for j in range(len(psychicop_specs[s])):
-                specs[j] = psychicop_specs[s][j]
-            if user_to_template_specop:
-                specs[6] = specopReadiness(psychicop_specs[s], "Spell", status, user_to_template_specop)
-            else:
-                specs[6] = None
-            arte = Artefacts.objects.get(name="Advanced Robotics")
-            if arte.empire_holding == status.empire:
-                specs[7] = get_op_penalty(status.research_percent_culture, (psychicop_specs[s][0]/2))
-            else:
-                specs[7] = get_op_penalty(status.research_percent_culture, psychicop_specs[s][0])
-            spells[s] = specs
-
-    inca = {}
-    for g in inca_specs:
-        if g in race_inca:
-            specs = [None] * 8
-            for j in range(len(inca_specs[g])):
-                specs[j] = inca_specs[g][j]
-            if user_to_template_specop:
-                ig_incs = ["Survey System", "Sense Artefact", "Vortex Portal", "Planetary Shielding"]
-                if g in ig_incs:
-                    specs[6] = inca_specs[g][1]
-                else:
-                    specs[6] = specopReadiness(inca_specs[g], "Inca", status, user_to_template_specop)
-            else:
-                specs[6] = None
-            arte = Artefacts.objects.get(name="Advanced Robotics")
-            if arte.empire_holding == status.empire:
-                specs[7] = get_op_penalty(status.research_percent_culture, (inca_specs[g][0]/2))
-            else:
-                specs[7] = get_op_penalty(status.research_percent_culture, inca_specs[g][0])
-            inca[g] = specs
-    msg = ""
-    main_fleet = Fleet.objects.get(owner=status.user.id, main_fleet=True)
-
-    if request.method == 'POST':
-        if 'spell' in request.POST and 'unit_ammount' in request.POST:
-            if status.psychic_readiness < 0:
-                msg = "You don't have enough psychic readiness to perform this operation!"
-            elif int(request.POST['unit_ammount']) > main_fleet.wizard:
-                msg = "You don't have that many psychics!"
-            else:
-                if psychicop_specs[request.POST['spell']][3] is False and request.POST['user_id2'] == "":
-                    msg = "You must specify a target player for this spell!"
-                else:
-                    if psychicop_specs[request.POST['spell']][3] is False:
-                        faction, err_msg = get_userstatus_from_id_or_name(request.POST['user_id2'])
-                    else:
-                        faction = None
-                    # if second faction not found and not self spell
-                    if faction is None and psychicop_specs[request.POST['spell']][3] is False:
-                        msg = err_msg
-                    else:
-                        msg = perform_spell(request.POST['spell'], int(request.POST['unit_ammount']), status, faction)
-                        user_to_template_specop = faction
-
-        print(request.POST)
-        if 'operation' in request.POST and 'unit_ammount' in request.POST:
-            if int(request.POST['unit_ammount']) > main_fleet.agent:
-                msg = "You don't have that many agents!"
-            elif request.POST['X'] == "" or request.POST['Y'] == "" or request.POST['I'] == "":
-                msg = "You must specify a planet!"
-            elif get_op_penalty(status.research_percent_operations, agentop_specs[request.POST['operation']][0]) == -1:
-                msg = "You don't have enough operations research to perform this covert operation!"
-            else:
-                planet = None
-                try:
-                    planet = Planet.objects.get(x=request.POST['X'], y=request.POST['Y'], i=request.POST['I'])
-                except Planet.DoesNotExist:
-                    msg = "This planet doesn't exist"
-                if planet:
-                    msg = "Agents sent! \n" + send_agents_ghosts(status, int(request.POST['unit_ammount']), 0,
-                                             request.POST['X'], request.POST['Y'], request.POST['I'],
-                                             request.POST['operation'])
-                    planet_to_template_specop = planet
-        if 'agent_select' in request.POST:
-            agent_select = request.POST.getlist('agent_select')
-            for agent_id in agent_select:
-                # TODO remake later to 1 function
-                speed = race_info_list[status.get_race_display()]["travel_speed"]
-                agent_fleet = Fleet.objects.get(id=agent_id)
-                portal_planets = Planet.objects.filter(owner=request.user, portal=True)
-                portal = find_nearest_portal(agent_fleet.current_position_x, agent_fleet.current_position_y,
-                                             portal_planets, status)
-                generate_fleet_order(agent_fleet, portal.x, portal.y, speed, 5)
-                main_fleet = Fleet.objects.get(owner=request.user, main_fleet=True)
-                fleets_id3 = Fleet.objects.filter(id=agent_id, ticks_remaining__lt=1)
-                join_main_fleet(main_fleet, fleets_id3)
-                msg = "Agents returned"
-        print(request.POST)        
-        if 'incantation' in request.POST and 'unit_ammount' in request.POST:
-            if int(request.POST['unit_ammount']) > main_fleet.ghost:
-                msg = "You don't have that many ghost ships!"
-            elif request.POST['X'] == "" or request.POST['Y'] == "" or request.POST['I'] == "":
-                msg = "You must specify a planet!"
-            elif get_op_penalty(status.research_percent_culture, inca_specs[request.POST['incantation']][0]) == -1:
-                msg = "You don't have enough culture research to perform this incantation!"
-            else:
-                planet = None
-                try:
-                    planet = Planet.objects.get(x=request.POST['X'], y=request.POST['Y'], i=request.POST['I'])
-                except Planet.DoesNotExist:
-                    msg = "This planet doesn't exist"
-                if planet:
-                    msg = "Ghost Ships sent! \n" + send_ghosts(status, 0, int(request.POST['unit_ammount']),
-                                             request.POST['X'], request.POST['Y'], request.POST['I'],
-                                             request.POST['incantation'])
-                    planet_to_template_specop = planet
-        if 'ghost_select' in request.POST:
-            ghost_select = request.POST.getlist('ghost_select')
-            for ghost_id in ghost_select:
-                speed = race_info_list[status.get_race_display()]["travel_speed"]
-                ghost_fleet = Fleet.objects.get(id=ghost_id)
-                portal_planets = Planet.objects.filter(owner=request.user, portal=True)
-                portal = find_nearest_portal(ghost_fleet.current_position_x, ghost_fleet.current_position_y,
-                                             portal_planets, status)
-                generate_fleet_order(ghost_fleet, portal.x, portal.y, speed, 5)
-                main_fleet = Fleet.objects.get(owner=request.user, main_fleet=True)
-                fleets_id3 = Fleet.objects.filter(id=ghost_id, ticks_remaining__lt=1)
-                join_main_fleet(main_fleet, fleets_id3)
-                msg = "Ghost ships returned"
-                
-        print(request.POST)
-    agent_fleets = Fleet.objects.filter(owner=status.user, agent__gt=0, main_fleet=False)
-    ghost_fleets = Fleet.objects.filter(owner=status.user, ghost__gt=0, main_fleet=False)
-    ops_in = Specops.objects.filter(user_to=status.user, specop_type='O').exclude(name="Diplomatic Espionage", stealth=True)
-    ops_out = Specops.objects.filter(user_from=status.user, specop_type='O')
-    spells_in = Specops.objects.filter(user_to=status.user, specop_type='S', stealth=False)
-    spells_out = Specops.objects.filter(user_from=status.user, specop_type='S')
-    inca_in = Specops.objects.filter(user_to=status.user, specop_type='G', stealth=False)
-    inca_out = Specops.objects.filter(user_from=status.user, specop_type='G')
-
-    template_name = None
-    if user_to_template_specop is not None:
-        template_name = user_to_template_specop.user_name
-
-    context = {"status": status,
-               "round": RoundStatus.objects.filter().first,
-               "page_title": "Special Operations",
-               "operations": ops,
-               "spells": spells,
-               "incantations": inca,
-               "msg": msg,
-               "main_fleet": main_fleet,
-               "agent_fleets": agent_fleets,
-               "ghost_fleets": ghost_fleets,
-               "ops_out": ops_out,
-               "ops_in": ops_in,
-               "spells_in": spells_in,
-               "spells_out": spells_out,
-               "inca_out": inca_out,
-               "inca_in": inca_in,
-               "planet_to_template_specop": planet_to_template_specop,
-               "user_to_template_specop": template_name,
-               }
-    return render(request, "specs.html", context)
+    
+    return specops(request, "short")
 
 
 def ops(request):
@@ -5739,7 +4686,7 @@ def specop_show(request, specop_id):
     target_player = UserStatus.objects.get(user=specop.user_to)
     fleets = None
     if specop.name == "High Infiltration":
-        if specop.specop_strength >= 0.8:
+        if specop.specop_strength >= 1.5:
             planets = Planet.objects.filter(owner=specop.user_to)
             for p in planets:
                 scouting = Scouting.objects.filter(planet=p, empire=status.empire).first()
@@ -5748,7 +4695,7 @@ def specop_show(request, specop_id):
                 elif scouting.scout < 1:
                     scouting.scout = 1
                     scouting.save()
-        if specop.specop_strength >= 1.0:
+        if specop.specop_strength >= 2.0:
             fleets = Fleet.objects.filter(owner=specop.user_to)
 
     context = {"status": status,
@@ -5834,8 +4781,8 @@ def famaid(request):
                     use2 += " ,Post: " + str(status2.ectrolium)
                     total += e
             if total > 0:
-                News.objects.create(user2=request.user,
-                                    user1=status2.user,
+                News.objects.create(user1=request.user,
+                                    user2=status2.user,
                                     empire1=status.empire,
                                     news_type='SI',
                                     date_and_time=datetime.datetime.now(),
@@ -5935,8 +4882,8 @@ def famgetaid(request):
                         use2 += ", Post: " + str(status2.ectrolium)
                         total += e
                 if total > 0:
-                    News.objects.create(user2=status.user,
-                                        user1=status2.user,
+                    News.objects.create(user1=status.user,
+                                        user2=status2.user,
                                         empire1=status.empire,
                                         news_type='RA',
                                         date_and_time=datetime.datetime.now(),
@@ -6363,7 +5310,21 @@ def gaccount(request):
     return render(request, "guide/account.htm")
     
 def garti(request):
-    context = {"arti_list": arti_list}
+    reg_arts={}
+    oth_arts={}
+    ret_arts={}
+    excluded = ["Scroll of the Necromancer", "You Grow, Girl!"]
+    for k, v in arti_list.items():
+        if k in excluded:
+            ret_arts[k]={"img":v[5],"desc":v[0]}
+        elif v[3] == 1:
+            reg_arts[k]={"img":v[5],"desc":v[0]}
+        else:
+            oth_arts[k]={"img":v[5],"desc":v[0]}
+            
+    context = {"reg_arts": reg_arts,
+                "oth_arts":oth_arts,
+                "ret_arts":ret_arts}
     return render(request, "guide/arti.htm", context)
 
 def gbuttons(request):
@@ -6414,12 +5375,20 @@ def gportal(request):
                 speedgen[key]['color']="yellow"
             else:
                 speedgen[key]['color']="red"
-            
+    
+    try:
+        status = UserStatus.objects.get(user=request.user)
+        if status.galsel == 2:
+            status = TwoStatus.objects.get(user=request.user)
+    except:
+        status = None
+    
     context = {"wks": wks,
                 "xone": xone,
                 "yone": yone,
                 "xtwo": xtwo,
                 "ytwo": ytwo,
+                "status": status,
                 "speedgen":speedgen}
     return render(request, "guide/portal.html", context)
     

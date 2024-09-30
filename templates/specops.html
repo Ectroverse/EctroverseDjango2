@@ -4,7 +4,11 @@
 
 {% block content %}
 
-
+{% if error != None %}
+	{{error|linebreaksbr}}
+	<br>
+	<br>
+{% endif %}
 
 {% if msg != '' %}
 	{{msg|linebreaksbr}}
@@ -109,6 +113,11 @@ function ghostsCheck() {
 	{% for name, values in incantations.items  %}
 		if (document.getElementById('{{values.4}}').checked) {
 			document.getElementById('ops_{{values.4}}').style.display = 'inline';
+			
+			if (document.getElementById('{{values.4}}').value == "Call to Arms" ) {
+				document.getElementById('target_planet_gs').style.visibility = 'hidden';
+			}
+			else document.getElementById('target_planet_gs').style.visibility = 'visible';
 		}
 		else document.getElementById('ops_{{values.4}}').style.display = 'none';
 
@@ -124,11 +133,19 @@ function ghostsCheck() {
 	<div class="ops_box spaceUnder">
 	<b>Agents amount: {{main_fleet.agent}}</b>
 	<br><br>
-	{% if status.galsel == 1 %}
+	{% if bare == "Yes" %}
+		{% if status.galsel == 1 %}
+		<form action="/specs" method="POST">
+		{% elif status.galsel == 2 %}
+		<form action="/galtwo/specs" method="POST">
+		{% endif %}
+	{% else %}
+		{% if status.galsel == 1 %}
 		<form action="/specops" method="POST">
 		{% elif status.galsel == 2 %}
 		<form action="/galtwo/specops" method="POST">
 		{% endif %}
+	{% endif %}
 		{% csrf_token %}
 			{% for name, values in operations.items  %}
 			<input class="spaceUnder" type="radio" id="{{ values.4 }}" name="operation" value="{{ name }}" onclick="agentsCheck()">
@@ -171,11 +188,19 @@ function ghostsCheck() {
 {% if agent_fleets %}
 	<div style="width:100%; float:left;">
 		Agents travelling:
+		{% if bare == "Yes" %}
+		{% if status.galsel == 1 %}
+		<form action="/specs" method="POST" name="cancelAgents" style="margin-bottom: 25px" >
+		{% elif status.galsel == 2 %}
+		<form action="/galtwo/specs" method="POST" name="cancelAgents" style="margin-bottom: 25px" >
+		{% endif %}	
+		{% else %}
 		{% if status.galsel == 1 %}
 		<form action="/specops" method="POST" name="cancelAgents" style="margin-bottom: 25px" >
 		{% elif status.galsel == 2 %}
 		<form action="/galtwo/specops" method="POST" name="cancelAgents" style="margin-bottom: 25px" >
-		{% endif %}		
+		{% endif %}	
+		{% endif %}
 		{% csrf_token %}
 		<table style="margin: 0 auto;">
 		<tr>
@@ -292,10 +317,18 @@ function ghostsCheck() {
 	<div class="ops_box ">
 	<b>Psychics amount: {{main_fleet.wizard}}</b>
 	<br><br>
+		{% if bare == "Yes" %}
+		{% if status.galsel == 1 %}
+		<form action="/specs" method="POST" style="margin-bottom: 25px">
+		{% elif status.galsel == 2 %}
+		<form action="/galtwo/specs" method="POST" style="margin-bottom: 25px">
+		{% endif %}
+		{% else %}
 		{% if status.galsel == 1 %}
 		<form action="/specops" method="POST" style="margin-bottom: 25px">
 		{% elif status.galsel == 2 %}
 		<form action="/galtwo/specops" method="POST" style="margin-bottom: 25px">
+		{% endif %}
 		{% endif %}
 		{% csrf_token %}
 			{% for name, values in spells.items  %}
@@ -374,10 +407,10 @@ function ghostsCheck() {
 	<div class="ops_box spaceUnder">
 	Ghost ships amount: {{main_fleet.ghost}}
 	<br>
-		{% if status.galsel == 1 %}
-		<form action="/specops" method="POST" style="margin-bottom: 25px">
-		{% elif status.galsel == 2 %}
-		<form action="/galtwo/specops" method="POST" style="margin-bottom: 25px">
+		{% if bare == "Yes" %}
+		<form action="specs" method="POST" style="margin-bottom: 25px">
+		{% else %}
+		<form action="specops" method="POST" style="margin-bottom: 25px">
 		{% endif %}
 		{% csrf_token %}
 			{% for name, values in incantations.items %}
@@ -389,7 +422,7 @@ function ghostsCheck() {
 			<div class = "spaceUnder"></div>
 			units to send:
 			<input class="spaceUnder" type="number"  min="0" max="{{main_fleet.ghost}}" name="unit_ammount" size="12" value="{{main_fleet.ghost}}" />
-			<div class="spaceUnder" id="target_planet">
+			<div class="spaceUnder" id="target_planet_gs">
 				Target coordinates:
 				X:<input class="spaceUnder" pattern="[0-9]+" type="text" id="X" name="X" size="4" value ="{{planet_to_template_specop.x}}">
 				Y:<input class="spaceUnder" pattern="[0-9]+" type="text" id="Y" name="Y" size="4" value ="{{planet_to_template_specop.y}}">
@@ -420,13 +453,20 @@ function ghostsCheck() {
 	</div>
 {% if ghost_fleets %}
 	<div style="width:100%; float:left;">
-		Ghost Ships travelling:	
+		Ghost Ships travelling:
+		{% if bare == "Yes" %}
+		{% if status.galsel == 1 %}
+		<form action="/specs" method="POST" style="margin-bottom: 25px">
+		{% elif status.galsel == 2 %}
+		<form action="/galtwo/specs" method="POST" style="margin-bottom: 25px">
+		{% endif %}
+		{% else %}
 		{% if status.galsel == 1 %}
 		<form action="/specops" method="POST" name="cancelGhosts" style="margin-bottom: 25px" >
 		{% elif status.galsel == 2 %}
 		<form action="/galtwo/specops" method="POST" name="cancelGhosts" style="margin-bottom: 25px" >
 		{% endif %}
-		
+		{% endif %}
 		{% csrf_token %}
 		<table style="margin: 0 auto;">
 		<tr>
@@ -489,7 +529,13 @@ function ghostsCheck() {
 			<b>Your incantations on other factions:</b><br>
 			{% for g in inca_out%}
 				{% if status.galsel == 1 %}
-				<a href="/planet{{g.planet.id}}">{{g.planet.x}},{{g.planet.y}}:{{g.planet.i}}</a> {{g.name}} of {{g.specop_strength}}% on <a href="/account{{g.user_to.userstatus.id}}">{{g.user_to.userstatus.user_name}}</a> for {{g.ticks_left}} weeks.<br>
+				<a href="/planet{{g.planet.id}}">{{g.planet.x}},{{g.planet.y}}:{{g.planet.i}}</a> {{g.name}} of {{g.specop_strength}}% on 
+				{% if g.name == "Planetary Shielding" %}
+				<a href="/account{{g.planet.owner.userstatus.id}}">{{g.planet.owner.userstatus.user_name}}</a>
+				{% else %}
+				<a href="/account{{g.user_to.userstatus.id}}">{{g.user_to.userstatus.user_name}}</a>
+				{% endif %}
+				for {{g.ticks_left}} weeks.<br>
 				{% elif status.galsel == 2 %}
 				<a href="/galtwo/planet{{g.planet.id}}">{{g.planet.x}},{{g.planet.y}}:{{g.planet.i}}</a> {{g.name}} of {{g.specop_strength}}% on <a href="/galtwo/account{{g.user_to.userstatus.id}}">{{g.user_to.galtwouser.user_name}}</a> for {{g.ticks_left}} weeks.<br>
 				{% endif %}

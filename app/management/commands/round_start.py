@@ -22,11 +22,10 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             tick_start.save()
             fast_tick = StatusRound.objects.get(id=1)
             msg = ""
-            if fast_tick.is_running == True:
-                fast_tick.is_running = False
-                fast_tick.save()
-                msg = "Fast Round has now Ended! "
-            #msg = "The Fast Round has now started, Good Luck and Have Fun!"
+            #if fast_tick.is_running == True:
+            #    fast_tick.is_running = False
+            #    fast_tick.save()
+            #    msg = "Fast Round has now Ended! "
             msg += "The Regular Round has now started, Good Luck!"
             NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
             msg = "<@&1201666532753547315> " + str(msg)

@@ -29,7 +29,7 @@ public class ProcessTick
 				+ " UPDATE \"PLANET\" SET max_population = (" + 
 				+ building_production_cities + " * cities +  size * " + population_size_factor + ") *pop_rc WHERE owner_id = user_id;" 
 				+ " UPDATE \"PLANET\" SET current_population = "
-				+ "greatest(least(current_population + current_population * pop_rc * race_pop_growth, max_population),100) WHERE owner_id = user_id;" 
+				+ "greatest(least(current_population + current_population * pop_rc * race_pop_growth, max_population),3000) WHERE owner_id = user_id;" 
 				+ " $$;";
 			
 			Statement statementSP = tmpCon.createStatement();
@@ -181,35 +181,7 @@ public class ProcessTick
 	
 		statement.executeUpdate("UPDATE app_roundstatus SET tick_number = " + (tick_nr + 1) );
 
-		//update arte timer
-		
-		//ResultSet RL = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Research Laboratory' ");
-		//RL.next();
-		//int RLA = RL.getInt("empire_holding_id");
-		//ResultSet CS = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Crystal Synthesis' ");
-		//CS.next();
-		//int CSA = CS.getInt("empire_holding_id");
-		//ResultSet FT = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Foohon Technology' ");
-		//FT.next();
-		//int FTA = FT.getInt("empire_holding_id");
-		//ResultSet MM = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Mirny Mine' ");
-		//MM.next();
-		//int MMA = MM.getInt("empire_holding_id");
-		//ResultSet EG = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Ether Gardens' ");
-		//EG.next();
-		//int EGA = EG.getInt("empire_holding_id");
-		//ResultSet TV = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 't-Veronica' ");
-		//TV.next();
-		//int TVA = TV.getInt("empire_holding_id");
-		//ResultSet DW = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Darwinism' ");
-		//DW.next();
-		//int DWA = DW.getInt("empire_holding_id");
-		//ResultSet MI = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Military Might' ");
-		//MI.next();
-		//int MIA = MI.getInt("empire_holding_id");
-		//ResultSet TR = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'The Recycler' ");
-		//TR.next();
-		//int TRA = TR.getInt("empire_holding_id");
+
 		ResultSet TF = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Terraformer' ");
 		TF.next();
 		int TFA = TF.getInt("empire_holding_id");
@@ -228,25 +200,11 @@ public class ProcessTick
 		ResultSet GL = statement.executeQuery("SELECT ticks_left FROM app_artefacts WHERE name = 'The General' ");
 		GL.next();
 		int GLA = GL.getInt("ticks_left");
-		//ResultSet SN = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Scroll of the Necromancer' ");
-		//SN.next();
-		//int SNA = SN.getInt("empire_holding_id");
-		//ResultSet IE = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Ironside Effect' ");
-		//IE.next();
-		//int IEA = IE.getInt("empire_holding_id");
-		//ResultSet CR = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Crystal Recharger' ");
-		//CR.next();
-		//int CRA = CR.getInt("empire_holding_id");
-		
-		//if(RLA == CSA && FTA == MMA && RLA == FTA && MMA == TFA && TFA == TVA && TVA == DWA && DWA == MIA && MIA == TRA && TRA == SNA && SNA == IEA && IEA == CRA){
-		
-		//    if(FTA == EGA && RLA >= 1){
-		//        statement.execute("UPDATE app_roundstatus SET artetimer = artetimer - 1;");
-		//        statement.execute("UPDATE app_roundstatus SET is_running = false WHERE artetimer = 0;");
-		//    }
-		//else{statement.execute("UPDATE app_roundstatus SET artetimer = 1440;");
-		//}
-		//}
+		ResultSet TJ = statement.executeQuery("SELECT ticks_left FROM app_artefacts WHERE name = 'Tyrs Justice' ");
+		TJ.next();
+		int TJA = TJ.getInt("ticks_left");
+
+
 		
 		//update terraformer
 		
@@ -278,6 +236,11 @@ public class ProcessTick
 		    statement.execute("UPDATE app_artefacts SET ticks_left = ticks_left - 1 WHERE name = 'The General';");
 		    }
 		
+		//update justic
+		
+		if(TJA >= 1){
+		    statement.execute("UPDATE app_artefacts SET ticks_left = ticks_left - 1 WHERE name = 'Tyrs Justice';");
+		    }
 					
 		//update fleet construction time
 		statement.execute("UPDATE app_unitconstruction SET ticks_remaining = ticks_remaining - 1;");
@@ -474,6 +437,8 @@ public class ProcessTick
 				(racebonus * userPlanetsUpdate.getPopulation() / popcount) )  / 100
 				));			
 				
+				double raceMax = race_info.getOrDefault(researchNames[i][3], 200.0);
+				
 				long rpoints = 0;
 				ResultSet rabbitSet = statement4.executeQuery("SELECT * FROM app_artefacts WHERE name = 'Rabbit Theorum' AND empire_holding_id = " + empireID);
 			    while (rabbitSet.next()){
@@ -485,15 +450,21 @@ public class ProcessTick
 				    rc += rpoints;}
 			    }
 				
-				rc = Math.max(0, rc);
-				totalRcPoints += rc;
-				userStatusUpdateStatement.setLong(15 + i, rc);
-				double raceMax = race_info.getOrDefault(researchNames[i][3], 200.0);
+				long ppoints = 0;
 				ResultSet quantumSet = statement4.executeQuery("SELECT * FROM app_artefacts WHERE name = 'Playboy Quantum' AND empire_holding_id = " + empireID);
 			    while (quantumSet.next()){
 				    if (i == 7){
-				    raceMax += 50;}
+				    raceMax += 100;
+				    ppoints = (long) (research_modifier * (enlightenmentResearchFactor * 1.2 * race_info.get(researchNames[i][1])  * userIntValues.get(researchNames[i][2])
+				    * (userPlanetsUpdate.getResearchProduction() + userLongValues.get("current_research_funding")/100 + 
+				    (racebonus * userPlanetsUpdate.getPopulation() / popcount) )  / 100
+				    ));
+				    rc += ppoints/2;}
 			    }
+				
+				rc = Math.max(0, rc);
+				totalRcPoints += rc;
+				userStatusUpdateStatement.setLong(15 + i, rc);
 				
 				long nw = userLongValues.get("networth");
 				int rcPercent = (int) Math.floor(raceMax * (1.0 - Math.exp(rc / (-10.0 * nw))));
@@ -590,10 +561,22 @@ public class ProcessTick
 				units_upkeep += (long)(units_upkeep_costs[i] * unitsSums[i]);
 				networth += (long)(unitsSums[i] * units_nw[i]);
 			}
+			
+			//general with might
+			
+			ResultSet GEN = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'The General' ");
+		    GEN.next();
+		    int GENM = GEN.getInt("empire_holding_id");
+			
 			//Military might artefact
 			artefactSet = statement4.executeQuery("SELECT * FROM app_artefacts WHERE name = 'Military Might' AND empire_holding_id = " + empireID);
 			while (artefactSet.next()){
+				if (GENM == empireID){
+					units_upkeep *= 1.0 - (artefactSet.getInt("effect1")*2) / 100.0;
+				}
+				else{
 				units_upkeep *= 1.0 - artefactSet.getInt("effect1") / 100.0;
+				}
 			}
 			
 			userStatusUpdateStatement.setLong(35, units_upkeep);

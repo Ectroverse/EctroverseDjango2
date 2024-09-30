@@ -72,6 +72,10 @@ def battleReadinessLoss(user1, user2, planet):
     if Specops.objects.filter(user_to=user2.user, name="Enlightenment", extra_effect="BadFR").exists():
         en = Specops.objects.get(user_to=user2.user, name="Enlightenment", extra_effect="BadFR")
         fa /= (1 + en.specop_strength / 100)
+    
+    tyr = Artefacts.objects.get(name="Tyrs Justice")
+    if empire1 == tyr.empire_holding and tyr.ticks_left > 0:
+        fa = round(fa*0.66)
 
     if nap == True:
         if fa < 50:
@@ -581,28 +585,38 @@ def attack_planet(attacking_fleet):
                 race_info_list[attacker.get_race_display()].get("military_defence", 1.0) / fa
     
     tgeneral = Artefacts.objects.get(name="The General")
+    might = Artefacts.objects.get(name="Military Might")
     if defender.empire == tgeneral.empire_holding and tgeneral.ticks_left == 0:
         gsystem = System.objects.get(id=tgeneral.effect1)
         gdist = max(abs(gsystem.x-attacked_planet.x), abs(gsystem.y-attacked_planet.y))
-        if gdist == 0:
+        if gdist == 0 or gdist == 1 and might.empire_holding == defender.empire:
             attfactor /= 1.15
             deffactor *= 1.15
-        elif gdist == 1:
+        elif gdist == 1 or gdist == 2 and might.empire_holding == defender.empire:
             attfactor /= 1.125
             deffactor *= 1.125
-        elif gdist == 2:
+        elif gdist == 2 or gdist == 4 and might.empire_holding == defender.empire:
             attfactor /= 1.1
             deffactor *= 1.1
-        elif gdist == 3:
+        elif gdist == 3 or gdist == 6 and might.empire_holding == defender.empire:
             attfactor /= 1.075
             deffactor *= 1.075
-        elif gdist == 4:
+        elif gdist == 4 or gdist == 8 and might.empire_holding == defender.empire:
             attfactor /= 1.05
             deffactor *= 1.05
-        elif gdist == 5:
+        elif gdist == 5 or gdist == 10 and might.empire_holding == defender.empire:
             attfactor /= 1.025
             deffactor *= 1.025
-                
+    
+    arte = Artefacts.objects.get(name="Double 0")
+    if defender.empire == arte.empire_holding:
+        deffactor *= 0.85
+    
+    tyr = Artefacts.objects.get(name="Tyrs Justice")
+    if defender.empire == tyr.empire_holding and attacker.empire != defender.empire:
+        tyr.ticks_left = 240
+        tyr.save()
+    
     fr = battleReadinessLoss(attacker, defender, attacked_planet)
     if attacked_planet.artefact != None and fr > 20:
         fr = 20

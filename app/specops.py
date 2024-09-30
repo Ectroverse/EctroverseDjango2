@@ -121,7 +121,11 @@ def specopReadiness(specop, type, user1, *args):
         if user2 == None and specop[3] == False:
             return -1
         if specop[3]: #if self op
-            return int((1.0 + 0.01 * penalty) * specop[1])
+            fr = int((1.0 + 0.01 * penalty) * specop[1])
+            arte = Artefacts.objects.get(name="Magus Cloak")
+            if arte.empire_holding == user1.empire:
+                fr = round(fr*0.75)
+            return fr
     else:
         arte = Artefacts.objects.get(name="Advanced Robotics")
         if arte.empire_holding == user1.empire:
@@ -875,39 +879,42 @@ def perform_operation(agent_fleet):
                 news_message2 += "Your agents managed to defend!"
 
         if operation == "Nuke Planet":
-            if success >= 1.0:
-                news_message += "The planet was nuked! Most of population is dead. Planet's building size is reduced.\n"
-                news_message2 += "The planet was nuked! Most of population is dead. Planet's building size is reduced.\n"
-                target_planet.owner = None
-                if target_planet.artefact is not None:
-                    target_planet.artefact.empire_holding = None
-                    target_planet.artefact.save()
-                raze_all_buildings2(target_planet, user2)
-                target_planet.protection = 0
-                target_planet.overbuilt = 0
-                target_planet.overbuilt_percent = 0
-                target_planet.buildings_under_construction = 0
-                target_planet.portal_under_construction = False
-                target_planet.portal = False
-                for con in Construction.objects.all():
-                        if con.planet == target_planet:
-                            con.delete()
-                stationed_fleet = Fleet.objects.filter(on_planet=target_planet).first()
-                if stationed_fleet is not None:
-                    stationed_fleet.delete()
-                    news_message += "Stationed fleet was completely destroyed in the blast!\n"
-                    news_message2 += "Stationed fleet was completely destroyed in the blast!\n"
-                target_planet.size *= random.randint(80,99)/100
-                target_planet.current_population = target_planet.size * 20
-                if target_planet.bonus_solar == 0 and target_planet.bonus_mineral == 0 and target_planet.bonus_crystal == 0 and target_planet.bonus_ectrolium == 0 and target_planet.artefact == False:
-                    target_planet.bonus_fission += random.randint(10,100)
-                    news_message += "Radioactive waste has improved Fission performance!"
-                    news_message2 += "Radioactive waste has improved Fission performance!"
-                target_planet.save()
-
+            if target_planet.home_planet == True:
+                news_message += "You cannot nuke a home planet"
             else:
-                news_message += "Your agents didn't succeed!"
-                news_message2 += "Your agents managed to defend!"
+                if success >= 1.0:
+                    news_message += "The planet was nuked! Most of population is dead. Planet's building size is reduced.\n"
+                    news_message2 += "The planet was nuked! Most of population is dead. Planet's building size is reduced.\n"
+                    target_planet.owner = None
+                    if target_planet.artefact is not None:
+                        target_planet.artefact.empire_holding = None
+                        target_planet.artefact.save()
+                    raze_all_buildings2(target_planet, user2)
+                    target_planet.protection = 0
+                    target_planet.overbuilt = 0
+                    target_planet.overbuilt_percent = 0
+                    target_planet.buildings_under_construction = 0
+                    target_planet.portal_under_construction = False
+                    target_planet.portal = False
+                    for con in Construction.objects.all():
+                            if con.planet == target_planet:
+                                con.delete()
+                    stationed_fleet = Fleet.objects.filter(on_planet=target_planet).first()
+                    if stationed_fleet is not None:
+                        stationed_fleet.delete()
+                        news_message += "Stationed fleet was completely destroyed in the blast!\n"
+                        news_message2 += "Stationed fleet was completely destroyed in the blast!\n"
+                    target_planet.size *= random.randint(80,99)/100
+                    target_planet.current_population = target_planet.size * 20
+                    if target_planet.bonus_solar == 0 and target_planet.bonus_mineral == 0 and target_planet.bonus_crystal == 0 and target_planet.bonus_ectrolium == 0 and target_planet.artefact == False:
+                        target_planet.bonus_fission += random.randint(10,100)
+                        news_message += "Radioactive waste has improved Fission performance!"
+                        news_message2 += "Radioactive waste has improved Fission performance!"
+                    target_planet.save()
+
+                else:
+                    news_message += "Your agents didn't succeed!"
+                    news_message2 += "Your agents managed to defend!"
 
 
         if operation == "Bio Infection":
@@ -1071,15 +1078,15 @@ def perform_incantation(ghost_fleet):
         user2 = None
         empire2 = None
 
-        n_check = ["Survey System", "Sense Artefact", "Vortex Portal", "Planetary Shielding"]
+        n_check = ["Survey System", "Sense Artefact", "Vortex Portal", "Planetary Shielding", "Call to Arms"]
         if target_planet.owner is not None and incantation not in n_check:
             user2 = UserStatus.objects.get(id=target_planet.owner.id)
             empire2 = user2.empire
             fleet2 = Fleet.objects.get(owner=user2.id, main_fleet=True)
-            ghosts2 = fleet2.wizard / 7
+            ghosts2 = fleet2.wizard 
             ghosts3 = fleet2.ghost
-            defense = ghosts2 * race_info_list[user2.get_race_display()].get("psychics_coeff", 1.0) * \
-                      (1.0 + 0.01 * user2.research_percent_culture)
+            defense = (ghosts2 * race_info_list[user2.get_race_display()].get("psychics_coeff", 1.0) * \
+                      (1.0 + 0.01 * user2.research_percent_culture)) / 7
             defense2 = ghosts3 * race_info_list[user2.get_race_display()].get("ghost_ships_coeff", 1.0) * \
                       (1.0 + 0.01 * user2.research_percent_culture)
 
@@ -1107,17 +1114,19 @@ def perform_incantation(ghost_fleet):
             news_message += "Attacker lost " + str(loss1) + " ghost ships. \nDefender lost: " + str(loss2) + " ghost ships.\n"
             news_message2 += "Attacker lost " + str(loss1) + " ghost ships. \nDefender lost: " + str(loss2) + " ghost ships.\n"
         
-        if target_planet.owner is not None and incantation not in n_check:
+        if success < 2.0 and target_planet.owner is not None and incantation not in n_check:
             refdef = 0.5 * pow((0.5 * success), 1.1)
             tlosses = 1.0 - pow((0.5 * success), 0.2)
             fc = 0.75 + (0.5 / 255.0) * (np.random.randint(0, 2147483647) & 255)
-            loss2 = min(ghosts2, round(fc * refdef * tlosses *ghosts2))
+            loss2 = min(ghosts2, round(fc * refdef * tlosses * ghosts2))
             if loss2 < 0:
-                loss2 = fleet2.wizard
+                loss2 = 0
+                success = 2.0
             fleet2.wizard -= loss2
             fleet2.save()
-            news_message += "Defender lost: " + str(loss2) + " psychics.\n"
-            news_message2 += "Defender lost: " + str(loss2) + " psychics.\n"            
+            if loss2 > 0:
+                news_message += "Defender lost: " + str(loss2) + " psychics.\n"
+                news_message2 += "Defender lost: " + str(loss2) + " psychics.\n"            
         
         if incantation == "Survey System":        
             planets = Planet.objects.filter(x=target_planet.x, y=target_planet.y).order_by('i')
@@ -1130,7 +1139,6 @@ def perform_incantation(ghost_fleet):
                       (1.0 + 0.01 * user3.research_percent_culture)
                     success = attack / (defense + 1)
                 else:
-                    fleet = Fleet.objects.get(owner=user, main_fleet=True)
                     defense = user1.networth / ghost
                     success = attack / (defense + 1)
                 if success < 0.4:
@@ -1181,17 +1189,20 @@ def perform_incantation(ghost_fleet):
             for arte in arti:
                 dist = max(abs(target_planet.x-arte.x), abs(target_planet.y-arte.y))
                 if dist < area:
-                    if success / 5 >= 1.0:
-                        news_message = "Your Ghost Ships have located an Artefact at Planet: " + str(arte.x) + "," + str(arte.y) + ":" + str(arte.i) + "!"
+                    if success >= 3:
+                        if "location" in news_message:
+                            news_message += "\nYour Ghost Ships have located an Artefact at Planet: " + str(arte.x) + "," + str(arte.y) + ":" + str(arte.i) + "!"
+                        else:
+                            news_message = "Your Ghost Ships have located an Artefact at Planet: " + str(arte.x) + "," + str(arte.y) + ":" + str(arte.i) + "!"
                         foundarte = arte
                         scouting = Scouting.objects.filter(empire=user1.empire, planet=foundarte).first()
                         if scouting is None:
                             Scouting.objects.create(user=user, planet=foundarte, empire=user1.empire, scout=1.0)
-                    elif success / 5 >= 0.7:
+                    elif success >= 2:
                         news_message = "Your Ghost Ships have felt an Artefact's presence in system: " + str(arte.x) + "," + str(arte.y) + "!"
-                    elif success / 5 >= 0.4:
+                    elif success >= 1:
                         news_message = "Your Ghost Ships have felt an Artefact's presence, its location remains unknown!"
-            if success >= 0.7:
+            if success >= 2:
                 for s in system:
                     dist = max(abs(target_planet.x-s.x), abs(target_planet.y-s.y))
                     if dist <= area:
@@ -1199,24 +1210,32 @@ def perform_incantation(ghost_fleet):
                     	
 
         if incantation == "Planetary Shielding":
+            stealth = False
+            user2 = UserStatus.objects.get(id=target_planet.owner.id)
+            empire2 = user2.empire
+            if empire2 == user1.empire:
+                empire2 = None
             ticks = round(min(72, (random.randint(1,6) * (success))))
             opstrength = min(2147483647, round(100 * attack * (np.random.randint(0, 2147483647) & 255)))
             if ticks > 0 and opstrength > 0:
                 Specops.objects.create(user_to=user1.user, specop_type='G', name='Planetary Shielding', specop_strength=opstrength, ticks_left=ticks, planet=target_planet)
                 news_message += "\nYour Ghost Ships managed to create a shield lasting " + str(ticks) + " weeks, able to withstand " + str(opstrength) + " damage!"
+                news_message2 += "\nGhost Ships managed to create a shield lasting " + str(ticks) + " weeks, able to withstand " + str(opstrength) + " damage!"
             else:
                 news_message += "\nYour Ghost Ships failed to create a shield!"
+                news_message2 += "\nGhost Ships failed to create a shield!"
         
         if incantation == "Portal Force Field":
-            ticks = round(min(48, (random.randint(1,6) * (success / 100))))
-            opstrength = min(100,round(attack * (np.random.randint(0, 2147483647) & 255)))
-            if ticks > 0 and opstrength > 0:
-                Specops.objects.create(user_to=target_planet.owner, user_from= user1.user, specop_type='G', name='Portal Force Field', specop_strength=opstrength, ticks_left=ticks, planet=target_planet)
-                news_message += "\nYour Ghost Ships managed to create a force field lasting "+ str(ticks) + " weeks, reducing portal capability by " + str(opstrength) + "%"
-                news_message2 += "\nYour portal was the target of a force field, reducing portal capability by " + str(opstrength) + "%, for " + str(ticks) + " weeks!"
-            else:
-                news_message += "\nYour Ghost Ships failed to create a force field"
-                news_message2 += "\nYour Psychics managed to defend a Portal Force Field"
+            if success > 0.5:
+                ticks = 16 + round(min(32, (random.randint(1,6) * (success / 100))))
+                opstrength = (min(100,round(attack * (np.random.randint(0, 2147483647) & 255))))
+                if ticks > 0 and opstrength > 0:
+                    Specops.objects.create(user_to=target_planet.owner, user_from= user1.user, specop_type='G', name='Portal Force Field', specop_strength=opstrength, ticks_left=ticks, planet=target_planet)
+                    news_message += "\nYour Ghost Ships managed to create a force field lasting "+ str(ticks) + " weeks, reducing portal capability by " + str(opstrength) + "%"
+                    news_message2 += "\nYour portal was the target of a force field, reducing portal capability by " + str(opstrength) + "%, for " + str(ticks) + " weeks!"
+                else:
+                    news_message += "\nYour Ghost Ships failed to create a force field"
+                    news_message2 += "\nYour Psychics managed to defend a Portal Force Field"
                 
         if incantation == "Mind Control":
             if success >= 2.0:
@@ -1350,18 +1369,25 @@ def perform_incantation(ghost_fleet):
         if incantation == "Call to Arms":
             pop = 0
             sol = 0
-            for p in Planet.objects.filter(owner=target_planet.owner):
+            for p in Planet.objects.filter(owner=user):
                 pops = round(p.current_population * (success/100))
                 p.current_population -= pops
                 p.save()
-                sols = round(pops/100)
                 pop += pops
-                sol += sols
-            main_fleet = Fleet.objects.get(owner=status.id, main_fleet=True)
-            main_fleet.soldier += sols
-            main_fleet.save()
-            news_message += str(pop) + " population has been recruited, training " + str(sol) + " soldiers!"
-
+            sol = int(pop/100)
+            m_fleet = Fleet.objects.get(owner=user, main_fleet=True)
+            if sol > 0:
+                sols = getattr(m_fleet, 'soldier')
+                mghost = getattr(m_fleet, 'ghost')
+                setattr(m_fleet, 'soldier', sol+sols)
+                setattr(m_fleet, 'ghost', mghost+ghost)
+                m_fleet.save()
+                ghost_fleet.delete()
+                news_message += str(pop) + " population has been recruited, training " + str(sol) + " soldiers!"
+            else:
+                news_message += "Your Ghost Ships failed!"
+             
+            
         if incantation == "Vortex Portal":
             print(ghost)
             fa = 7 * attack / user.userstatus.networth

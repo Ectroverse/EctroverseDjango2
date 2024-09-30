@@ -15,7 +15,13 @@
 <a href="/pmap">
 {% elif status.galsel == 2 %}
 <a href="/galtwo/pmap">
-{% endif %}Highlight Portal Coverage</a><br>
+{% endif %}Highlight Portal Coverage</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+{% if status.galsel == 1 %}
+<a href="/amap">
+{% elif status.galsel == 2 %}
+<a href="/galtwo/amap">
+{% endif %}Highlight Known Artefacts</a>
+<br>
 <div id="mapdiv" style="background-color:black; "></div>
 <div id="clsyst" style="display:none;" >
 <input type="button"  style="position:fixed; left:180px; top:95px; z-index: 100;" onclick="document.getElementById('clsyst').style.display='none';" value="Close System"/>
@@ -56,7 +62,7 @@
 		g.append("circle")
 			.attr("cx", "{{o.x}}")
 			.attr("cy", "{{o.y}}")
-			.attr("r", circle_radius * 0.9)
+			.attr("r", circle_radius)
 			.style("fill", "{{o.show}}")
 			.style("opacity",0.7)
 	{% endif %}
@@ -64,15 +70,21 @@
     g.append("circle")
 			.attr("cx", "{{o.x}}")
 			.attr("cy", "{{o.y}}")
-			.attr("r", circle_radius * 0.55)
+			.attr("r", circle_radius * 0.7)
 			.style("fill", "{{o.sense}}")
 			.style("opacity",1)
 
+	g.append("circle")
+			.attr("cx", "{{o.x}}")
+			.attr("cy", "{{o.y}}")
+			.attr("r", circle_radius * 0.6)
+			.style("fill", "")
+			.style("opacity",1)
 	
 	g.append("circle")
 			.attr("cx", "{{o.x}}")
 			.attr("cy", "{{o.y}}")
-			.attr("r", circle_radius * 0.5)
+			.attr("r", circle_radius * 0.55)
 			.style("fill", "{{o.scout}}")
 			.style("opacity",1)
 

@@ -143,7 +143,7 @@ public class UpdatePlanets{
 				buildgsBuiltFromJobs = new HashMap<>();
 					
 			//add planets population to total population
-			//population += (long)rowValues[colLocation[0]];
+			//population += (int)rowValues[colLocation[0]];
 
 						//update portal coverage
 			double portalCoverage = 0;
@@ -204,6 +204,7 @@ public class UpdatePlanets{
 			networth += (int)rowValues[colLocation[25]] * 1.65;
 			networth += (int)rowValues[colLocation[26]] * 5.0;
 			networth += (int)rowValues[colLocation[19]] * 1.75; //size
+			
 			
 			int buildingsUnderConstr = 0;
 			ResultSet underconSet = statement2.executeQuery("SELECT n FROM galtwo_construction WHERE planet_id = " + planetID + " AND user_id = " + userID + ";");
@@ -313,7 +314,7 @@ public class UpdatePlanets{
 	}
 	
 	//public long getPopulation(){
-	//	return population;
+		//return population;
 	//}
 	
 	public int getResearchProduction(){

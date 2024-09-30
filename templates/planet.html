@@ -6,6 +6,25 @@
 
 {% load mathfilters %}
 
+<script>
+
+function updatesystem(id){
+	{% if status.galsel == 1 %}
+	window.parent.document.getElementById('syst').setAttribute('src', '/syst'+id); 
+	window.parent.document.getElementById('msyst').setAttribute('src', '/msyst'+id);
+	{% elif status.galsel == 2 %}
+	window.parent.document.getElementById('syst').setAttribute('src', '/galtwo/syst'+id); 
+	window.parent.document.getElementById('msyst').setAttribute('src', 'galtwo/msyst'+id);
+	{% endif %}
+	}
+</script>
+
+{% if error %}
+	{{error}}
+	<br>
+	<br>
+{% endif %}
+
 {% if msg != '' %}
 {{msg}}<br><br>{% endif %}
 
@@ -40,6 +59,17 @@ Distance from nearest Portal: {{travel_time}} weeks
 <br>
 <br>
 
+{% if bare == "Yes" %}
+<a id="system" href="#" onclick="updatesystem({{system}})">View System</a>
+<br><br>
+{% if status.galsel == 1 %}
+<a id="system" href="#" onclick="window.parent.open('/systmap{{system}}', '_self');return false;">View System on Map</a>
+{% elif status.galsel == 2 %}
+<a id="system" href="#" onclick="window.parent.open('/galtwo/systmap{{system}}', '_self');return false;">View System on Map</a>
+{% endif %}
+
+{% else %}
+
 <div class ="left_box" >
 <div style="width: 50%; margin:0 auto; text-align: center; margin-bottom:10px;">
 {% if status.galsel == 1 %}
@@ -51,11 +81,13 @@ Distance from nearest Portal: {{travel_time}} weeks
 <div class ="right_box" >
 <div style="width: 50%; margin:0 auto; text-align: center; margin-bottom:10px;">
 {% if status.galsel == 1 %}
-<a href="/systmap{{system}}">View System on Map</a>
+<a href="/systmap{{system}}"  target="_top">View System on Map</a>
 {% elif status.galsel == 2 %}
-<a href="/galtwo/systmap{{system}}">View System on Map</a>
+<a href="/galtwo/systmap{{system}}"  target="_top">View System on Map</a>
 {% endif %}
 </div></div>
+
+{% endif %}
 
 <br>
 <br>
@@ -65,18 +97,6 @@ Distance from nearest Portal: {{travel_time}} weeks
     {% if planet.home_planet %}
         No one owns this planet, but it is part of a home system and unavailable for exploration
         <br><br><br>
-		{% if status.galsel == 1 %}
-			<form action="/specops" id="specops_form" action="showMessage.jsp" method="post">
-			{% csrf_token %}
-			<input type="submit" value="Special operation">
-			<input type="hidden" name="specop_planet" value="{{planet.id}}">
-			</form>
-		{% elif status.galsel == 2 %}
-			<form action="/galtwo/specops" id="specops_form" action="showMessage.jsp" method="post">
-			{% csrf_token %}
-			<input type="submit" value="Special operation">
-			<input type="hidden" name="specop_planet" value="{{planet.id}}">
-			</form>{% endif %}
     {% elif planet.nuked %}
         This planet suffered a heavy nuclear blast, polution is too high to inhabit it!
     {% else %}
@@ -98,8 +118,24 @@ Distance from nearest Portal: {{travel_time}} weeks
 			<input type="hidden" name="id_planet" value="{{planet.id}}">
 		</form></td>
 		</div></div>
-		<br>
-		{% if status.galsel == 1 %}
+	{% endif %}
+	
+	<br>
+	{% if bare == "Yes" %}
+			{% if status.galsel == 1 %}
+			<form action="/specs" id="specops_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Special operation">
+			<input type="hidden" name="specop_planet" value="{{planet.id}}">
+			</form>
+		{% elif status.galsel == 2 %}
+			<form action="/galtwo/specs" id="specops_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Special operation">
+			<input type="hidden" name="specop_planet" value="{{planet.id}}">
+			</form>{% endif %}
+	{% else %}
+			{% if status.galsel == 1 %}
 			<form action="/specops" id="specops_form" action="showMessage.jsp" method="post">
 			{% csrf_token %}
 			<input type="submit" value="Special operation">
@@ -114,46 +150,129 @@ Distance from nearest Portal: {{travel_time}} weeks
 	{% endif %}
 		
 {% elif planet.owner.id != status.user.id %}
-{% if status.galsel == 1 %}
-    This planet is owned by <a href="/account{{planet.owner.id}}">{{planet_owner_status.user_name}}</a> of
-    <a href="/empire{{planet_owner_status.empire.id}}">{{planet_owner_status.empire.name_with_id}}</a>, networth {{planet_owner_status.networth}}<br><br>
+
+	{% if status.galsel == 1 %}
+    This planet is owned by <a href="/account{{planet.owner.id}}" target="_top">{{planet_owner_status.user_name}}</a> of
+    <a href="/empire{{planet_owner_status.empire.id}}" target="_top">{{planet_owner_status.empire.name_with_id}}</a>, networth {{planet_owner_status.networth}}<br><br>
 	{% if specops == "Webs" %}
     Planet is surrounded by a Dark Web!<br><br>
 	{% elif specops == "Beacon" %}
 	Planetary Beacon active, effects of Dark Webs have been removed!<br><br>
     {% endif %}
 	It will cost {{attack_cost}}% fleet readiness to attack this planet!<br><br>
+		{% if planet.home_planet == True and planet.owner.userstatus.empire_role != "I" %}
+			You cannot attack a home planet<br>
+			{% if bare == "Yes" %}
+			
+			<form action="/specs" id="specops_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Special operation">
+			<input type="hidden" name="specop_planet" value="{{planet.id}}">
+			</form>
+			
+			{% else %}
+			
+			<form action="/specops" id="specops_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Special operation">
+			<input type="hidden" name="specop_planet" value="{{planet.id}}">
+			</form>
+			
+			{% endif %}
+			
+		{% else %}
+			
+			{% if bare == "Yes" %}
+			
+			<form action="/fleets_orders" id="attack_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Attack this planet">
+			<input type="hidden" name="attack_planet" value="{{planet.id}}">
+			</form>
+			<br> 
+			<form action="/specs" id="specops_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Special operation">
+			<input type="hidden" name="specop_planet" value="{{planet.id}}">
+			</form>
+			
+			{% else %}
+			
 			<form action="/fleets" id="attack_form" action="showMessage.jsp" method="post">
 			{% csrf_token %}
 			<input type="submit" value="Attack this planet">
 			<input type="hidden" name="attack_planet" value="{{planet.id}}">
 			</form>
+			
 			<br> 
 			<form action="/specops" id="specops_form" action="showMessage.jsp" method="post">
 			{% csrf_token %}
 			<input type="submit" value="Special operation">
 			<input type="hidden" name="specop_planet" value="{{planet.id}}">
 			</form>
-{% elif status.galsel == 2 %}
-    This planet is owned by <a href="/galtwo/account{{planet.owner.id}}">{{planet_owner_status.user_name}}</a> of
-    <a href="/galtwo/empire{{planet_owner_status.empire.id}}">{{planet_owner_status.empire.name_with_id}}</a>, networth {{planet_owner_status.networth}}<br><br>
+			
+			{% endif %}
+		{% endif %}
+	{% elif status.galsel == 2 %}
+    This planet is owned by <a href="/galtwo/account{{planet.owner.id}}" target="_top">{{planet_owner_status.user_name}}</a> of
+    <a href="/galtwo/empire{{planet_owner_status.empire.id}}" target="_top">{{planet_owner_status.empire.name_with_id}}</a>, networth {{planet_owner_status.networth}}<br><br>
 	{% if specops == "Webs" %}
     Planet is surrounded by a Dark Web!<br><br>
 	{% elif specops == "Beacon" %}
 	Planetary Beacon active, effects of Dark Webs have been removed!<br><br>
     {% endif %}
 	It will cost {{attack_cost}}% fleet readiness to attack this planet!<br><br>
+			{% if planet.home_planet == True %}
+			You cannot attack a home planet<br>
+			{% if bare == "Yes" %}
+			
+			<form action="/galtwo/specs" id="specops_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Special operation">
+			<input type="hidden" name="specop_planet" value="{{planet.id}}">
+			</form>
+			
+			{% else %}
+			
+			<form action="/galtwo/specops" id="specops_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Special operation">
+			<input type="hidden" name="specop_planet" value="{{planet.id}}">
+			</form>
+			
+			{% endif %}
+			{% else %}
+			
+			{% if bare == "Yes" %}
+			
+			<form action="/galtwo/fleets_orders" id="attack_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Attack this planet">
+			<input type="hidden" name="attack_planet" value="{{planet.id}}">
+			</form>
+			<br> 
+			<form action="/galtwo/specs" id="specops_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Special operation">
+			<input type="hidden" name="specop_planet" value="{{planet.id}}">
+			</form>
+			
+			{% else %}
+			
 			<form action="/galtwo/fleets" id="attack_form" action="showMessage.jsp" method="post">
 			{% csrf_token %}
 			<input type="submit" value="Attack this planet">
 			<input type="hidden" name="attack_planet" value="{{planet.id}}">
 			</form>
+			
 			<br> 
 			<form action="/galtwo/specops" id="specops_form" action="showMessage.jsp" method="post">
 			{% csrf_token %}
 			<input type="submit" value="Special operation">
 			<input type="hidden" name="specop_planet" value="{{planet.id}}">
 			</form>
+			{% endif %}
+			{% endif %}
 	{% endif %}
     
 <!--if( planetd.surrender == id )
@@ -202,6 +321,40 @@ Population: {{planet.current_population}}/{{planet.max_population}}
 
   httpPrintf( cnt,"</SCRIPT>\n");
   -->
+  {% if bare == "Yes" %}
+  
+{% if status.galsel == 1 %}  
+  <br><a href="#" onclick="window.parent.open('/build{{planet.id}}', '_self');return false;">Build on this planet</a><br><br>
+  <form action="/fleets_orders" id="attack_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Station Fleet">
+			<input type="hidden" name="attack_planet" value="{{planet.id}}">
+			</form>
+  <br><a href="#" onclick="window.parent.open('/raze{{planet.id}}', '_self');return false;">Raze buildings</a><br><br>
+  
+<form action="/razeall{{planet.id}}/" method="post" onsubmit="return confirm('Are you sure you want to raze all?');" target="_top">
+{% csrf_token %}
+<button type="submit">Raze All</button></form>
+{% elif status.galsel == 2 %}  
+  <br><a href="#" onclick="window.parent.open('/galtwo/build{{planet.id}}', '_self');return false;">Build on this planet</a><br><br>
+  <form action="/fleets_orders" id="attack_form" action="showMessage.jsp" method="post">
+			{% csrf_token %}
+			<input type="submit" value="Station Fleet">
+			<input type="hidden" name="attack_planet" value="{{planet.id}}">
+			</form>
+  <a href="#" onclick="window.parent.open('/galtwo/raze{{planet.id}}', '_self');return false;">Raze buildings</a><br><br>
+  
+<form action="#" onclick="window.parent.open('/galtwo/razeall{{planet.id}}', '_self');return false;" method="post" onsubmit="return confirm('Are you sure you want to raze all?');">
+{% csrf_token %}
+<button type="submit">Raze All</button>
+
+
+</form>
+{% endif %}
+
+{% else %}  
+  
+  
 {% if status.galsel == 1 %}  
   <br><a href="/build{{planet.id}}">Build on this planet</a><br><br>
   <form action="/fleets" id="attack_form" action="showMessage.jsp" method="post">
@@ -223,12 +376,13 @@ Population: {{planet.current_population}}/{{planet.max_population}}
 			</form>
   <a href="/galtwo/raze{{planet.id}}">Raze buildings</a><br><br>
   
-<form action="/razeall{{planet.id}}/" method="post" onsubmit="return confirm('Are you sure you want to raze all?');">
+<form action="/galtwo/razeall{{planet.id}}/" method="post" onsubmit="return confirm('Are you sure you want to raze all?');">
 {% csrf_token %}
 <button type="submit">Raze All</button>
 
 
 </form>
+{% endif %}
 {% endif %}
 <br>
 <!--Offer planet to member of own empire

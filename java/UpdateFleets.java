@@ -240,6 +240,11 @@ public class UpdateFleets {
 	
 	public void updateMoovingFleets(LinkedList<Planet> portals, int militaryFlag, HashMap<String, Double> race_info) throws Exception{
 		String fleetsQuery = " SELECT * FROM app_fleet WHERE main_fleet = false AND owner_id = " + userID;
+		
+		ResultSet s_emp = statement.executeQuery("SELECT empire_holding_id FROM app_artefacts WHERE name = 'Blackhole' ");
+		s_emp.next();
+		int semp = s_emp.getInt("empire_holding_id");
+		
 		ResultSet resultSet = statement.executeQuery(fleetsQuery);
 		
 		
@@ -253,7 +258,10 @@ public class UpdateFleets {
 			int y = resultSet.getInt("y"); //4
 			int fleet_id = resultSet.getInt("id"); //5
 			int ticks_rem = resultSet.getInt("ticks_remaining");  //6
-			double speed = race_info.get("travel_speed");
+			double speed = race_info.get("travel_speed");			
+			if (semp == empireID){
+				speed *= 1.6;
+			}
 			
 			if (resultSet.getInt("command_order") == 5){ //return to main
 				Planet portal = HelperFunctions.find_nearest_portal(current_position_x, current_position_y, portals);

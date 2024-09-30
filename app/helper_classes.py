@@ -46,9 +46,6 @@ class ResourceSet:
         self.ect = int(np.ceil(overbuild * self.ect))
 
 
-
-
-
 # These classes below aren't designed to make multiples of, i.e. if you want to
 # build 5 Solar Collectors you don't actually create 5 of the SolarCollector class,
 # actually creating buildings is done through the construction related models in models.py

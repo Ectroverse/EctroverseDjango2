@@ -61,7 +61,7 @@ class Building:
         self.required_building_tech = required_building_tech[self.building_index]
 
     # Calc cost of N buildings, from cmdGetBuildCosts() in cmd.c
-    def calc_cost(self, num_buildings, research_construction, research_tech, status):
+    def calc_costs(self, num_buildings, research_construction, research_tech, status):
         multiplier = 100.0 / (100.0 + research_construction)
         tech_penalty = self.required_building_tech - research_tech;
         #buffer[CMD_RESSOURCE_NUMUSED+1] = 0;
@@ -98,7 +98,7 @@ class Building:
 
         return final_costs, penalty # final_costs is a list of 5 ints, and pentaly is a float rounded to 2 decimal places
 
-class SolarCollectors(Building):
+class SolarCollector(Building):
     def __init__(self):
         self.building_index = 0
         self.label = "Solar Collectors"
@@ -106,7 +106,7 @@ class SolarCollectors(Building):
         self.model_name = 'solar_collectors' # based on field of planet
         super().__init__() # calls parent class constructor
 
-class FissionReactors(Building):
+class FissionReactor(Building):
     def __init__(self):
         self.building_index = 1
         self.label = "Fission Reactors"
@@ -114,7 +114,7 @@ class FissionReactors(Building):
         self.model_name = 'fission_reactors'
         super().__init__()
 
-class MineralPlants(Building):
+class MineralPlant(Building):
     def __init__(self):
         self.building_index = 2
         self.label = "Mineral Plants"
@@ -122,7 +122,7 @@ class MineralPlants(Building):
         self.model_name = 'mineral_plants'
         super().__init__()
 
-class CrystalLabs(Building):
+class CrystalLab(Building):
     def __init__(self):
         self.building_index = 3
         self.label = "Crystal Laboratories"
@@ -130,7 +130,7 @@ class CrystalLabs(Building):
         self.model_name = 'crystal_labs'
         super().__init__()
 
-class RefinementStations(Building):
+class RefinementStation(Building):
     def __init__(self):
         self.building_index = 4
         self.label = "Refinement Stations"
@@ -138,7 +138,7 @@ class RefinementStations(Building):
         self.model_name = 'refinement_stations'
         super().__init__()
 
-class Cities(Building):
+class Citie(Building):
     def __init__(self):
         self.building_index = 5
         self.label = "Cities"
@@ -146,7 +146,7 @@ class Cities(Building):
         self.model_name = 'cities'
         super().__init__()
 
-class ResearchCenters(Building):
+class ResearchCenter(Building):
     def __init__(self):
         self.building_index = 6
         self.label = "Research Centers"
@@ -154,7 +154,7 @@ class ResearchCenters(Building):
         self.model_name = 'research_centers'
         super().__init__()
 
-class DefenseSats(Building):
+class DefenseSat(Building):
     def __init__(self):
         self.building_index = 7
         self.label = "Defense Satellites"
@@ -162,7 +162,7 @@ class DefenseSats(Building):
         self.model_name = 'defense_sats'
         super().__init__()
 
-class ShieldNetworks(Building):
+class ShieldNetwork(Building):
     def __init__(self):
         self.building_index = 8
         self.label = "Shield Network"
@@ -170,7 +170,7 @@ class ShieldNetworks(Building):
         self.model_name = 'shield_networks'
         super().__init__()
 
-class Portal(Building):
+class Portals(Building):
     def __init__(self):
         self.building_index = 9
         self.label = "Portal"
@@ -180,11 +180,11 @@ class Portal(Building):
 
 
 def raze_all_buildings2(planet, status):
-    building_list = [SolarCollectors(), FissionReactors(), MineralPlants(), CrystalLabs(), RefinementStations(),
-                     Cities(), ResearchCenters(), DefenseSats(), ShieldNetworks()]
+    building_list = [SolarCollector(), FissionReactor(), MineralPlant(), CrystalLab(), RefinementStation(),
+                     Citie(), ResearchCenter(), DefenseSat(), ShieldNetwork(), Portals()]
     for building in building_list:
         num_on_planet = getattr(planet, building.model_name)
-        if num_on_planet:
+        if num_on_planet > 0:
             setattr(planet, building.model_name, 0)
             setattr(status, 'total_' + building.model_name,
                     getattr(status, 'total_' + building.model_name) - num_on_planet)

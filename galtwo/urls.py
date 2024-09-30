@@ -11,6 +11,7 @@ urlpatterns = [
     path('map', views.map, name='map'),
     path('smap', views.smap, name='smap'),
     path('pmap', views.pmap, name='pmap'),
+    path('amap', views.amap, name='amap'),
     path('planets', views.planets, name='planets'),
     re_path(r'^planet(?P<planet_id>[0-9]+)/$', views.planet, name='planet'),
     re_path(r'^system(?P<system_id>[0-9]+)/$', views.system, name='system'),

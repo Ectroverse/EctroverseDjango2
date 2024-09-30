@@ -53,28 +53,6 @@
 
 
 <style>
-<!-- width>= 836px - normal desctop mode
-	width < 836px and width > 660 still show side menu, but change the appearence of header, dont top show meny yet
-	width <= 660 full mobile version
--->
-
-
-@media all and (max-width: 660px){
-<!--defined in base, need to clean this all up, but carefully, this shit breaks easily and mayconflict with @media on base page" -->
-}
-
-@media all and (min-width: 661px) and (max-width: 837px) {
-	.content-mobile {display: block;}
-	.content-desktop, .content-mobile-menu {display: none;}
-	.hide_pop {display: inline;}
-}
-
-@media all and (min-width: 838px){
-	.content-desktop {display: block;}
-	.content-mobile, .content-mobile-menu {display: none;}
-
-}
-
 
 .menu_container_left{
 	position: absolute;
@@ -291,7 +269,7 @@
 					{% if status.empire.numplayers > 1 %}
                         <li><a href="/offer">-Offer</a></li>
                         {% endif %}
-					<li><a href="/empire{{status.empire_id}}">Empire</a>
+					<li><a href="/empire{{status.empire_id}}">Empire</a></li>
 					{% if status.empire.numplayers > 1 %}
 					<li><a href="/famaid">-Send aid</a></li>
 					<li><a href="/famgetaid">-Receive aid</a></li>
@@ -314,7 +292,7 @@
 					<li><a href="/galtwo/council">Council</a></li>
 					<li><a href="/galtwo/units">Units</a></li>
 					<li><a href="/galtwo/planets">Planets</a></li>
-					<li><a href="/galtwo/empire{{status.empire_id}}">Empire</a>
+					<li><a href="/galtwo/empire{{status.empire_id}}">Empire</a></li>
 					<li><a href="/galtwo/famnews">-News</a></li>
 					<li><a href="/galtwo/relations">-Relations</a></li>
 					<li><a href="/galtwo/fleets">Fleets</a></li>

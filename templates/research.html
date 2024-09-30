@@ -18,7 +18,7 @@ Increase fundings
 <form action="/galtwo/research" method="POST" >
 {% endif %}
 {% csrf_token %}
-<input type="text" pattern="[0-9]+" maxlength="12" id="fund" name="fund" size="12">&nbsp;
+<input type="text" pattern="[0-9]+" maxlength="12" id="fund" name="fund" size="12" onkeyup="if(this.value > {{status.energy}}) this.value = {{status.energy}};">&nbsp;
 <input type="submit" name="fund_form" value="Fund">
 </form>
 <br>

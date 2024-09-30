@@ -70,7 +70,11 @@ td {
 <tr>
     {% if time_tick.is_running == False and time_tick.round_start == None %}
 	<td colspan="5" align="center">
+	{% if time_tick.round_start != None %}
 	Congratulations, the round has finished. New round will be announced soon!
+	{% else %}
+	Pre Round Registration
+	{% endif %}
 	</td>
 	{% elif time_tick.is_running == False and time_tick.round_start != None %}
 	<td colspan="4" align="center">

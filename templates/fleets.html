@@ -35,7 +35,8 @@
 function maxunits() {
 	{% for unit in send_fleet_list %}
 		if (document.getElementById('u{{unit.i}}').checked) {
-			document.getElementById('{{unit.i}}').value = {{unit.value}};
+			var per = document.getElementById('u_per').value;
+			document.getElementById('{{unit.i}}').value = Math.round({{unit.value}}*per/100);
 		}
 		else document.getElementById('{{unit.i}}').value = 0;
 
@@ -124,12 +125,9 @@ label {display: inline;}
 		{{unit.value}}
 		<br>
 		{% endfor %}
+		
 		<br>
-		{% if status.galsel == 1 %}
-		<a href="fleets_disband">Disband units</a></td>
-		{% elif status.galsel == 2 %}
-		<a href="/galtwo/fleets_disband">Disband units</a></td>
-		{% endif %}
+		<a href="fleets_disband" target="_top" >Disband units</a></td>
 		
 		{% if necro.empire_holding == status.empire %}
 		<br><br><b>Necromancers</b><br>
@@ -142,10 +140,10 @@ label {display: inline;}
 	</div>
 	<div class ="right_box" align="center">	
 		<b>Fleets orders</b>
-		{% if status.galsel == 1 %}
-		<form action="/fleets" method="POST">
-		{% elif status.galsel == 2 %}
-		<form action="/galtwo/fleets" method="POST">
+		{% if bare == "Yes" %}
+		<form action="fleets_orders" method="POST">
+		{% else %}
+		<form action="fleets" method="POST">
 		{% endif %}
 		
 			{% csrf_token %}
@@ -277,10 +275,10 @@ label {display: inline;}
 					</tr>
 					
 					<td align="center" colspan="100" id="{{fleet_nr.id}}" style="display:none;">
-			{% if status.galsel == 1 %}
-			<form action="/fleets_orders_process" method="POST">
-			{% elif status.galsel == 2 %}
-			<form action="/galtwo/fleets_orders_process" method="POST">
+			{% if bare == "Yes" %}
+			<form action="fleet_orders_process" method="POST">
+			{% else %}
+			<form action="fleets_orders_process" method="POST">
 			{% endif %}
 			{% csrf_token %}
 			
@@ -348,13 +346,16 @@ label {display: inline;}
 			</select>
 			{% endif %}
 			<table class="spaceUnder" cellspacing="8" align="center">
-			<td colspan="100%" align="right"><div class="href" onclick="toggleForm();maxunits();"><font size="1">Toggle</font></div></font></td>
+			<tr class="spaceUnder">
+			<td colspan="3" align="center"><input id="u_per" type="number" name="u_per" style="width: 5em" value="100" onkeyup="if(this.value > 100) this.value = 100;">% of units</td>
+			<td align="right"><div class="href" onclick="toggleForm();maxunits();"><font size="1">Toggle</font></div></font></td>
+			</tr>
 			{% for unit in send_fleet_list %}
 			<tr class="spaceUnder">
 				<td align="left">{{unit.value}}&nbsp;&nbsp;</td>
 				<td align="left">{{unit.name}}&nbsp;&nbsp;</td>
 				<td><input id="{{unit.i}}" type="text" name="u{{unit.i}}" size="10" value="0">&nbsp;&nbsp;</td>
-				<td><input type="checkbox" id="u{{unit.i}}" onclick="maxunits()"></td>
+				<td align="right"><input type="checkbox" id="u{{unit.i}}" onclick="maxunits()"></td>
 			</tr>
 			{% endfor %}
 			</table>
@@ -439,10 +440,10 @@ label {display: inline;}
 				
 
 				<td align="center" colspan="100" id="{{fleet_nr.id}}" style="display:none;">
-			{% if status.galsel == 1 %}
-			<form action="/fleets_orders_process" method="POST">
-			{% elif status.galsel == 2 %}
-			<form action="/galtwo/fleets_orders_process" method="POST">
+			{% if bare == "Yes" %}
+			<form action="fleet_orders_process" method="POST">
+			{% else %}
+			<form action="fleets_orders_process" method="POST">
 			{% endif %}
 			{% csrf_token %}
 			

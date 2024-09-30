@@ -637,7 +637,6 @@ race_display_list = {
         "Energy": "-20",
         "Crystal": "25",},
         "research":{
-        "Military": "40",
         "Construction": "40",
         "Tech": "180",
         "Energy": "40",

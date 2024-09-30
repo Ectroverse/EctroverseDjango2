@@ -37,6 +37,7 @@ def give_first_planet(user, status, planet):
     MapSettings.objects.create(user=status.user, map_setting="YP", color_settings="B")
     MapSettings.objects.create(user=status.user, map_setting="YR", color_settings="Y")
     MapSettings.objects.create(user=status.user, map_setting="UE", color_settings="G")
+    MapSettings.objects.create(user=status.user, map_setting="SS", color_settings="W")
     MapSettings.objects.create(user=status.user, map_setting="SC", color_settings="W")
 
 def give_first_fleet(main_fleet):
@@ -71,6 +72,18 @@ def find_bounding_circle(systems):
     C, r2 = miniball.get_bounding_ball(S)
     return C
 
+def travel_speed(status):
+    speed = race_info_list[status.get_race_display()]["travel_speed"]
+    speed_boost_enlightement = 1
+    if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed"):
+        en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
+        speed_boost_enlightement = (1 + en.specop_strength / 100)
+    speed *= speed_boost_enlightement
+    bhole_art = Artefacts.objects.get(name="Blackhole")
+    if bhole_art.empire_holding == status.empire:
+        speed *= 1.6
+    return speed
+
 # option value="0" Attack the planet
 # option value="1" Station on planet
 # option value="2" Move to system
@@ -92,11 +105,6 @@ def generate_fleet_order(fleet, target_x, target_y, speed, order_type, *args):
             fleet.target_planet = planet
     min_dist = np.sqrt((fleet.current_position_x - float(target_x)) ** 2 +
                        (fleet.current_position_y - float(target_y)) ** 2)
-    speed_boost_enlightement = 1
-    if Specops.objects.filter(user_to=fleet.owner, name="Enlightenment", extra_effect="Speed").exists():
-        en = Specops.objects.get(user_to=fleet.owner, name="Enlightenment", extra_effect="Speed")
-        speed_boost_enlightement = (1 + en.specop_strength / 100)
-    speed *= speed_boost_enlightement
     ticks_remaining = max(0,int(np.floor(min_dist / speed)))
     fleet.x = target_x
     fleet.y = target_y
@@ -106,7 +114,7 @@ def generate_fleet_order(fleet, target_x, target_y, speed, order_type, *args):
         #fleet.current_position_y = target_y
     fleet.command_order = order_type
     fleet.save()
-
+        
 def merge_fleets(fleets):
     fleet1 = None
     d = defaultdict(list)
@@ -317,11 +325,7 @@ def send_agents_ghosts(status, agents, ghost, x, y, i, specop):
         return "You need at least one portal to send the fleet from!"
     best_portal_planet = find_nearest_portal(x, y, portal_planets, status)
     min_dist = np.sqrt((best_portal_planet.x - x) ** 2 + (best_portal_planet.y - y) ** 2)
-    speed_boost_enlightement = 1
-    if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed").exists():
-        en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-        speed_boost_enlightement *= (1 + en.specop_strength / 100)
-    speed = race_info_list[status.get_race_display()]["travel_speed"]* speed_boost_enlightement
+    speed = travel_speed(status)
     fleet_time = max(0,int(np.floor(min_dist / speed)))
     agent_fleet = Fleet.objects.create(owner=status.user,
                          command_order=6,
@@ -361,11 +365,7 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
         return "You need at least one portal to send the fleet from!"
     best_portal_planet = find_nearest_portal(x, y, portal_planets, status)
     min_dist = np.sqrt((best_portal_planet.x - x) ** 2 + (best_portal_planet.y - y) ** 2)
-    speed_boost_enlightement = 1
-    if Specops.objects.filter(user_to=status.user, name="Enlightenment", extra_effect="Speed").exists():
-        en = Specops.objects.get(user_to=status.user, name="Enlightenment", extra_effect="Speed")
-        speed_boost_enlightement *= (1 + en.specop_strength / 100)
-    speed = race_info_list[status.get_race_display()]["travel_speed"]* speed_boost_enlightement
+    speed = travel_speed(status)
     fleet_time = max(0,int(np.floor((min_dist / speed))))
     ghost_fleet = Fleet.objects.create(owner=status.user,
                          command_order=7,
@@ -384,10 +384,11 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     msg = ""
     if fleet_time < 1:
         if ghost > 0:
-            msg =perform_incantation(ghost_fleet)
-            main_fleet.ghost += ghost_fleet.ghost
-            main_fleet.save()
-            ghost_fleet.delete()
+            msg = perform_incantation(ghost_fleet)
+            if specop != "Call to Arms":
+                main_fleet.ghost += ghost_fleet.ghost
+                main_fleet.save()
+                ghost_fleet.delete()
 
     return msg
 

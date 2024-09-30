@@ -23,6 +23,8 @@ display: table-row;
 background-color: rgb(25,38,51);
 }
 
+.tharts th { height: 4vh; }
+
 </style>
 
 </head>
@@ -125,44 +127,29 @@ background-color: rgb(25,38,51);
 <br>
 <br>
 <p align="center"><font size="5">Artefacts Currently in Rotation</font></p><br>
-<table width="100%">
-
-{% for key, val in arti_list.items %}
-{% if key != "Scroll of the Necromancer" %}
+<table class="tharts" width="100%">
+<tr><th align="left" colspan="100%"><b><u>Regular Round</b></u></th></tr>
+{% for key, val in reg_arts.items %}
 <tr class="{% cycle 'row2' 'row1' %}">
-
 <td>&nbsp;The <b>{{key}}</b></td>
-{% for val in val %}
-{% if forloop.counter == 6 %}
-<td><img src="{{val}}" width="16" height="16"></td>
-{% endif %}
-{% if forloop.counter == 1 %}
-<td>{{val}}</td>
-{% endif %}
-{% endfor %}
-{% endif %}
+<td><img src="{{val.img}}" width="16" height="16"></td>
+<td>{{val.desc}}</td>
 </tr>
 {% endfor %}
-
-</table>
-
-<p align="center"><font size="5">Retired Artefacts</font></p><br>
-<table width="100%">
-
-{% for key, val in arti_list.items %}
-{% if key == "Scroll of the Necromancer" %}
+<tr><th align="left" colspan="100%"><b><u>Additionals in Fast Round</b></u></th></tr>
+{% for key, val in oth_arts.items %}
 <tr class="{% cycle 'row2' 'row1' %}">
-
 <td>&nbsp;The <b>{{key}}</b></td>
-{% for val in val %}
-{% if forloop.counter == 6 %}
-<td><img src="{{val}}" width="16" height="16"></td>
-{% endif %}
-{% if forloop.counter == 1 %}
-<td>{{val}}</td>
-{% endif %}
+<td><img src="{{val.img}}" width="16" height="16"></td>
+<td>{{val.desc}}</td>
+</tr>
 {% endfor %}
-{% endif %}
+<tr><th align="left" colspan="100%"><b><u>Retired</b></u></th></tr>
+{% for key, val in ret_arts.items %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>&nbsp;The <b>{{key}}</b></td>
+<td><img src="{{val.img}}" width="16" height="16"></td>
+<td>{{val.desc}}</td>
 </tr>
 {% endfor %}
 

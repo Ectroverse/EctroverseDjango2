@@ -391,7 +391,11 @@ function fixTimeDigits(s_left) {
 			<div class="mob_menu_mid_align">
 			{% if round.is_running == False %}
 				{% if round.tick_number == 0 %}
+				{% if round.round_start != None %}
 				<span id="roundstart"></span>
+				{% else %}
+				Pre Round Registration
+				{% endif %}
 				{% else %}
 				Round Over!
 				{% endif %}
@@ -413,7 +417,11 @@ function fixTimeDigits(s_left) {
 			<div class = "menu_mid_align">
 				{% if round.is_running == False %}
 				{% if round.tick_number == 0 %}
+				{% if round.round_start != None %}
 				<span id="roundstart2"></span>
+				{% else %}
+				Pre Round Registration
+				{% endif %}
 				{% else %}
 				Round Over!
 				{% endif %}

@@ -280,7 +280,7 @@
 					{% if n.user1 == 0 %}
 						performed by unknown faction!
 					{% else %}
-						performed by {{n.user2}}!
+						performed by {{n.user2.userstatus.user_name}}!
 					{% endif %}
 				{% endif %}
 				<br>
@@ -375,13 +375,20 @@
 				<div class="left_news"><img src="{% static '/news/outgoing_incantation.gif' %}"></div>
 				<div class="right_news">
 				<i>Week {{ n.tick_number|mod:52 }}, year {{ n.tick_number|intdiv:52 }}</i><br>
-				<a href="/account{{n.user1.id}}">{{n.user1.userstatus.user_name}}'s</a> Psychics have prevented some enemy Ghost Ships from
+				{% if n.fleet1 != "Planetary Shielding" %}
+				<a href="/account{{n.user1.id}}">{{n.user1.userstatus.user_name}}'s</a> 
+				Psychics have prevented some enemy Ghost Ships from
+				{% endif %}
 				{% if n.user2 != None %}
 				<a href="/account{{n.user2.id}}">{{n.user2.userstatus.user_name}}</a> of <a href="/empire{{n.empire2.id}}">{{n.empire2.name_with_id}}</a>
 				{% else %}
 				an unknown faction 
 				{% endif %}
-				performing a {{ n.fleet1 }} operation
+				{% if n.fleet1 != "Planetary Shielding" %}
+				performing
+				{% else %}
+				performed
+				{% endif %} a {{ n.fleet1 }} operation
 				on planet <a href="planet{{n.planet.id}}">{{n.planet.x}},{{n.planet.y}}:{{n.planet.i}}</a>
 				<br>
 				The results: {{n.extra_info|linebreaksbr}}
@@ -688,7 +695,7 @@
 					{% if n.user1 == 0 %}
 						performed by unknown faction!
 					{% else %}
-						performed by {{n.user2}}!
+						performed by {{n.user2.galtwouser.user_name}}!
 					{% endif %}
 				{% endif %}
 				<br>

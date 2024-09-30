@@ -155,6 +155,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         Specops.objects.all().delete()
         botattack.objects.all().delete()
         System.objects.all().delete()
+        Sensing.objects.all().delete()
         Empire.objects.all().delete()  # remove all empires -remove after players
         planet_buffer = [] # MUCH quicker to save them all at once, like 100x faster
         empires_buffer = []
@@ -217,8 +218,10 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                 y = np.random.randint(-1*d_from_home, d_from_home+1) + home_y
                 if (x,y) not in history:
                     history.append((x,y))
-                    systies.append((x,y))
-                    planet_buffer.extend(fill_system(x,y))
+                    try:
+                        planet_buffer.extend(fill_system(x,y))
+                    except:
+                        pass
 
         # Main core in the center
         for x in range(map_size):
@@ -228,7 +231,10 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                 roll_off_factor = 1.4 # higher means more planets clustered in the middle
                 if (np.random.rand() < d_to_center**roll_off_factor) and (np.random.rand() < density) and (x,y) not in systies:
                     systies.append((x,y))
-                    planet_buffer.extend(fill_system(x,y))
+                    try:
+                        planet_buffer.extend(fill_system(x,y))
+                    except:
+                        pass
 
         start_tt = time.time()
         Planets.objects.bulk_create(planet_buffer)
@@ -366,11 +372,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
 
         artifacts()
         settings()
-        tgeneral = Artefacts.objects.get(name="The General")
-        gsyst = System.objects.get(x=tgeneral.on_planet.x, y=tgeneral.on_planet.y)
-        tgeneral.effect1 = gsyst.id
-        tgeneral.save()
-        msg = "The Fast Round has been Reset,  Register now!"
+        msg = "The Fast Round has been Reset,  Artefacts have been reworked, somewhat. Round to start tomorrow, 30th September at 3pm UTC."
         NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
         msg = "<@&1201666532753547315> " + str(msg)
         webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())

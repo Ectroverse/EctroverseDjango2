@@ -10,7 +10,7 @@ from discord import Webhook, RequestsWebhookAdapter
 
 class Command(BaseCommand): # must be called command, use file name to name the functionality
     @transaction.atomic # Makes it so all object saves get aggregated, otherwise process_tick would take a minute
-    def handle(self, *args, **options):
+    def handle(self, *args, **options): 
         agent_fleets = Fleet.objects.filter(agent__gt=0, main_fleet=False, command_order=6, ticks_remaining=0)
         for agent_fleet in agent_fleets:
             # perform operation
@@ -22,7 +22,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             perform_operation(agent_fleet)
             # (operation, agents, user1, planet):
             status = UserStatus.objects.get(id=agent_fleet.owner.id)
-            speed = race_info_list[status.get_race_display()]["travel_speed"]
+            speed = travel_speed(status)
 
             # send agents home after operation
             portals = Planets.objects.filter(owner=agent_fleet.owner.id, portal=True)
@@ -44,7 +44,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
 
             perform_incantation(ghost_fleet)
             status = UserStatus.objects.get(id=ghost_fleet.owner.id)
-            speed = race_info_list[status.get_race_display()]["travel_speed"]
+            speed = travel_speed(status)
 
             # send home
             if ghost_fleet.specop == "Vortex Portal":
@@ -75,10 +75,11 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                 max_artis = max(art_tab[a.empire_holding], max_artis)
         
         growart = Artefacts.objects.get(name="You Grow, Girl!")
-        growplant = growart.on_planet.id
-        growplant = Planets.objects.get(id=growplant)
-        growplant.size += 1
-        growplant.save()
+        if growart.on_planet != None:
+            growplant = growart.on_planet.id
+            growplant = Planets.objects.get(id=growplant)
+            growplant.size += 1
+            growplant.save()
         
         holding = ""
         
@@ -117,7 +118,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
             webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
             webhook.send(msg)
-        
+            
         act_play = UserStatus.objects.exclude(user_name='').exclude(user_name='user-display-name')
         for p in act_play:
             planets = Planets.objects.filter(owner=p.user)
