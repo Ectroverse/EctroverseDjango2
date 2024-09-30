@@ -201,7 +201,7 @@ values
 ((select id from classes where name = 'race jackos'),'race_special_resource_interest', 0.002,current_timestamp),
 ((select id from classes where name = 'race jackos'),'travel_speed', (1.0*2.0),current_timestamp),
 ((select id from classes where name = 'race jackos'),'race_special_solar_15', 1.10,current_timestamp),
-((select id from classes where name = 'race jackos'),'research_max_culture', 250.0,current_timestamp);
+((select id from classes where name = 'race jackos'),'research_max_culture', 250.0,current_timestamp),
 ((select id from classes where name = 'race jackos'),'research_max_operations', 250.0,current_timestamp);
 
 select * from  constants;
