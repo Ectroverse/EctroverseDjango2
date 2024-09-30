@@ -106721,3 +106721,171 @@ Main loop: 0.014993147 sec.
 Python script process_ops time: 0.379554309 sec.
 Total time: 0.398868453 sec.
 
+Process of tick #13596 has started!
+Tick completion time: 2024-09-30T20:35:00.271Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001572094 sec.
+Main loop: 0.012480319 sec.
+Python script process_ops time: 0.247850213 sec.
+Total time: 0.268557559 sec.
+
+Process of tick #13597 has started!
+Tick completion time: 2024-09-30T20:35:10.630Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001558054 sec.
+Main loop: 0.011784789 sec.
+Python script process_ops time: 0.61368611 sec.
+Total time: 0.628974812 sec.
+
+Process of tick #13598 has started!
+Tick completion time: 2024-09-30T20:35:20.663Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001622048 sec.
+Main loop: 0.014185343 sec.
+Python script process_ops time: 0.639769104 sec.
+Total time: 0.661549023 sec.
+
+Process of tick #13599 has started!
+Tick completion time: 2024-09-30T20:35:30.021Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001913947 sec.
+Main loop: 0.012423237 sec.
+Python script process_ops time: 0.005224048 sec.
+Total time: 0.020338133 sec.
+
+Process of tick #13600 has started!
+Tick completion time: 2024-09-30T20:35:40.024Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.002334048 sec.
+Main loop: 0.014990147 sec.
+Python script process_ops time: 0.004965076 sec.
+Total time: 0.023221514 sec.
+
+Process of tick #13601 has started!
+Tick completion time: 2024-09-30T20:35:50.022Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.00175175 sec.
+Main loop: 0.014065649 sec.
+Python script process_ops time: 0.003720678 sec.
+Total time: 0.02107474 sec.
+
+Process of tick #13602 has started!
+Tick completion time: 2024-09-30T20:36:00.022Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.002072351 sec.
+Main loop: 0.013168734 sec.
+Python script process_ops time: 0.004317585 sec.
+Total time: 0.021439038 sec.
+
+Process of tick #13603 has started!
+Tick completion time: 2024-09-30T20:36:10.024Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.002459113 sec.
+Main loop: 0.015604656 sec.
+Python script process_ops time: 0.004615777 sec.
+Total time: 0.023224899 sec.
+
+Process of tick #13604 has started!
+Tick completion time: 2024-09-30T20:36:20.035Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001570705 sec.
+Main loop: 0.011051018 sec.
+Python script process_ops time: 0.003665058 sec.
+Total time: 0.031156134 sec.
+
+Process of tick #13605 has started!
+Tick completion time: 2024-09-30T20:36:30.019Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001751656 sec.
+Main loop: 0.011112494 sec.
+Python script process_ops time: 0.003729448 sec.
+Total time: 0.018400591 sec.
+
+Process of tick #13606 has started!
+Tick completion time: 2024-09-30T20:36:40.021Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001767029 sec.
+Main loop: 0.012913228 sec.
+Python script process_ops time: 0.003955522 sec.
+Total time: 0.01998534 sec.
+
+Process of tick #13607 has started!
+Tick completion time: 2024-09-30T20:36:50.043Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.012931318 sec.
+Main loop: 0.014013901 sec.
+Python script process_ops time: 0.015038264 sec.
+Total time: 0.040713533 sec.
+
+Process of tick #13608 has started!
+Tick completion time: 2024-09-30T20:37:00.032Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001637281 sec.
+Main loop: 0.015067212 sec.
+Python script process_ops time: 0.003834101 sec.
+Total time: 0.029292453 sec.
+
+Process of tick #13609 has started!
+Tick completion time: 2024-09-30T20:37:10.036Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001524673 sec.
+Main loop: 0.012072219 sec.
+Python script process_ops time: 0.003852729 sec.
+Total time: 0.032336522 sec.
+
+Process of tick #13610 has started!
+Tick completion time: 2024-09-30T20:37:20.029Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001657276 sec.
+Main loop: 0.012954533 sec.
+Python script process_ops time: 0.003931237 sec.
+Total time: 0.027018349 sec.
+
+Process of tick #13611 has started!
+Tick completion time: 2024-09-30T20:37:30.022Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.00171968 sec.
+Main loop: 0.011947663 sec.
+Python script process_ops time: 0.003730279 sec.
+Total time: 0.02135755 sec.
+
+Process of tick #13612 has started!
+Tick completion time: 2024-09-30T20:37:40.031Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001550112 sec.
+Main loop: 0.011100365 sec.
+Python script process_ops time: 0.003797444 sec.
+Total time: 0.02805756 sec.
+
+Process of tick #13613 has started!
+Tick completion time: 2024-09-30T20:37:50.030Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001616618 sec.
+Main loop: 0.013581126 sec.
+Python script process_ops time: 0.003708125 sec.
+Total time: 0.029006129 sec.
+
+Process of tick #13614 has started!
+Tick completion time: 2024-09-30T20:38:00.026Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001846334 sec.
+Main loop: 0.017102448 sec.
+Python script process_ops time: 0.003870189 sec.
+Total time: 0.025963167 sec.
+
+Process of tick #13615 has started!
+Tick completion time: 2024-09-30T20:38:10.027Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001495609 sec.
+Main loop: 0.013333017 sec.
+Python script process_ops time: 0.00351551 sec.
+Total time: 0.025808457 sec.
+
+Process of tick #13616 has started!
+Tick completion time: 2024-09-30T20:38:20.024Z
+Execute postgres population update procedure: 0.0 sec.
+batch executions: 0.001689291 sec.
+Main loop: 0.012587239 sec.
+Python script process_ops time: 0.003774183 sec.
+Total time: 0.023168759 sec.
+
