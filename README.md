@@ -18,19 +18,21 @@ left to do:
 
 0. Copy .env.template to .env (`cp .env.template .env`) and change the secret key if you care about security
 1. `docker-compose up -d`
-2. `docker exec -it ectroversedjango_python_1 /bin/bash`
-3. `python manage.py makemigrations app` (if you are loading an older db, check below in readme, don't do later steps)
+2. `docker exec -it ectroversedjango_python_1 /bin/bash` depending on machine may have to replace _ with -
+3. `python manage.py makemigrations` (if you are loading an older db, check below in readme, don't do later steps)
 4. `python manage.py migrate`
 5. `python manage.py createsuperuser` create a user named admin, with whatever pass you want, you can skip email
 6. `python manage.py collectstatic --noinput`
-7. `python manage.py generate_planets` (can take a while if its a big galaxy with a lot of planets)
-8. go to http://127.0.0.1:8000, log in as admin, and choose a race
-8.1 you may need to go to Round Status in admin panel and add 1 entry if none are present
-9. `python manage.py generate_artefacts`
-10. `cd java`
-11. `javac *.java -d .` - if wasnt allready compiled into bytecode
-12. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTick >> log.txt &`
-13. Set the `Round statuss` object's `Is running` to True whenever you want the tick time to start running
+7. go to project/settings and # line 63
+8. http://127.0.0.1:8000/admin, in both Round Status create new entry and save
+9. in both UserStatus create a new record and assign to admin account
+10. `python manage.py generate_planets` (can take a while if its a big galaxy with a lot of planets)
+11. remove # from line 63 in project/settings
+12. go to http://127.0.0.1:8000, log in as admin, and choose a race
+13. `cd java`
+14. `javac *.java -d .` - if wasnt allready compiled into bytecode
+15. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTick >> log.txt &`
+16. Set the `Round statuss` object's `Is running` to True whenever you want the tick time to start running
 
 to kill the java process tick:
 1. `ps -aux` - get the list of currently running jobs
