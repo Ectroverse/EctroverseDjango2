@@ -175,7 +175,7 @@ for i, unit in enumerate(unit_info["unit_list"]):
 
 unit_helper_list = {
     "Bombers": {
-        "Attacking": "Phase 3", 
+        "Attacking": "Phase 3 + 4", 
         "Defending": "None", 
         "Air Attack": "0", 
         "Air Defence": "64", 
@@ -198,7 +198,7 @@ unit_helper_list = {
         "Goliaths": "25",
         "Upkeep": "3.2"}, 
     "Cruisers": {
-        "Attacking": "Phase 1, 2 + 3", 
+        "Attacking": "All", 
         "Defending": "Phase 1 + 2", 
         "Air Attack": "70", 
         "Air Defence": "600", 
@@ -248,7 +248,7 @@ unit_helper_list = {
         "Defending": "Spells + Incantations", 
         "Spells Attack": "1", 
         "Spells Defence": "1",  
-        "Incantations Defence": "1", 
+        "Incantations Defence": "1/7", 
         "Upkeep": "0.8"}, 
     "Agents": {
         "Attacking": "Operations", 
@@ -403,7 +403,7 @@ race_info_list = {
         "military_attack": 1.0,
         "military_defence": 0.7,
         "travel_speed": 1.0 * 2.0,
-        "research_bonus_military": 1.4,
+        "research_bonus_military": 1.0,
         "research_bonus_construction": 1.4,
         "research_bonus_tech": 2.8,
         "research_bonus_energy": 1.4,

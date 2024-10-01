@@ -166,31 +166,36 @@ DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap-responsive.html"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
+#####SSL RELATED#####
 
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+#SESSION_COOKIE_SECURE = True
+#CSRF_COOKIE_SECURE = True
 
-CSRF_TRUSTED_ORIGINS = ['ectroverse.org']
+#CSRF_TRUSTED_ORIGINS = ['domain.name']
 
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_COOKIE_AGE = 60*60
+#SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+#SESSION_COOKIE_AGE = 60*60
 
-CSRF_FAILURE_VIEW = 'app.views.csrf_failure'
+#####CRSF TOKEN FAILURE EDIT IN VIEWS#####
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#CSRF_FAILURE_VIEW = 'app.views.csrf_failure'
 
-EMAIL_USE_TLS = True
+#####EMAIL RELATED#####
 
-EMAIL_HOST = 'smtp.zoho.eu'
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-EMAIL_HOST_USER = 'ev@ev.com'
+#EMAIL_USE_TLS = True
+
+#EMAIL_HOST = 'email_host'
+
+#EMAIL_HOST_USER = 'admin@domain.name'
 
 #Must generate specific password for your app in [gmail settings][1]
-EMAIL_HOST_PASSWORD = 'password'
+#EMAIL_HOST_PASSWORD = 'password'
 
-EMAIL_PORT = 587
+#EMAIL_PORT = 587
 
 #This did the trick
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+#DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 SITE_ID = 1
