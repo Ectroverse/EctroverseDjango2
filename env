@@ -1,3 +1,5 @@
-MYSQLPASS=password
-
 SECRETKEY=secretkey
+POSTGRES_USER=dbadmin
+POSTGRES_PASSWORD=pass
+ 
+
