@@ -1,10 +1,10 @@
 package org.ectroverse.processtick;
 
 public final class Settings {	
-	public static final String connectionPath = "jdbc:postgresql://evdjango-db-1:5432/djangodatabase"; //specify your db connection, e.g. jdbc:postgresql://ectroversedjango_db_1:5432/djangodatabase
+	public static final String connectionPath = "jdbc:postgresql://ectroversedjango2-db-1:5432/djangodatabase"; //specify your db connection, e.g. jdbc:postgresql://ectroversedjango_db_1:5432/djangodatabase
 	public static final String dbUserName = "dbadmin"; //your database username
-	public static final String dbPass = "password"; //your database password
-	
+	public static final String dbPass = "pass"; //your database password
+
 	//specify in tick time in seconds
 	//set them so they fit without a remainder either within a minute (e.g 10 second tick, but not 11)
 	//or in an hour (5min tick, not 7)

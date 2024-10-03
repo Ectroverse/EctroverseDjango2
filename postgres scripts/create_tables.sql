@@ -193,26 +193,8 @@ values
 ((select id from classes where name = 'WK'),'travel_speed', (1.6*2.0),current_timestamp),
 ((select id from classes where name = 'WK'),'research_max_population', 250.0,current_timestamp);
 
-((select id from classes where name = 'race jackos'),'pop_growth', (1.0*0.02),current_timestamp),
-((select id from classes where name = 'race jackos'),'research_bonus_military', 0.8,current_timestamp),
-((select id from classes where name = 'race jackos'),'research_bonus_construction', 0.8,current_timestamp),
-((select id from classes where name = 'race jackos'),'research_bonus_tech', 0.8,current_timestamp),
-((select id from classes where name = 'race jackos'),'research_bonus_energy', 0.8,current_timestamp),
-((select id from classes where name = 'race jackos'),'research_bonus_population', 0.8,current_timestamp),
-((select id from classes where name = 'race jackos'),'research_bonus_culture', 0.8,current_timestamp),
-((select id from classes where name = 'race jackos'),'research_bonus_operations', 0.8,current_timestamp),
-((select id from classes where name = 'race jackos'),'research_bonus_portals', 0.8,current_timestamp),
-((select id from classes where name = 'race jackos'),'energy_production', 1.0,current_timestamp),
-((select id from classes where name = 'race jackos'),'mineral_production', 0.9,current_timestamp),
-((select id from classes where name = 'race jackos'),'crystal_production', 1.0,current_timestamp),
-((select id from classes where name = 'race jackos'),'ectrolium_production', 1.0,current_timestamp),
-((select id from classes where name = 'race jackos'),'race_special_resource_interest', 0.002,current_timestamp),
-((select id from classes where name = 'race jackos'),'travel_speed', (1.0*2.0),current_timestamp),
-((select id from classes where name = 'race jackos'),'race_special_solar_15', 1.10,current_timestamp),
-((select id from classes where name = 'race jackos'),'research_max_culture', 250.0,current_timestamp),
-((select id from classes where name = 'race jackos'),'research_max_operations', 250.0,current_timestamp);
 
 select * from  constants;
 
 create table ticks_log
-(id serial primary key, round varchar(255), calc_time, dt timestamp);
+(id serial primary key, round varchar(255), calc_time_ms numeric, dt timestamp);
