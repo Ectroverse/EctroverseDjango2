@@ -79,7 +79,7 @@ BEGIN
 
   RAISE NOTICE 'Execution time in ms = %' , 1000 * (extract(epoch FROM _end_ts - _start_ts));
   
-  insert into ticks_log (round, calc_time, dt)
+  insert into ticks_log (round, calc_time_ms, dt)
   values ((select max(round_number) from app_roundstatus), 
 		  1000 * extract(epoch FROM _end_ts - _start_ts), current_timestamp);
   
