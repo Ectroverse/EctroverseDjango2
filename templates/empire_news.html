@@ -259,7 +259,7 @@
 				<div class="left_news"><img src="{% static '/news/aid_received.gif' %}"></div>
 				<div class="right_news">
 				<i>Week {{ n.tick_number|mod:52 }}, year {{ n.tick_number|intdiv:52 }}</i><br>
-				<a href="/account{{n.user2.id}}">{{n.user2.userstatus.user_name}}</a></a> has requested an aid shipment of {{n.extra_info}} from <a href="/account{{n.user1.id}}">{{n.user1.userstatus.user_name}}</a>.
+				<a href="/account{{n.user1.id}}">{{n.user1.userstatus.user_name}}</a></a> has requested an aid shipment of {{n.extra_info}} from <a href="/account{{n.user2.id}}">{{n.user2.userstatus.user_name}}</a>.
 				</div>
 			</div>
 		{% endif %}
@@ -674,7 +674,7 @@
 				<div class="left_news"><img src="{% static '/news/aid_received.gif' %}"></div>
 				<div class="right_news">
 				<i>Week {{ n.tick_number|mod:52 }}, year {{ n.tick_number|intdiv:52 }}</i><br>
-				<a href="/galtwo/account{{n.user2.id}}">{{n.user2.galtwouser.user_name}}</a></a> has requested an aid shipment of {{n.extra_info}} from <a href="/galtwo/account{{n.user1.id}}">{{n.user1.galtwouser.user_name}}</a>.
+				<a href="/galtwo/account{{n.user1.id}}">{{n.user1.galtwouser.user_name}}</a></a> has requested an aid shipment of {{n.extra_info}} from <a href="/galtwo/account{{n.user2.id}}">{{n.user2.galtwouser.user_name}}</a>.
 				</div>
 			</div>
 		{% endif %}

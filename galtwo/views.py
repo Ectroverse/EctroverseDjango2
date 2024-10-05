@@ -236,6 +236,7 @@ def ressies(request):
 def scouting(request):
     status = get_object_or_404(UserStatus, user=request.user)
     scouted = Scouting.objects.distinct('planet').filter(user=request.user)
+    scouted_list = Scouting.objects.filter(user=request.user).values_list('planet_id', flat=True)
     order_by = request.GET.get('order_by', 'planet')
     if order_by == 'planet':
         scouted = Scouting.objects.select_related('planet').filter(user=request.user). \
@@ -258,6 +259,10 @@ def scouting(request):
     
     main_fleet = Fleet.objects.get(owner=request.user, main_fleet=True)
     msg = ""
+    
+    if 'msg' in request.session:
+        msg = request.session['msg']
+        request.session['msg'] = ''
     
     users = UserStatus.objects.all()
     
@@ -315,6 +320,19 @@ def scouting(request):
     hovfl = Fleet.objects.filter(owner__in=empmembs, main_fleet=False, exploration=1, ticks_remaining=0)
     for e in hovfl:
         hov_fleets[e.target_planet.id] = e.owner.id
+        
+    if 'landall' in request.POST:
+        for p in hovfl: 
+            msg = "Landed Hovers!"
+            fleets_buffer = Fleet.objects.filter(main_fleet=False, exploration=1, ticks_remaining__lt=1, owner=status.user, target_planet=p.target_planet)
+            explore_planets(fleets_buffer)
+        if msg == '':
+            msg = "No Exploration Ships Hovering!"
+        request.session['msg'] = msg
+        return redirect(request.META['HTTP_REFERER'])
+    
+    arts = Artefacts.objects.all().exclude(on_planet=None).values_list('on_planet_id', flat=True)
+    known_arts = Artefacts.objects.filter(on_planet_id__in=scouted_list).count()
     
     context = {"status": status,
                "round": RoundStatus.objects.filter().first,
@@ -324,7 +342,10 @@ def scouting(request):
                "msg": msg,
                "expo_fleets": expo_fleets,
                "hov_fleets": hov_fleets,
-               "sql": scouted.query
+               "sql": scouted.query,
+               "arts": arts,
+               "arts_count": len(arts),
+               "known_arts": known_arts
                }
     return render(request, "scouting.html", context)
 
@@ -1939,18 +1960,65 @@ def build(request, planet_id):
     building_list = [SolarCollector(), FissionReactor(), MineralPlant(), CrystalLab(), RefinementStation(),
                      Citie(), ResearchCenter(), DefenseSat(), ShieldNetwork(), Portals()]
 
+    list_costs = {"Energy": 0, "Minerals": 0, "Crystals": 0, "Ectrolium": 0}
+    list_type = {}
+    
+    building_types = []
+    
+    for building in building_list:
+        list_type[building.label]={"number":0}
+        building_types.append(building.label)
+
     building_helper = building_info_list
 
     if request.method == 'POST':
         if planet.owner != request.user:
             return "This is not your planet!"
-        building_list_dict = {}
-
+        
         for building in building_list:
-            building_list_dict[building] = request.POST.get(str(building.building_index), None)
+            building_list_dict = {}
+            num = None
+            if building.building_index == 5 and request.POST.get(building.building_index) != None:
+                cur_cities = planet.cities
+                build_cities = request.POST.get(str(building.building_index), None)
+                tot_cities = cur_cities + int(build_cities)
+                if tot_cities >= 70000:
+                    num = 70000 - cur_cities
+                    building_list_dict[building] = 70000 - cur_cities
+                    msg += "\nPlanet cannot exceed 70000 Cities"
+                else:
+                    num = request.POST.get(str(building.building_index), None)
+                    building_list_dict[building] = request.POST.get(str(building.building_index), None)
+            else:
+                num = request.POST.get(str(building.building_index), None)
+                building_list_dict[building] = request.POST.get(str(building.building_index), None)
 
-        msg = "building on planet " + str(planet.x) + ":" + str(planet.y) + "," + str(planet.i) + "\n"
-        msg += build_on_planet(status, planet, building_list_dict)
+            if num:
+                list_building, list_cost = build_on_planet(status, planet, building_list_dict)
+                for k, v in list_cost.items():
+                    list_costs[k] += v
+                for k, v in list_building.items():
+                    for a, b in v.items():
+                        if k in building_types:
+                            list_type[k][a] += b
+                        else:
+                            msg += str(b)
+                        
+        
+        total = 0
+        for k, v in list_costs.items():
+            total += int(v)
+            
+        if total > 0:
+            msg += "\n\nTotals: \n"
+            
+            for k, v in list_type.items():
+                for a, b in v.items():
+                    if int(b) > 0:
+                        msg += str(b) + " " + str(k) + "\n"
+
+            for k, v in list_costs.items():
+                    msg += str(v) + " " + str(k) + "\n"
 
     # Build up list of dicts, designed to be used easily by template
     costs = []
@@ -1971,13 +2039,18 @@ def build(request, planet_id):
         # Add resource names to the cost_list, for the sake of the for loop in the view
         if cost_list:  # Remember that cost_list will be None if the tech is too low
             cost_list_labeled = []
+            cost_list_calc = []
             for i in range(5):  # 4 types of resources plus time
                 if i < 4:
                     if building == building_list[9]:
                         cost_list_labeled.append({"value": int(np.ceil(cost_list[i])),
                                               "name": resource_names[i]})
+                        cost_list_calc.append({"value": int(np.ceil(cost_list[i])),
+                                              "name": resource_names[i]})
                     else:
                         cost_list_labeled.append({"value": int(np.ceil(cost_list[i] * max(1, planet.overbuilt))),
+                                              "name": resource_names[i]})
+                        cost_list_calc.append({"value": int(np.ceil(cost_list[i])),
                                               "name": resource_names[i]})
                 else:
                     cost_list_labeled.append({"value": int(np.ceil(cost_list[i])),
@@ -1988,6 +2061,7 @@ def build(request, planet_id):
             cost_list_labeled = None  # Tech was too low
 
         cost = {"cost": cost_list_labeled,
+                "cost_calc": cost_list_calc,
                 "penalty": penalty,
                 "owned": getattr(status, 'total_' + building.model_name),
                 "name": building.label}
@@ -2017,20 +2091,32 @@ def mass_build(request):
 
     building_helper = building_info_list
 
+    b_planets = []
+
     msg = ""
     building_list_dict = {}
     num_planets = 0
     total_ob = 0
 
+    list_costs = {"Energy": 0, "Minerals": 0, "Crystals": 0, "Ectrolium": 0}
+    list_type = {}
+    
+    building_types = []
+    
+    for building in building_list:
+        list_type[building.label]={"number":0}
+        building_types.append(building.label)
+    
     if 'planets_id_mass_build' in request.POST:
         request.session['mass_build'] = request.POST.getlist('planets_id_mass_build')
         planets_id = request.session['mass_build']
         for pid in planets_id:
             planet = Planets.objects.get(id=pid)
+            b_planets.append(planet)
             if planet.overbuilt_percent <= 0:
                 num_planets += 1
                 total_ob += planet.overbuilt
-    elif 'mass_build' in request.session and request.session['mass_build'] is not None:
+    elif 'mass_build' in request.session and request.session['mass_build'] is not None:            
         obchecked = request.POST.get("obcheck")
         if obchecked:    
             planets_id = request.session['mass_build']
@@ -2074,6 +2160,7 @@ def mass_build(request):
             for pid in planets_id:
                 building_list_dict = {}
                 planet = Planets.objects.get(id=pid)
+                b_planets.append(planet)
                 obmax = int(request.POST.get('oblimit'))
                 maxob = obmax / 100 +1
                 maxob2 = np.sqrt(maxob)
@@ -2117,11 +2204,27 @@ def mass_build(request):
                         building_list_dict[RefinementStation()] = rf
                         totalbuild -= rf
                     if ci >= totalbuild:
-                        building_list_dict[Citie()] = totalbuild
-                        totalbuild -= totalbuild
+                        cur_cities = planet.cities
+                        tot_cities = cur_cities + totalbuild
+                        if tot_cities > 70000:
+                            build_cities = 70000 - cur_cities
+                            building_list_dict[Citie()] = build_cities
+                            totalbuild -= build_cities
+                            msg += "\nPlanet cannot exceed 70000 Cities\n"
+                        else:
+                            building_list_dict[Citie()] = totalbuild
+                            totalbuild -= totalbuild
                     else:
-                        building_list_dict[Citie()] = ci
-                        totalbuild -= ci
+                        cur_cities = planet.cities
+                        tot_cities = cur_cities + ci
+                        if tot_cities > 70000:
+                            build_cities = 70000 - cur_cities
+                            building_list_dict[Citie()] = build_cities
+                            totalbuild -= build_cities
+                            msg += "\nPlanet cannot exceed 70000 Cities\n"
+                        else:
+                            building_list_dict[Citie()] = ci
+                            totalbuild -= ci
                     if rc >= totalbuild:
                         building_list_dict[ResearchCenter()] = totalbuild
                         totalbuild -= totalbuild
@@ -2141,22 +2244,63 @@ def mass_build(request):
                         building_list_dict[ShieldNetwork()] = sn
                         totalbuild -= sn
                     building_list_dict[Portal()] = po
-                msg += "<br><b>Building on planet " + str(planet.x) + ":" + str(planet.y) + "," + str(planet.i) + "</b>"
-                msg += build_on_planet(status, planet, building_list_dict)
-                total_ob += planet.overbuilt
+                list_building, list_cost = build_on_planet(status, planet, building_list_dict)
+                for k, v in list_cost.items():
+                    list_costs[k] += v
+                for k, v in list_building.items():
+                    for a, b in v.items():
+                        if k in building_types:
+                            list_type[k][a] += b
+                        else:
+                            msg += str(b)
                 del building_list_dict
+                total_ob += planet.overbuilt
         else:
             planets_id = request.session['mass_build']
             for pid in planets_id:
                 building_list_dict = {}
                 planet = Planets.objects.get(id=pid)
+                b_planets.append(planet)
                 for building in building_list:
-                    building_list_dict[building] = request.POST.get(str(building.building_index), None)
-                msg += "building on planet " + str(planet.x) + ":" + str(planet.y) + "," + str(planet.i) + "\n"
-                msg += build_on_planet(status, planet, building_list_dict)
-                del building_list_dict
-                total_ob += planet.overbuilt
+                    building_list_dict = {}
+                    if building.building_index == 5:
+                        cur_cities = planet.cities
+                        build_cities = request.POST.get(str(building.building_index), None)
+                        tot_cities = cur_cities + int(build_cities)
+                        if tot_cities > 70000:
+                            to_build_cities = 70000 - cur_cities
+                            if to_build_cities > 0:
+                                building_list_dict[building] = to_build_cities
+                            msg += "\nPlanet "+ str(planet.x) + ":" + str(planet.y) + "," + str(planet.i) + " cannot exceed 70000 Cities\n"
+                        else:
+                            building_list_dict[building] = request.POST.get(str(building.building_index), None)
+                    else:
+                        building_list_dict[building] = request.POST.get(str(building.building_index), None)
+                
+                    list_building, list_cost = build_on_planet(status, planet, building_list_dict)
+                    for k, v in list_cost.items():
+                        list_costs[k] += v
+                    for k, v in list_building.items():
+                        for a, b in v.items():
+                            if k in building_types:
+                                list_type[k][a] += b
+                            else:
+                                msg += str(b)
+                    total_ob += planet.overbuilt
 
+        total = 0
+        for k, v in list_costs.items():
+            total += int(v)  
+        if total > 0:
+            msg += "\n\nTotals: \n"
+            
+            for k, v in list_type.items():
+                for a, b in v.items():
+                    if int(b) > 0:
+                        msg += str(b) + " " + str(k) + "\n"
+            for k, v in list_costs.items():
+                    msg += str(v) + " " + str(k) + "\n"
+        b_planets = b_planets
 
     if num_planets > 0:
         average_ob = total_ob / num_planets
@@ -2203,6 +2347,8 @@ def mass_build(request):
                "costs": costs,
                "msg": msg,
                "building_helper": building_helper,
+               "b_planets": b_planets,
+               "num_planets": len(b_planets),
                "page_title": "Mass build"}
     return render(request, "mass_build.html", context)
 
@@ -2484,6 +2630,10 @@ def units(request):
                 arte = Artefacts.objects.get(name="Engineers Son")
                 if arte.empire_holding == status.empire and unit == 'fighter':
                     arte_multiplier = 0.8
+                
+                maryc = Artefacts.objects.get(name="Mary Celeste")
+                if maryc.empire_holding == status.empire and unit == 'ghost':
+                    arte_multiplier = 0.5
 
                 total_resource_cost = [int(np.ceil(x * mult * arte_multiplier)) for x in unit_info[unit]['cost']]
                 
@@ -2546,6 +2696,10 @@ def units(request):
         if arte.empire_holding == status.empire and unit == 'fighter':
             arte_multiplier = 0.8
 
+        maryc = Artefacts.objects.get(name="Mary Celeste")
+        if maryc.empire_holding == status.empire and unit == 'ghost':
+            arte_multiplier = 0.5
+
         if not mult:
             cost = None
         else:
@@ -2557,13 +2711,13 @@ def units(request):
             mini = 999999999999999999999999
             for i, resource in enumerate(resource_names):
                 if resource == 'Energy' and unit_info[unit]['cost'][i] > 0 and unit_info[unit]['cost'][i] < nrg:
-                    nrg = int(status.energy/(np.ceil(mult * unit_info[unit]['cost'][i] * bribe_time_multiplier)))
+                    nrg = int(status.energy/(np.ceil(mult * unit_info[unit]['cost'][i] * bribe_resource_multiplier * arte_multiplier)))
                 elif resource == 'Crystal' and unit_info[unit]['cost'][i] > 0 and unit_info[unit]['cost'][i] < cry:
-                    cry = int(status.crystals/(np.ceil(mult * unit_info[unit]['cost'][i] * bribe_time_multiplier)))
+                    cry = int(status.crystals/(np.ceil(mult * unit_info[unit]['cost'][i] * bribe_resource_multiplier * arte_multiplier)))
                 elif resource == 'Mineral' and unit_info[unit]['cost'][i] > 0 and unit_info[unit]['cost'][i] < mini:
-                    mini = int(status.minerals/(np.ceil(mult * unit_info[unit]['cost'][i] * bribe_time_multiplier)))
+                    mini = int(status.minerals/(np.ceil(mult * unit_info[unit]['cost'][i] * bribe_resource_multiplier * arte_multiplier)))
                 elif resource == 'Ectrolium' and unit_info[unit]['cost'][i] > 0 and unit_info[unit]['cost'][i] < ect:
-                    ect = int(status.ectrolium/(np.ceil(mult * unit_info[unit]['cost'][i] * bribe_time_multiplier)))
+                    ect = int(status.ectrolium/(np.ceil(mult * unit_info[unit]['cost'][i] * bribe_resource_multiplier * arte_multiplier)))
                 if resource != 'Time':
                     cost.append({"name": resource,
                                  "value": int(np.ceil(mult * unit_info[unit]['cost'][i] * bribe_resource_multiplier * arte_multiplier))})     
@@ -4041,11 +4195,8 @@ def specops(request, *args):
             ops[o] = specs
 
     spells = {}
+    cloak = Artefacts.objects.get(name="Magus Cloak")
     for s in psychicop_specs:
-        cloak = Artefacts.objects.get(name="Magus Cloak")
-        if cloak.empire_holding == status.empire:
-            if s not in race_spells and psychicop_specs[s][3] == True:
-                race_spells.append(s)
         if s in race_spells:
             specs = [None] * 8
             for j in range(len(psychicop_specs[s])):
@@ -4065,6 +4216,36 @@ def specops(request, *args):
             else:
                 specs[7] = get_op_penalty(status.research_percent_culture, psychicop_specs[s][0])
             spells[s] = specs
+            
+    cloak_spells = {}
+    self_spells = []
+    if cloak.empire_holding != None:
+        for s in psychicop_specs:
+            if cloak.empire_holding.id == status.empire.id:
+                if s not in race_spells and psychicop_specs[s][3] == True:
+                    self_spells.append(s)
+                    
+        for s in self_spells:
+            cspecs = [None] * 8
+            for j in range(len(psychicop_specs[s])):
+                cspecs[j] = psychicop_specs[s][j]
+                if cloak.empire_holding == status.empire and j == 1:
+                    if psychicop_specs[s][3] == True:
+                        c_cost = int(psychicop_specs[s][1] * 0.75)
+                        cspecs[1] = c_cost
+                        
+            if user_to_template_specop:
+                cspecs[6] = specopReadiness(psychicop_specs[s], "Spell", status, user_to_template_specop)
+            else:
+                cspecs[6] = None
+            arte = Artefacts.objects.get(name="Advanced Robotics")
+            if arte.empire_holding == status.empire:
+                cspecs[7] = get_op_penalty(status.research_percent_culture, (psychicop_specs[s][0]/2))
+            else:
+                cspecs[7] = get_op_penalty(status.research_percent_culture, psychicop_specs[s][0])
+            cloak_spells[s] = cspecs
+
+        cloak_spells = {**spells, **cloak_spells}
 
     inca = {}
     for g in inca_specs:
@@ -4086,6 +4267,30 @@ def specops(request, *args):
             else:
                 specs[7] = get_op_penalty(status.research_percent_culture, inca_specs[g][0])
             inca[g] = specs
+            
+    maryc = Artefacts.objects.get(name="Mary Celeste")
+    maryc_inca = {}
+    if maryc.empire_holding != None:
+        if maryc.empire_holding.id == status.empire.id:
+            for g in inca_specs:
+                specs = [None] * 8
+                for j in range(len(inca_specs[g])):
+                    specs[j] = inca_specs[g][j]
+                if user_to_template_specop:
+                    ig_incs = ["Survey System", "Sense Artefact", "Vortex Portal", "Planetary Shielding", "Call to Arms"]
+                    if g in ig_incs:
+                        specs[6] = inca_specs[g][1]
+                    else:
+                        specs[6] = specopReadiness(inca_specs[g], "Inca", status, user_to_template_specop)
+                else:
+                    specs[6] = None
+                arte = Artefacts.objects.get(name="Advanced Robotics")
+                if arte.empire_holding == status.empire:
+                    specs[7] = get_op_penalty(status.research_percent_culture, (inca_specs[g][0]/2))
+                else:
+                    specs[7] = get_op_penalty(status.research_percent_culture, inca_specs[g][0])
+                maryc_inca[g] = specs
+    
     msg = ""
     main_fleet = Fleet.objects.get(owner=status.user.id, main_fleet=True)
 
@@ -4109,7 +4314,7 @@ def specops(request, *args):
                     else:
                         request.session['error'] = perform_spell(request.POST['spell'], int(request.POST['unit_ammount']), status, faction)
                         if psychicop_specs[request.POST['spell']][3] is False:    
-                            request.session['specop_u_id'] = faction.id    
+                            request.session['specop_u_id'] = faction.id
                         return redirect(request.META['HTTP_REFERER'])
 
         print(request.POST)
@@ -4220,6 +4425,10 @@ def specops(request, *args):
                "bare": bare,
                "planet_to_template_specop": planet_to_template_specop,
                "user_to_template_specop": template_name,
+               "cloak_spells": cloak_spells,
+               "cloak": cloak,
+               "maryc_inca": maryc_inca,
+               "maryc": maryc,
                }
     
     return render(request, "specops.html", context)

@@ -221,7 +221,7 @@ public class UpdatePlanets{
 			ResultSet darkMistSet = statement2.executeQuery("SELECT specop_strength FROM app_specops WHERE (name = 'Black Mist' or name = 'Dark Web') "+
 			"and user_to_id = " + userID + ";");
 			while(darkMistSet.next()){
-				tmpTickProduction_solar *= (1.0 - darkMistSet.getInt("specop_strength")/100.0);				
+				tmpTickProduction_solar *= (100.0 / (darkMistSet.getInt("specop_strength") +100));				
 			}
 			
 			//update player production

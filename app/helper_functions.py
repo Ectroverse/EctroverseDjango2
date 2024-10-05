@@ -402,8 +402,13 @@ def build_on_planet(status, planet, building_list_dict):
     # Might be a cleaner way to do it that ties it more directly with the model
 
     # Following is a rewrite of cmdExecAddBuild in cmd.c, a function that got called for each building type
-    msg = ''
+    list_costs = {"Energy": 0, "Minerals": 0, "Crystals": 0, "Ectrolium": 0}
+    list_buildings = {}
+    msg = ""
+
     for building, num in building_list_dict.items():
+        list_buildings[planet] = {"number": ""}
+        list_buildings[building.label] = {"number": 0}
         if num == 'on':
             num = 1
         if num == '0':
@@ -425,7 +430,7 @@ def build_on_planet(status, planet, building_list_dict):
                                                                   tech, status)
 
                 if not total_resource_cost:
-                    msg += 'Not enough tech research to build ' + building.label + '<br>'
+                    list_buildings[planet]['number'] += "Planet "+ str(planet.x) + ":" + str(planet.y) + "," + str(planet.i) + "\nNot enough tech research to build"  + building.label  + "\n"
                     continue
                 
                 pportal = 0
@@ -445,15 +450,15 @@ def build_on_planet(status, planet, building_list_dict):
                     ob_factor)  # can't just use planet.overbuilt, need to take into account how many buildings we are making
 
                 if not total_resource_cost.is_enough(status):
-                    msg += 'Not enough resources to build ' + building.label + '<br>'
+                    list_buildings[planet]['number'] = "Planet "+ str(planet.x) + ":" + str(planet.y) + "," + str(planet.i) + "\nNot enough resources to build " + building.label +"\n"
                     continue
 
                 if isinstance(building, Portal) and planet.portal:
-                    msg += '<br>A portal is already on this planet!<br>'
+                    list_buildings[planet]['number'] = "Planet "+ str(planet.x) + ":" + str(planet.y) + "," + str(planet.i) + "\nA portal is already on this planet! \n"
                     continue
 
                 if isinstance(building, Portal) and planet.portal_under_construction:
-                    msg += '<br>A portal is already under construction on this planet!<br>'
+                    list_buildings[planet]['number'] = "Planet "+ str(planet.x) + ":" + str(planet.y) + "," + str(planet.i) + "\nA portal is already under construction on this planet!\n"
                     continue
                 
                 # Deduct resources
@@ -465,12 +470,11 @@ def build_on_planet(status, planet, building_list_dict):
                 ticks = total_resource_cost.time  # calculated ticks
 
                 # Create new construction job
-                msg += '<br>' + 'Building ' + str(num) + ' ' + building.label + '<br>'
-                msg += 'Total costs: <br>'
-                msg += 'Energy: ' + str(total_resource_cost.ene) + '<br>'
-                msg += 'Minerals: ' + str(total_resource_cost.min) + '<br>'
-                msg += 'Crystals: ' + str(total_resource_cost.cry) + '<br>'
-                msg += 'Ectrolium: ' + str(total_resource_cost.ect) + '<br>'
+                list_buildings[building.label]['number'] += num
+                list_costs['Energy'] += total_resource_cost.ene
+                list_costs['Minerals'] += total_resource_cost.min
+                list_costs['Crystals'] += total_resource_cost.cry
+                list_costs['Ectrolium'] += total_resource_cost.ect
 
                 Construction.objects.create(user=status.user,
                                             planet=planet,
@@ -496,7 +500,7 @@ def build_on_planet(status, planet, building_list_dict):
     planet.save()
     status.save()  # update user's resources
 
-    return msg
+    return list_buildings, list_costs
 
 def color_code(color):
     if color=="R":

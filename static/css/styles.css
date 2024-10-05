@@ -307,7 +307,7 @@ font-color: white;
         margin: 0 auto;
         text-align: center;
         font-size: 15px;
-		min-width: 100%;
+		max-width: 100%;
     }
 
 
@@ -324,6 +324,10 @@ font-color: white;
     .display_box_header_center {
         background-image: url("/static/i27.jpg");
         flex-grow: 1;
+        display: flex;
+        text-align: center;
+        justify-content: center;
+        align-items: center;
     }
 
     .display_box_header_center_content {

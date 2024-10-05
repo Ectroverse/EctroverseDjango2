@@ -216,7 +216,7 @@ function changeslider(newValue,field) {
  function startTime() {
   var today = new Date();
   var s = today.getSeconds();
-  s_left = 59 - (s % 60);
+  s_left = 14 - (s % 15);
   //s_left = fixTimeDigits(s_left);
   document.getElementById('headerTime1').innerHTML = s_left;
   document.getElementById('headerTime2').innerHTML = s_left;

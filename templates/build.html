@@ -18,12 +18,107 @@
 #logo-holder:hover .text {opacity:1;}
 </style>
 
+<script>
+function costbuild() {
+		document.getElementById("totcost").style.display = 'block';
+		var solar = 0
+		var min = 0
+		var cry = 0
+		var ect = 0
+		planet_size = {{planet.size}}
+		planet_buildings = ({{planet.total_buildings}}+{{planet.buildings_under_construction}}) - ({{planet.defense_sats}} + {{planet.shield_networks}})
+		{% if planet.portal == True %}
+		planet_buildings = planet_buildings - 1
+		{% endif %}
+		{% for cost in costs %}
+		{% if cost.penalty != None %}
+			{% if cost.name == "Portal" %}
+				if (document.getElementById('b_portal').checked) {
+					var gx = +1
+					var x = +gx;
+					var z = +x;
+					q = 1
+					}
+			{% else %}
+			var gx = +document.getElementById('{{forloop.counter0}}').value
+			var x = +gx;
+			var z = +x;
+			
+			
+			ob = Math.min(Math.max(0, planet_size - planet_buildings), x)
+			built = x - ob
+			n = Math.max(planet_buildings,planet_size)
+			o = built + n
+			o = (o * (o + 1) * (2 * o + 1)) / 6
+			p = (n * (n + 1) * (2 * n + 1)) / 6
+			ob += (o - p) / Math.pow(planet_size,2)	
+			
+			q = ob/x
+			{% endif %}
+			
+			
+			while (z > 0) {
+			if( x > 0){
+				{% for resource in cost.cost_calc %}
+					{% if resource.value > 0 %}
+						var y = q * {{resource.value}}
+						if(y>0){
+							{% if resource.name == "Energy" %}
+								solar += y;
+							{% endif %}
+							{% if resource.name == "Mineral" %}
+								min += y;		
+							{% endif %}
+							{% if resource.name == "Crystal" %}
+								cry += y;	
+							{% endif %}
+							{% if resource.name == "Ectrolium" %}
+								ect += y;
+							{% endif %}
+						}
+					{% endif %}	
+				{% endfor %}
+			}
+			z -= 1
+			;}
+			planet_buildings += x
+			{% endif %}
+		
+		
+		
+		{% endfor %}
+		
+		if(solar > {{status.energy}}){document.getElementById("solar").style.color = 'red';}
+		else{document.getElementById("solar").style.color = 'green';}
+		if(min > {{status.minerals}}){document.getElementById("min").style.color = 'red';}
+		else{document.getElementById("min").style.color = 'green';}
+		if(cry > {{status.crystals}}){document.getElementById("crys").style.color = 'red';}
+		else{document.getElementById("crys").style.color = 'green';}
+		if(ect > {{status.ectrolium}}){document.getElementById("ect").style.color = 'red';}
+		else{document.getElementById("ect").style.color = 'green';}
+		document.getElementById('solar').value = Math.ceil(solar);
+		document.getElementById('min').value = Math.ceil(min);
+		document.getElementById('crys').value = Math.ceil(cry);
+		document.getElementById('ect').value = Math.ceil(ect);
+		
+}
+</script>
+
+<div id="totcost" style="position:fixed; right:0; bottom:0; background-color:#0b1119; color:white; z-index: 99; width: 100%">
+
+  <td><b>Energy: <input type="text" id="solar" value="0" size="10vw" readonly style=" border:none; background-color:#0b1119;"></b></td>
+  <td><b>Mineral: <input type="text" id="min" value="0" size="10vw" readonly style=" border:none; background-color:#0b1119;"></b></td>
+    <div class="content-mobile"><br></div>
+  <td><b>Crystal: <input type="text" id="crys" value="0" size="10vw" readonly style=" border:none; background-color:#0b1119;"></b></td>
+  <td><b>Ectrolium: <input type="text" id="ect" value="0" size="10vw" readonly style=" border:none; background-color:#0b1119;"></b></td>
+</div>
+
 <br>
 Building Information
 <br>
 <br>
 {% if msg %}
-    {{msg|safe}}
+    {{msg|safe|linebreaks}}
     <br>
     <br>
 {% endif %}
@@ -35,13 +130,10 @@ The overbuilding penalty for this planet is <font color="#FF0000"><b>+<span id="
 <br>
 <br>
 
-<div class="content-desktop">
-
 <form action="" method="POST">
 {% csrf_token %}
 <table cellspacing="6" align="center">
 <tr>
-	<td><b></b></td>
     <td><b>Building</b></td>
     <td><b>Cost</b></td>
     <td><b>&nbsp;&nbsp;Owned&nbsp;&nbsp;</b></td>
@@ -52,7 +144,7 @@ The overbuilding penalty for this planet is <font color="#FF0000"><b>+<span id="
 
 {% for cost in costs %}
 <tr style="line-height: 1;">
-	<td><div id="logo-holder">
+	<td><font color="#FFFFFF">{{cost.name}}</font><br><div id="logo-holder">
     <img class="image" src="{% static '/buildings/'|add:cost.name|add:'.png' %}" width="70" height="70" title ="{{cost.name}}" />
 	{% for key,val in building_helper.items %}
 	
@@ -70,7 +162,6 @@ The overbuilding penalty for this planet is <font color="#FF0000"><b>+<span id="
 	{% endfor %}
   </div> 
 </div> </td>
-    <td valign="top"><font color="#FFFFFF">{{cost.name}}</font><br></td>
     {% if cost.cost == None %}
         <td valign="top" nowrap><font color="#FF0000">Unavailable<br>Tech too low</font></td>
         <td valign="top" align="center">{{cost.owned}}</td>
@@ -96,9 +187,9 @@ The overbuilding penalty for this planet is <font color="#FF0000"><b>+<span id="
         </td>
         <td valign="top" align="center">{{cost.owned}}</td>
         {% if cost.name == "Portal" %}
-            <td valign="top"><input type="checkbox" name="{{forloop.counter0}}">Build a portal</td>
+            <td valign="top"><input type="checkbox" name="{{forloop.counter0}}" id="b_portal" onchange="costbuild()">Build a portal</td>
         {% else %}
-            <td valign="top"><input type="text" pattern="[0-9]+" maxlength="9" size ="10" name="{{forloop.counter0}}"></td>
+            <td valign="top"><input type="text" pattern="[0-9]+" maxlength="9" value="0" size ="10" id="{{forloop.counter0}}" name="{{forloop.counter0}}" onchange="costbuild()"></td>
         {% endif %}
     {% endif %}
 </tr>
@@ -109,80 +200,8 @@ The overbuilding penalty for this planet is <font color="#FF0000"><b>+<span id="
 
 
 <input type="submit" value="Build"></form>
-</div>
-
-<div class="content-mobile">
-  <form action="" method="POST">
-  {% csrf_token %}
-  <table cellspacing="6" align="center">
-  <tr>
-      <td><b>Building</b></td>
-      <td><b>Cost</b></td>
-      <td><b>&nbsp;&nbsp;Owned&nbsp;&nbsp;</b></td>
-      <td><b>Build</b></td>
-  </tr>
 
 
-
-  {% for cost in costs %}
-  <tr style="line-height: 1;">
-  	<td><font color="#FFFFFF">{{cost.name}}</font><br><div id="logo-holder">
-    <img class="image" src="{% static '/buildings/'|add:cost.name|add:'.png' %}" width="70" height="70" title ="{{cost.name}}" />
-	{% for key,val in building_helper.items %}
-	
-	<div class="text">
-	{% for k,v in val.items %}
-	{% if key == cost.name %}
-	<table align="center" cellspacing="1">
-	<tr>
-      <td width="50"><b>{{k}}</b></td>
-      <td width="50">{{v}}</td>
-	</tr>
-	</table>
-	{% endif %}
-	{% endfor %}
-	{% endfor %}
-  </div> 
-</div>
-      {% if cost.cost == None %}
-          <td valign="top" nowrap><font color="#FF0000">Unavailable<br>Tech too low</font></td>
-          <td valign="top" align="center">{{cost.owned}}</td>
-          <td>&nbsp;</td></tr>
-      {% elif cost.name == "Portal" and portal %}
-          <td valign="top" nowrap>Already present</td>
-          <td valign="top" align="center">{{cost.owned}}</td>
-          <td>&nbsp;</td></tr>
-      {% elif cost.name == "Portal" and portal_under_construction %}
-          <td valign="top" nowrap>Under construction</td>
-          <td valign="top" align="center">{{cost.owned}}</td>
-          <td>&nbsp;</td></tr>
-      {% else %}
-          <td valign="top"" nowrap>
-          {% for resource_cost in cost.cost %}
-              {% if resource_cost.value > 0 %}
-                  {{resource_cost.value}} {{resource_cost.name}}<br>
-              {% endif %}
-          {% endfor %}
-          {% if cost.penalty > 0 %}
-              <font color="#FF2020">Tech : +{{cost.penalty}}% costs</font><br>
-          {% endif %}
-          </td>
-          <td valign="top" align="center">{{cost.owned}}</td>
-          {% if cost.name == "Portal" %}
-              <td valign="top"><input type="checkbox" name="{{forloop.counter0}}">Build a portal</td>
-          {% else %}
-              <td valign="top"><input type="text" pattern="[0-9]+" maxlength="9" size ="5" name="{{forloop.counter0}}"></td>
-          {% endif %}
-      {% endif %}
-  </tr>
-  <tr><td>&nbsp;</td><td></td><td></td><td></td></tr>
-  {% endfor %}
-  </td></tr>
-  </table>
-
-
-  <input type="submit" value="Build"></form>
-</div>
 
 {% if status.galsel == 1 %}
 <br><br><a href="/planet{{planet.id}}">View planet</a>

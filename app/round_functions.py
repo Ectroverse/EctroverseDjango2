@@ -23,11 +23,11 @@ arti_list = {
         "Churchills Brandy": ["The War Chest has been found, improving your Fleets Readiness return!", 0, 0, 0, 0, "/static/arti/artimg23.png"],
         "Advanced Robotics": ["Technology requirements are now halved!", 0, 0, 0, 0, "/static/arti/artimg24.png"],
         "Flying Dutchman": ["Travelling the galaxy, the Flying Dutchman reports back on the findings!", 0, 0, 0, 1, "/static/arti/artimg25.png"],
-        "You Grow, Girl!": ["This Planet grows by 1 every week!", 0, 1, 0, 0, "/static/arti/artimg27.png"],
+        "You Grow, Girl!": ["This Planet grows by 1 every week!", 0, 0, 0, 0, "/static/arti/artimg27.png"],
         "Playboy Quantum": ["Raises Portals Research maximum by 100% and improves Portals Research production by 50%!", 0, 0, 1, 0, "/static/arti/artimg30.png"],
         "The General": ["Enamoured by The Generals Presence, your troops are stronger defending! Range doubled with Military Might!", 0, 0, 1, 0, "/static/arti/artimg29.png"],
         "Shield Network": ["Connects your Shield Networks across the Galaxy, removes the Technology requirement but reduces their effectiveness to 1/3!", 0, 0, 0, 0, "/static/arti/artimg28.png"],
-        "Double 0": ["Raises your Agents defence by 25% but lowers Military defence by 15%!", 0, 0, 1, 0, "/static/arti/artimg31.png"],
+        "Double 0": ["Raises your Agents defence by 25% but lowers Military defence by 15%!", 0, 0, 0, 0, "/static/arti/artimg31.png"],
         "Rabbit Theorum": ["Doubles your Population Research production!", 0, 0, 0, 0, "/static/arti/artimg32.png"],
         "Engineers Son": ["A lifetime of watching his father has resulted in Fighters being 20% cheaper to build!", 0, 0, 0, 0, "/static/arti/artimg33.png"],
         "Engineer": ["Reduces building upkeep by 10% or 20% with the Engineers Son!", 0, 0, 0, 0, "/static/arti/artimg34.png"],
@@ -35,6 +35,7 @@ arti_list = {
         "Genghis Effect": ["Reduces exploration costs by 25%!", 0, 0, 1, 0, "/static/arti/artimg35.png"],
         "Blackhole": ["Opening blackholes, Travel Speed is increased by 60%!", 0, 0, 1, 0, "/static/arti/artimg36.png"],
         "Tyrs Justice": ["Temporarily reduces attack costs after being attacked!", 0, 0, 1, 0, "/static/arti/artimg37.png"],
+        "Mary Celeste": ["The lost crew of Mary Celeste grants you all Incantations and cuts Ghosts Ships build cost in half!", 0, 0, 1, 0, "/static/arti/artimg38.png"],
         
     }
 

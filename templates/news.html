@@ -47,7 +47,7 @@
 			<br><br>
 		{% endif %}
 		{% if n.news_type == 'RA' %}
-			<a href="/account{{n.user2.id}}">{{n.user2.userstatus.user_name}}</a> has requested an aid shipment of {{n.extra_info}} from you.
+			<a href="/account{{n.user1.id}}">{{n.user1.userstatus.user_name}}</a> has requested an aid shipment of {{n.extra_info}} from you.
 			<br><br>
 		{% endif %}
 		{% if n.news_type == 'SI' %}
@@ -234,7 +234,7 @@
 			<br><br>
 		{% endif %}
 		{% if n.news_type == 'RA' %}
-			<a href="/galtwo/account{{n.user2.id}}">{{n.user2.galtwouser.user_name}}</a> has requested an aid shipment of {{n.extra_info}} from you.
+			<a href="/galtwo/account{{n.user1.id}}">{{n.user1.galtwouser.user_name}}</a> has requested an aid shipment of {{n.extra_info}} from you.
 			<br><br>
 		{% endif %}
 		{% if n.news_type == 'SI' %}
