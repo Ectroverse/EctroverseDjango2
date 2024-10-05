@@ -1,5 +1,5 @@
 
-### Arti timer + delay on loss ###
+### Arti timer + delay on loss end after 24hours ###
 
 UPDATE app_roundstatus rs
 SET artedelay =
@@ -20,10 +20,8 @@ END);
 UPDATE app_roundstatus rs
 SET artetimer = 
 (CASE
-WHEN 
-rs.artedelay = 0
-THEN
-144
+WHEN rs.artedelay = 0
+THEN 144
 WHEN (SELECT COUNT (*) FROM app_artefacts art WHERE art.on_planet_id is not null) = 
 (SELECT MAX(emparts) as max_emp
 FROM 
@@ -32,4 +30,10 @@ FROM app_artefacts art WHERE art.empire_holding_id is not null
 GROUP BY art.empire_holding_id ) as emp_max)
 THEN artetimer - 1
 ELSE artetimer
+END);
+UPDATE app_roundstatus rs SET is_running =
+(CASE
+WHEN rs.artetimer = 0
+then false
+else is_running
 END);
