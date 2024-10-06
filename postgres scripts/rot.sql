@@ -85,7 +85,7 @@ and tp is not null;
 
 insert into app_news
 select 
-(select id from app_news ORDER BY id DESC LIMIT 1) + 1, 'TE', 1, _start_ts, False, True, True, 'Terraformer', v, tb,
+(select id from app_news ORDER BY id DESC LIMIT 1) + 1, 'TE', (select tick_number from app_roundstatus), _start_ts, False, True, True, 'Terraformer', v, tb,
 (SELECT empire_id FROM app_userstatus u WHERE u.empire_id = (SELECT empire_holding_id FROM app_artefacts WHERE name = 'Terraformer')), 
 (SELECT empire_id FROM app_userstatus u WHERE u.empire_id = (SELECT empire_holding_id FROM app_artefacts WHERE name = 'Terraformer')),
 tp, (SELECT id FROM app_userstatus u WHERE u.empire_id = (SELECT empire_holding_id FROM app_artefacts WHERE name = 'Terraformer')), 
