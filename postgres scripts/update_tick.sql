@@ -73,9 +73,9 @@ BEGIN
   ) p4
  where p.id = p4.id;
  
- -- user eco  										
- lock table app_userstatus;
- 
+								
+ -- user eco  		
+lock table app_userstatus;
 
 update app_userstatus u
 set population = cur_pop,
@@ -86,25 +86,35 @@ r.race_energy_production* (1 + u.research_percent_energy/100)*
 				(SC_prod * r.solar_bonus * a.dark_mist_effect + FR_prod ),
 
 
-/*energy_decay =, 
-energy_interest =,
-energy_income= , 
-energy_specop_effect =, 
-mineral_production =,
-mineral_decay =, 
-mineral_interest = , 
-mineral_income = ,
-crystal_production = , 
-crystal_decay = , 
-crystal_interest = , 
-crystal_income = , 
-ectrolium_production = ,
-ectrolium_decay = , 
-ectrolium_interest = ,
-ectrolium_income = , 
-buildings_upkeep = ,
-portals_upkeep = , 
-population_upkeep_reduction =, */
+energy_decay = greatest(0, u.energy * (select num_val from constants c where c.name = 'energy_decay_factor')), 
+energy_interest =  least(u.energy_production, u.energy * r.race_special_resource_interest), 
+-- energy_income= , 
+--energy_specop_effect =, 
+mineral_production = MP_prod * r.race_mineral_production * case when b.extra_effect = 'Mineral' then b.Enlightenment_effect else 1 end, 
+mineral_decay = 0, 
+mineral_interest = least(u.mineral_production, u.minerals * r.race_special_resource_interest), 
+-- mineral_income = ,
+crystal_production = CL_prod * r.race_crystal_production * case when b.extra_effect = 'Crystal' then b.Enlightenment_effect else 1 end ,  
+crystal_decay = greatest(0, u.crystals * (select num_val from constants c  where c.name = 'crystal_decay_factor')), 
+crystal_interest =  least(u.crystal_production, u.crystals * r.race_special_resource_interest), 
+-- crystal_income = , 
+ectrolium_production = RS_prod * r.race_ectrolium_production  * case when b.extra_effect = 'Ectrolium' then b.Enlightenment_effect else 1 end ,
+ectrolium_decay = 0, 
+ectrolium_interest = least(u.ectrolium_production, u.ectrolium * r.race_special_resource_interest),
+-- ectrolium_income = , 
+buildings_upkeep = SC * (select num_val from constants where name = 'upkeep_solar_collectors')
+ + FR * (select num_val from constants where name = 'upkeep_fission_reactors')
+ + MP * (select num_val from constants where name = 'upkeep_mineral_plants')
+ + CL * (select num_val from constants where name = 'upkeep_crystal_labs')
+ + RS * (select num_val from constants where name = 'upkeep_refinement_stations')
+ + CT * (select num_val from constants where name = 'upkeep_cities')
+ + RC * (select num_val from constants where name = 'upkeep_research_centers')
+ + DS * (select num_val from constants where name = 'upkeep_defense_sats')
+ + SN * (select num_val from constants where name = 'upkeep_shield_networks'),
+
+portals_upkeep = greatest(0 , pow(greatest(1, PL - 1), 1.2736) * 10000 / (1 + u.research_percent_portals/100)), 
+units_upkeep = COALESCE(fs.fleet_cost, 0),
+population_upkeep_reduction = pop / 350, 
 total_solar_collectors = SC, 
 total_fission_reactors = FR , 
 total_mineral_plants = MP, 
@@ -118,77 +128,136 @@ total_portals = PL,
 total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 
 -- select  SC, r.solar_bonus, a.dark_mist_effect
- from (select owner_id, sum(current_population) cur_pop, count(*) total_pl,
+ from app_userstatus u2
+ join (select owner_id, sum(current_population) cur_pop, count(*) total_pl,
 	   ((select num_val from constants where name = 'building_production_solar') * sum(solar_collectors* (1 + bonus_solar/100 ))
 	    ) SC_prod,
 	   sum(solar_collectors) SC,
 	   ((select num_val from constants where name = 'building_production_fission') * sum(fission_reactors* (1 + bonus_fission/100 ))
 	    ) FR_prod,
 	   sum(fission_reactors) FR,
-	   
+	   sum(mineral_plants * (1 + bonus_mineral/100 )) MP_prod, 
 	   sum(mineral_plants) MP,
+	   sum(crystal_labs* (1 + bonus_crystal/100 )) CL_prod,
 	   sum(crystal_labs) CL,
+	   sum(refinement_stations* (1 + bonus_ectrolium/100 )) RS_prod,
 	   sum(refinement_stations) RS,
 	   sum(cities) CT,
 	   sum(research_centers) RC,
 	   sum(defense_sats) DS , 
 	   sum(shield_networks) SN , 
-	   sum(case when portal = true then 1 else 0 end) PL  
+	   sum(case when portal = true then 1 else 0 end) PL ,
+	   sum(population) pop
 	   from "PLANET" p1
 	   join app_userstatus u1 on u1.id = p1.owner_id
 	   where p1.owner_id is not null
-	   group by owner_id) p,
-	   
-		(select user_to_id, 
-		 1*  EXP (SUM (LN (100 / (specop_strength + 100.0)))) dark_mist_effect  --EXP (SUM (LN )) is just multiplication
+	   group by owner_id) p on p.owner_id = u2.id  
+  left join (select user_to_id, 
+		 (specop_strength / 100.0) Enlightenment_effect,
+		 extra_effect
 		 from app_specops  a
-		 where a.name in ('Black Mist', 'Dark Web') and specop_strength > 0
-		 group by user_to_id
-		)  a ,
-		
-		(select u.id, 
+		 where a.name in ('Enlightenment') and specop_strength > 0
+		) b on u2.id = b.user_to_id
+
+  join (select u3.id, 
 		 max(case when c.name = 'race_special_solar_15' then
 		 case when c.num_val is not null then c.num_val else 1 end 
 		 else 0 end )
 		 solar_bonus,
-
 		 max(case when c.name = 'energy_production' then
 		 case when c.num_val is not null then c.num_val else 1 end 
 		 else 0 end )
-		 race_energy_production
-		 
-		 from app_userstatus u
-		 join classes l on l.name = u.race
-		 left join constants c on c.class = l.id and c.name in('race_special_solar_15', 'energy_production')
-		 group by u.id
-		 ) r
- /*where p.owner_id = a.user_to_id
- and p.owner_id = r.id */
- 
- where p.owner_id = u.id   
- and u.id = a.user_to_id
- and r.id = p.owner_id
- and p.owner_id is not null;
+		 race_energy_production,
+		 max(case when c.name = 'mineral_production' then
+		 case when c.num_val is not null then c.num_val else 1 end 
+		 else 0 end )
+		 race_mineral_production,
+		 max(case when c.name = 'crystal_production' then
+		 case when c.num_val is not null then c.num_val else 1 end 
+		 else 0 end )
+		 race_crystal_production,
+		 max(case when c.name = 'ectrolium_production' then
+		 case when c.num_val is not null then c.num_val else 1 end 
+		 else 0 end )
+		 race_ectrolium_production,
+		 max(case when c.name = 'race_special_resource_interest' then
+		 case when c.num_val is not null then c.num_val else 1 end 
+		 else 0 end )
+		 race_special_resource_interest
+		 from app_userstatus u3
+		 join classes l on l.name = u3.race
+		 left join constants c on c.class = l.id --and c.name in('race_special_solar_15', 'energy_production')
+		 group by u3.id
+		 ) r on r.id = u2.id
+ left join 		(select user_to_id, 
+		 1*  EXP (SUM (LN (100 / (specop_strength + 100.0)))) dark_mist_effect  --EXP (SUM (LN )) is just multiplication
+		 from app_specops  a
+		 where a.name in ('Black Mist', 'Dark Web') and specop_strength > 0
+		 group by user_to_id
+		)  a on u2.id = a.user_to_id
+  left join (select owner_id, sum(bomber) bomber, sum(fighter) fighter, sum(transport) transport,
+			 sum(cruiser) cruiser, sum(soldier) soldier, sum(droid) droid, sum(goliath) goliath,
+			 sum(phantom) phantom, sum(wizard) wizard, sum(agent) agent, sum(ghost) ghost,
+			 sum(exploration) exploration
+			 from app_fleet
+			 --join constants c on c.
+			 group by owner_id)
+			 f on f.owner_id = u2.id
+  left join 
+  (select 
+	owner_id, 
+	sum(a1.bomber  * u1.bomber) +
+	sum(a1.fighter  * u1.fighter) +
+	sum(a1.transport  * u1.transport) +
+	sum(a1.cruiser  * u1.cruiser) +
+	sum(a1.carrier  * u1.carrier) +
+	sum(a1.soldier  * u1.soldier) +
+	sum(a1.droid  * u1.droid) +
+	sum(a1.goliath  * u1.goliath) +
+	sum(a1.phantom  * u1.phantom) +
+	sum(a1.wizard  * u1.wizard) +
+	sum(a1.agent  * u1.agent) +
+	sum(a1.ghost  * u1.ghost) +
+	sum(a1.exploration  * u1.exploration) as fleet_cost
+	from app_fleet a1
+	join unit_stats u1 on u1.class_name = 'unit upkeep costs'
+	group by owner_id) fs on fs.owner_id =  u2.id 
+;
+
 
  -- networth
  update app_userstatus u
- set networth = n.nw
- from (select owner_id, (sum(total_buildings)*(select num_val from constants where name = 'networth_per_building') +
- sum(bonus_solar)* 1.25 + sum(bonus_mineral)* 1.45 + sum(bonus_crystal)* 2.25 + sum(bonus_ectrolium) * 1.65  +
- sum(bonus_fission)* 5.0 +  sum(size)* 1.75) nw
- from "PLANET" p
- group by owner_id) n
- where n.owner_id  = u.id;
+ set networth = a.total_nw 
+ from (
+ select n.owner_id, n.nw + fs.fleet_nw as total_nw from
+	 (select owner_id, (sum(total_buildings)*(select num_val from constants where name = 'networth_per_building') +
+	 sum(bonus_solar)* 1.25 + sum(bonus_mineral)* 1.45 + sum(bonus_crystal)* 2.25 + sum(bonus_ectrolium) * 1.65  +
+	 sum(bonus_fission)* 5.0 +  sum(size)* 1.75) nw
+	 from "PLANET" p
+	 group by owner_id) n
+ left join 
+	  (select 
+		owner_id, 
+		sum(a1.bomber  * u2.bomber) +
+		sum(a1.fighter  * u2.fighter) +
+		sum(a1.transport  * u2.transport) +
+		sum(a1.cruiser  * u2.cruiser) +
+		sum(a1.carrier  * u2.carrier) +
+		sum(a1.soldier  * u2.soldier) +
+		sum(a1.droid  * u2.droid) +
+		sum(a1.goliath  * u2.goliath) +
+		sum(a1.phantom  * u2.phantom) +
+		sum(a1.wizard  * u2.wizard) +
+		sum(a1.agent  * u2.agent) +
+		sum(a1.ghost  * u2.ghost) +
+		sum(a1.exploration  * u2.exploration) as fleet_nw
+		from app_fleet a1
+		join unit_stats u2 on u2.class_name = 'units nw'
+		group by owner_id) fs on fs.owner_id =  n.owner_id
+ ) as a
+ where u.id = a.owner_id;
  
- 	/*population = 0;
-		networth = 0;
-		num_planets = 0;
-		cmdTickProduction_solar = 0;
-		cmdTickProduction_fission = 0;
-		cmdTickProduction_mineral = 0;
-		cmdTickProduction_crystal = 0;
-		cmdTickProduction_ectrolium = 0;
-		cmdTickProduction_research = 0;*/
+
  
  delete from app_construction
  where ticks_remaining = 0;
@@ -203,5 +272,5 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
   
 END
 $$;
-
+ 
  

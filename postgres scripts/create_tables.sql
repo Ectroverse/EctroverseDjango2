@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS tablefunc; -- for crosstab
+
 drop table if exists classes cascade;
 
 create table classes
@@ -73,7 +75,7 @@ values
 ((select id from classes where name = 'unit upkeep costs'),'wizard', 0.8,current_timestamp),
 ((select id from classes where name = 'unit upkeep costs'),'agent', 0.8,current_timestamp),
 ((select id from classes where name = 'unit upkeep costs'),'ghost', 2.4,current_timestamp),
-((select id from classes where name = 'unit upkeep costs'),'exploration};', 60.0,current_timestamp),
+((select id from classes where name = 'unit upkeep costs'),'exploration', 60.0,current_timestamp),
 
 ((select id from classes where name = 'units nw'),'bomber', 4,current_timestamp),
 ((select id from classes where name = 'units nw'),'fighter', 3,current_timestamp),
@@ -195,6 +197,36 @@ values
 
 
 select * from  constants;
+drop table if exists ticks_log;
 
 create table ticks_log
 (id serial primary key, round varchar(255), calc_time_ms numeric, dt timestamp);
+
+
+drop table if exists unit_stats;
+
+create table unit_stats
+as 
+select * from crosstab (
+'select c1.name class_name, t.name, t.num_val
+	from constants t
+	join classes c1 on c1.id = t.class 
+	where c1.name in (''unit upkeep costs'', ''units nw'')
+	order by 1,2'
+) as ct
+( 
+class_name varchar,	
+agent numeric,
+bomber numeric,
+carrier numeric,
+cruiser numeric,
+droid numeric,
+exploration numeric,
+fighter numeric,
+ghost numeric,
+goliath numeric,
+phantom numeric,
+soldier numeric,
+transport numeric,
+wizard numeric
+);
