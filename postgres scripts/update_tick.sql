@@ -4,6 +4,7 @@ $$
 declare
    _start_ts timestamptz;
    _end_ts   timestamptz;
+   _tmp numeric;
 BEGIN 
    _start_ts := clock_timestamp();
  
@@ -83,25 +84,26 @@ num_planets = total_pl,
 energy_production = 
 -- solar
 r.race_energy_production* (1 + u.research_percent_energy/100)* 
-				(SC_prod * r.solar_bonus * a.dark_mist_effect + FR_prod ),
+				(SC_prod * r.solar_bonus * a.dark_mist_effect + FR_prod ) * 
+				case when b.extra_effect = 'Energy' then b.Enlightenment_effect else 1 end,
 
 
 energy_decay = greatest(0, u.energy * (select num_val from constants c where c.name = 'energy_decay_factor')), 
 energy_interest =  least(u.energy_production, u.energy * r.race_special_resource_interest), 
--- energy_income= , 
+
 --energy_specop_effect =, 
 mineral_production = MP_prod * r.race_mineral_production * case when b.extra_effect = 'Mineral' then b.Enlightenment_effect else 1 end, 
 mineral_decay = 0, 
 mineral_interest = least(u.mineral_production, u.minerals * r.race_special_resource_interest), 
--- mineral_income = ,
+
 crystal_production = CL_prod * r.race_crystal_production * case when b.extra_effect = 'Crystal' then b.Enlightenment_effect else 1 end ,  
 crystal_decay = greatest(0, u.crystals * (select num_val from constants c  where c.name = 'crystal_decay_factor')), 
 crystal_interest =  least(u.crystal_production, u.crystals * r.race_special_resource_interest), 
--- crystal_income = , 
+ 
 ectrolium_production = RS_prod * r.race_ectrolium_production  * case when b.extra_effect = 'Ectrolium' then b.Enlightenment_effect else 1 end ,
 ectrolium_decay = 0, 
 ectrolium_interest = least(u.ectrolium_production, u.ectrolium * r.race_special_resource_interest),
--- ectrolium_income = , 
+
 buildings_upkeep = SC * (select num_val from constants where name = 'upkeep_solar_collectors')
  + FR * (select num_val from constants where name = 'upkeep_fission_reactors')
  + MP * (select num_val from constants where name = 'upkeep_mineral_plants')
@@ -114,7 +116,7 @@ buildings_upkeep = SC * (select num_val from constants where name = 'upkeep_sola
 
 portals_upkeep = greatest(0 , pow(greatest(1, PL - 1), 1.2736) * 10000 / (1 + u.research_percent_portals/100)), 
 units_upkeep = COALESCE(fs.fleet_cost, 0),
-population_upkeep_reduction = pop / 350, 
+
 total_solar_collectors = SC, 
 total_fission_reactors = FR , 
 total_mineral_plants = MP, 
@@ -224,10 +226,17 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 	group by owner_id) fs on fs.owner_id =  u2.id 
 ;
 
+update app_userstatus u
+set population_upkeep_reduction = least(population_upkeep_reduction, (portals_upkeep + buildings_upkeep + units_upkeep));
 
- -- networth
- update app_userstatus u
- set networth = a.total_nw 
+update app_userstatus u
+set 
+ectrolium_income = ectrolium_production + ectrolium_interest - ectrolium_decay, 
+crystal_income = crystal_production + crystal_interest - crystal_decay,
+mineral_income = mineral_production + mineral_interest - mineral_decay, 
+energy_income =  energy_production + population_upkeep_reduction +  energy_interest - energy_decay + energy_specop_effect
+		- buildings_upkeep - portals_upkeep - units_upkeep,
+networth = a.total_nw 
  from (
  select n.owner_id, n.nw + fs.fleet_nw as total_nw from
 	 (select owner_id, (sum(total_buildings)*(select num_val from constants where name = 'networth_per_building') +
@@ -257,7 +266,11 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
  ) as a
  where u.id = a.owner_id;
  
-
+update app_userstatus u
+set energy = energy + energy_income,
+minerals = crystals + mineral_income,
+crystals = crystals + crystal_income,
+ectrolium = ectrolium + ectrolium_income;
  
  delete from app_construction
  where ticks_remaining = 0;

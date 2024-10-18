@@ -3017,10 +3017,10 @@ def units(request):
                 if arte.empire_holding == status.empire and unit == 'fighter':
                     arte_multiplier = 0.8
                     
-                maryc = Artefacts.objects.get(name="Mary Celeste")
+                '''maryc = Artefacts.objects.get(name="Mary Celeste")
                 if maryc.empire_holding == status.empire and unit == 'ghost':
                     arte_multiplier = 0.5
-
+				'''
                 total_resource_cost = [int(np.ceil(x * mult * arte_multiplier)) for x in unit_info[unit]['cost']]
                 
                 for j in range(4):  # multiply all resources except time by number of units
@@ -3082,10 +3082,10 @@ def units(request):
         if arte.empire_holding == status.empire and unit == 'fighter':
             arte_multiplier = 0.8
 
-        maryc = Artefacts.objects.get(name="Mary Celeste")
+        '''maryc = Artefacts.objects.get(name="Mary Celeste")
         if maryc.empire_holding == status.empire and unit == 'ghost':
             arte_multiplier = 0.5
-
+'''
         if not mult:
             cost = None
         else:
@@ -4645,7 +4645,7 @@ def specops(request, *args):
                 specs[7] = get_op_penalty(status.research_percent_culture, inca_specs[g][0])
             inca[g] = specs
     
-    maryc = Artefacts.objects.get(name="Mary Celeste")
+    '''maryc = Artefacts.objects.get(name="Mary Celeste")
     maryc_inca = {}
     if maryc.empire_holding != None:
         if maryc.empire_holding.id == status.empire.id:
@@ -4668,7 +4668,7 @@ def specops(request, *args):
                     specs[7] = get_op_penalty(status.research_percent_culture, inca_specs[g][0])
                 maryc_inca[g] = specs
                 
-    
+    '''
     msg = ""
     main_fleet = Fleet.objects.get(owner=status.user.id, main_fleet=True)
 
@@ -4734,17 +4734,14 @@ def specops(request, *args):
         if 'incantation' in request.POST and 'unit_ammount' in request.POST:
             if int(request.POST['unit_ammount']) > main_fleet.ghost:
                 msg = "You don't have that many ghost ships!"
-            elif request.POST['incantation'] != "Call to Arms" and request.POST['X'] == "" or request.POST['incantation'] != "Call to Arms" and request.POST['Y'] == "" or request.POST['incantation'] != "Call to Arms" and request.POST['I'] == "":
+            elif request.POST['X'] == "" and request.POST['Y'] == "" and request.POST['I'] == "":
                 msg = "You must specify a planet!"
             elif get_op_penalty(status.research_percent_culture, inca_specs[request.POST['incantation']][0]) == -1:
                 msg = "You don't have enough culture research to perform this incantation!"
             else:
                 planet = None
                 try:
-                    if request.POST['incantation'] == "Call to Arms":
-                        planet = status.home_planet
-                    else:
-                        planet = Planet.objects.get(x=request.POST['X'], y=request.POST['Y'], i=request.POST['I'])
+                    planet = Planet.objects.get(x=request.POST['X'], y=request.POST['Y'], i=request.POST['I'])
                 except Planet.DoesNotExist:
                     msg = "This planet doesn't exist"
                 if planet:
@@ -4813,8 +4810,8 @@ def specops(request, *args):
                "user_to_template_specop": template_name,
                "cloak_spells": cloak_spells,
                "cloak": cloak,
-               "maryc_inca": maryc_inca,
-               "maryc": maryc,
+               #"maryc_inca": maryc_inca,
+               #"maryc": maryc,
                }
     
     return render(request, "specops.html", context)
