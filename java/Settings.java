@@ -9,5 +9,5 @@ public final class Settings {
 	//set them so they fit without a remainder either within a minute (e.g 10 second tick, but not 11)
 	//or in an hour (5min tick, not 7)
 	//otherwise you will have a harder time aligning the js ticking clock (shown ingame), which now is set to go from the start of every 10 seconds
-	public static final int tickTime = 15; 
+	public static final int tickTime = 2;
 }

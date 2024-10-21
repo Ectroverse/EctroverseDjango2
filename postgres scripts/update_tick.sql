@@ -7,6 +7,14 @@ declare
    _tmp numeric;
 BEGIN 
    _start_ts := clock_timestamp();
+   
+ IF (select is_running from app_roundstatus where round_number = (select max(round_number) from app_roundstatus)) = false THEN
+      return;
+ END IF;
+   
+ update app_roundstatus
+ set tick_number = tick_number + 1
+ where is_running = 'true';
  
  -- population  
  lock table "PLANET";
@@ -53,6 +61,9 @@ BEGIN
  where p.id = a.planet_id and a.ticks_remaining = 0
  and p.owner_id is not null;
  
+ delete from app_construction
+ where ticks_remaining = 0;
+ 
  update "PLANET" p
  set total_buildings = solar_collectors + fission_reactors + mineral_plants + crystal_labs + refinement_stations + 
  cities + research_centers + defense_sats + shield_networks + case when portal = true then 1 else 0 end
@@ -74,33 +85,90 @@ BEGIN
   ) p4
  where p.id = p4.id;
  
-								
- -- user eco  		
+
 lock table app_userstatus;
 
+  -- user eco  		
 update app_userstatus u
-set population = cur_pop,
+set 
+
+research_points_military = u.research_points_military + 1.2 * u.alloc_research_military * 
+case when b.extra_effect = 'Research' then ( 1 + b.Enlightenment_effect/100) else 1 end
+* (RC * (select num_val from constants where name = 'building_production_research') + u.current_research_funding/100 
+ + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
+research_bonus_military ,
+
+research_points_construction = u.research_points_construction + 1.2 * u.alloc_research_construction * 
+case when b.extra_effect = 'Research' then ( 1 + b.Enlightenment_effect/100) else 1 end
+* (RC * (select num_val from constants where name = 'building_production_research') + u.current_research_funding/100
+  + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
+research_bonus_construction ,
+
+
+research_points_tech = u.research_points_tech + 1.2 * u.alloc_research_tech * 
+case when b.extra_effect = 'Research' then ( 1 + b.Enlightenment_effect/100) else 1 end
+* (RC * (select num_val from constants where name = 'building_production_research') + u.current_research_funding/100
+ + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus 
+research_bonus_tech ,
+
+
+research_points_energy = u.research_points_energy + 1.2 * u.alloc_research_energy * 
+case when b.extra_effect = 'Research' then ( 1 + b.Enlightenment_effect/100) else 1 end
+* (RC * (select num_val from constants where name = 'building_production_research') + u.current_research_funding/100
+ + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
+research_bonus_energy ,
+
+
+research_points_population = u.research_points_population + 1.2 * u.alloc_research_population * 
+case when b.extra_effect = 'Research' then ( 1 + b.Enlightenment_effect/100) else 1 end
+* (RC * (select num_val from constants where name = 'building_production_research') + u.current_research_funding/100
+ + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
+research_bonus_population ,
+
+
+research_points_culture = u.research_points_culture + 1.2 * u.alloc_research_culture * 
+case when b.extra_effect = 'Research' then ( 1 + b.Enlightenment_effect/100) else 1 end
+* (RC * (select num_val from constants where name = 'building_production_research') + u.current_research_funding/100
+ + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
+research_bonus_culture ,
+
+
+research_points_operations = u.research_points_operations + 1.2 * u.alloc_research_operations * 
+case when b.extra_effect = 'Research' then ( 1 + b.Enlightenment_effect/100) else 1 end
+* (RC * (select num_val from constants where name = 'building_production_research') + u.current_research_funding/100
+ + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus 
+research_bonus_operations ,
+
+
+research_points_portals = u.research_points_portals + 1.2 * u.alloc_research_portals * 
+case when b.extra_effect = 'Research' then ( 1 + b.Enlightenment_effect/100) else 1 end
+* (RC * (select num_val from constants where name = 'building_production_research') + u.current_research_funding/100
+ + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
+research_bonus_portals ,
+
+
+population = cur_pop,
 num_planets = total_pl,
 energy_production = 
 -- solar
 r.race_energy_production* (1 + u.research_percent_energy/100)* 
-				(SC_prod * r.solar_bonus * a.dark_mist_effect + FR_prod ) * 
-				case when b.extra_effect = 'Energy' then b.Enlightenment_effect else 1 end,
+				(SC_prod * r.race_special_solar_15 * COALESCE(a.dark_mist_effect,1) + FR_prod ) * 
+				case when b.extra_effect = 'Energy' then (1 + b.Enlightenment_effect/100) else 1 end,
 
 
 energy_decay = greatest(0, u.energy * (select num_val from constants c where c.name = 'energy_decay_factor')), 
 energy_interest =  least(u.energy_production, u.energy * r.race_special_resource_interest), 
 
 --energy_specop_effect =, 
-mineral_production = MP_prod * r.race_mineral_production * case when b.extra_effect = 'Mineral' then b.Enlightenment_effect else 1 end, 
+mineral_production = MP_prod * r.race_mineral_production * case when b.extra_effect = 'Mineral' then (1 + b.Enlightenment_effect/100) else 1 end, 
 mineral_decay = 0, 
 mineral_interest = least(u.mineral_production, u.minerals * r.race_special_resource_interest), 
 
-crystal_production = CL_prod * r.race_crystal_production * case when b.extra_effect = 'Crystal' then b.Enlightenment_effect else 1 end ,  
+crystal_production = CL_prod * r.race_crystal_production * case when b.extra_effect = 'Crystal' then (1 + b.Enlightenment_effect/100) else 1 end ,  
 crystal_decay = greatest(0, u.crystals * (select num_val from constants c  where c.name = 'crystal_decay_factor')), 
 crystal_interest =  least(u.crystal_production, u.crystals * r.race_special_resource_interest), 
  
-ectrolium_production = RS_prod * r.race_ectrolium_production  * case when b.extra_effect = 'Ectrolium' then b.Enlightenment_effect else 1 end ,
+ectrolium_production = RS_prod * r.race_ectrolium_production  * case when b.extra_effect = 'Ectrolium' then (1 + b.Enlightenment_effect/100) else 1 end ,
 ectrolium_decay = 0, 
 ectrolium_interest = least(u.ectrolium_production, u.ectrolium * r.race_special_resource_interest),
 
@@ -114,7 +182,7 @@ buildings_upkeep = SC * (select num_val from constants where name = 'upkeep_sola
  + DS * (select num_val from constants where name = 'upkeep_defense_sats')
  + SN * (select num_val from constants where name = 'upkeep_shield_networks'),
 
-portals_upkeep = greatest(0 , pow(greatest(1, PL - 1), 1.2736) * 10000 / (1 + u.research_percent_portals/100)), 
+portals_upkeep = pow(greatest(0, PL - 1), 1.2736) * 10000 / (1 + u.research_percent_portals/100), 
 units_upkeep = COALESCE(fs.fleet_cost, 0),
 
 total_solar_collectors = SC, 
@@ -162,10 +230,14 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 		) b on u2.id = b.user_to_id
 
   join (select u3.id, 
+		max(case when c.name = 'race_special_pop_research' then
+		 case when c.num_val is not null then c.num_val else 0 end 
+		 else 0 end )
+		 race_special_pop_research,
 		 max(case when c.name = 'race_special_solar_15' then
 		 case when c.num_val is not null then c.num_val else 1 end 
 		 else 0 end )
-		 solar_bonus,
+		 race_special_solar_15,
 		 max(case when c.name = 'energy_production' then
 		 case when c.num_val is not null then c.num_val else 1 end 
 		 else 0 end )
@@ -185,7 +257,44 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 		 max(case when c.name = 'race_special_resource_interest' then
 		 case when c.num_val is not null then c.num_val else 1 end 
 		 else 0 end )
-		 race_special_resource_interest
+		 race_special_resource_interest,
+		 
+		 max(case when c.name = 'research_bonus_military' then
+		 case when c.num_val is not null then c.num_val else 1 end 
+		 else 0 end )
+		 research_bonus_military,
+		 max(case when c.name = 'research_bonus_construction' then
+		 case when c.num_val is not null then c.num_val else 1 end 
+		 else 0 end )
+		 research_bonus_construction,
+		 
+		 max(case when c.name = 'research_bonus_tech' then
+		 case when c.num_val is not null then c.num_val else 1 end 
+		 else 0 end )
+		 research_bonus_tech,
+		 max(case when c.name = 'research_bonus_energy' then
+		 case when c.num_val is not null then c.num_val else 1 end 
+		 else 0 end )
+		 research_bonus_energy,
+		 
+		 max(case when c.name = 'research_bonus_population' then
+		 case when c.num_val is not null then c.num_val else 1 end 
+		 else 0 end )
+		 research_bonus_population,
+		 max(case when c.name = 'research_bonus_culture' then
+		 case when c.num_val is not null then c.num_val else 1 end 
+		 else 0 end )
+		 research_bonus_culture,
+		 
+		  max(case when c.name = 'research_bonus_operations' then
+		 case when c.num_val is not null then c.num_val else 1 end 
+		 else 0 end )
+		 research_bonus_operations,
+		 max(case when c.name = 'research_bonus_portals' then
+		 case when c.num_val is not null then c.num_val else 1 end 
+		 else 0 end )
+		 research_bonus_portals
+		 
 		 from app_userstatus u3
 		 join classes l on l.name = u3.race
 		 left join constants c on c.class = l.id --and c.name in('race_special_solar_15', 'energy_production')
@@ -226,8 +335,73 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 	group by owner_id) fs on fs.owner_id =  u2.id 
 ;
 
+
 update app_userstatus u
 set population_upkeep_reduction = least(population_upkeep_reduction, (portals_upkeep + buildings_upkeep + units_upkeep));
+
+lock table app_unitconstruction;
+
+update app_unitconstruction
+set ticks_remaining = ticks_remaining -1;
+
+lock table app_fleet;
+
+update app_fleet f
+set 
+bomber  = f.bomber  + coalesce(a.bomber ,0),
+fighter  = f.fighter  + coalesce(a.fighter ,0),
+transport = f.transport + coalesce(a.transport,0),
+cruiser = f.cruiser + coalesce(a.cruiser,0),
+carrier = f.carrier + coalesce(a.carrier,0),
+soldier = f.soldier + coalesce(a.soldier,0),
+droid = f.droid + coalesce(a.droid,0),
+goliath = f.goliath + coalesce(a.goliath,0),
+phantom = f.phantom + coalesce(a.phantom,0),
+wizard = f.wizard + coalesce(a.wizard,0),
+agent = f.agent + coalesce(a.agent,0),
+ghost = f.ghost + coalesce(a.ghost,0),
+exploration = f.exploration + coalesce(a.exploration,0)
+
+from 
+(
+	select * from
+	crosstab
+	(
+	'
+	select user_id, unit_type, sum(n) n
+	 from app_unitconstruction
+	 where ticks_remaining = 0
+	 group by user_id, unit_type
+	 order by user_id, unit_type
+	',
+	' 
+        VALUES (''agent'') , (''bomber'') , (''carrier'') , (''cruiser'') ,
+		(''droid'') , (''exploration'') , (''fighter'') , (''ghost'') ,  (''goliath'') ,
+		(''phantom'') , (''soldier'') , (''transport'') , (''wizard'') 
+    '
+	)
+	 as ct
+	 ( user_id integer,
+	  agent bigint,
+		bomber bigint,
+		carrier bigint,
+		cruiser bigint,
+		droid bigint,
+		exploration bigint,
+		fighter bigint,
+		ghost bigint,
+		goliath bigint,
+		phantom bigint,
+		soldier bigint,
+		transport bigint,
+		wizard bigint
+	 )
+) a
+where a.user_id = f.owner_id and f.main_fleet = true;
+
+delete from app_unitconstruction
+where ticks_remaining = 0;
+
 
 update app_userstatus u
 set 
@@ -236,7 +410,17 @@ crystal_income = crystal_production + crystal_interest - crystal_decay,
 mineral_income = mineral_production + mineral_interest - mineral_decay, 
 energy_income =  energy_production + population_upkeep_reduction +  energy_interest - energy_decay + energy_specop_effect
 		- buildings_upkeep - portals_upkeep - units_upkeep,
-networth = a.total_nw 
+networth = a.total_nw + u.population * (select num_val from constants where name = 'population nw') 
++ (
+research_points_military +
+research_points_construction +
+research_points_tech +
+research_points_energy +
+research_points_population +
+research_points_culture +
+research_points_operations +
+research_points_portals  ) * (select num_val from constants where name = 'research nw') 
+
  from (
  select n.owner_id, n.nw + fs.fleet_nw as total_nw from
 	 (select owner_id, (sum(total_buildings)*(select num_val from constants where name = 'networth_per_building') +
@@ -267,13 +451,194 @@ networth = a.total_nw
  where u.id = a.owner_id;
  
 update app_userstatus u
-set energy = energy + energy_income,
-minerals = crystals + mineral_income,
-crystals = crystals + crystal_income,
-ectrolium = ectrolium + ectrolium_income;
+set energy = greatest(0, energy + energy_income),
+minerals = greatest(0, minerals + mineral_income),
+crystals = greatest(0, crystals + crystal_income),
+ectrolium = greatest(0, ectrolium + ectrolium_income);
  
- delete from app_construction
- where ticks_remaining = 0;
+-- readiness update
+update app_userstatus u
+set fleet_readiness = greatest(-100, least(fleet_readiness_max ,fleet_readiness + case when u.energy <= 0 then -3 else 2 end)) ,
+psychic_readiness = greatest(-100, least(psychic_readiness_max ,psychic_readiness + case when u.energy <= 0 then -3 else 2 end)),
+agent_readiness = greatest(-100, least(agent_readiness_max ,agent_readiness + case when u.energy <= 0 then -3 else 2 end));
+
+-- fleet decay
+update app_fleet a
+set  bomber = 0.98* bomber,
+fighter  = 0.98 * fighter,
+transport  = 0.98 * transport,
+cruiser  = 0.98 * cruiser,
+carrier  = 0.98 * carrier,
+soldier  = 0.98 * soldier,
+droid  = 0.98 * droid,
+goliath = 0.98 * goliath,
+phantom  = 0.98 * phantom,
+wizard = 0.98 * wizard,
+agent  = 0.98 * agent,
+ghost  = 0.98 * ghost,
+exploration  = 0.98 * exploration
+from app_userstatus u
+where u.id = a.owner_id
+and u.energy <= 0;
+
+
+
+-- research percentages update after nw and research points calucaltion
+
+update app_userstatus u
+set 
+research_percent_military = u.research_percent_military + case when u.research_percent_military < (
+	case when research_max_military < 200 
+	then least(research_max_military, floor(200 * (1 - exp(u.research_points_military/(-10 * u.networth)))))
+	else least(research_max_military, floor(research_max_military * (1 - exp(u.research_points_military/(-10 * u.networth)))))
+	end
+	) then 1 
+	when 
+	u.research_percent_military > (
+	case when research_max_military < 200 
+	then least(research_max_military, floor(200 * (1 - exp(u.research_points_military/(-10 * u.networth)))))
+	else least(research_max_military, floor(research_max_military * (1 - exp(u.research_points_military/(-10 * u.networth)))))
+	end
+	) then -1 
+	else 0 end,
+research_percent_construction = u.research_percent_construction + case when u.research_percent_construction < (
+	case when research_max_construction < 200 
+	then least(research_max_construction, floor(200 * (1 - exp(u.research_points_construction/(-10 * u.networth)))))
+	else least(research_max_construction, floor(research_max_construction * (1 - exp(u.research_points_construction/(-10 * u.networth)))))
+	end
+	) then 1 
+	when 
+	u.research_percent_construction > (
+	case when research_max_construction < 200 
+	then least(research_max_construction, floor(200 * (1 - exp(u.research_points_construction/(-10 * u.networth)))))
+	else least(research_max_construction, floor(research_max_construction * (1 - exp(u.research_points_construction/(-10 * u.networth)))))
+	end
+	) then -1 
+	else 0 end,
+research_percent_tech = u.research_percent_tech + case when u.research_percent_tech < (
+	case when research_max_tech < 200 
+	then least(research_max_tech, floor(200 * (1 - exp(u.research_points_tech/(-10 * u.networth)))))
+	else least(research_max_tech, floor(research_max_tech * (1 - exp(u.research_points_tech/(-10 * u.networth)))))
+	end
+	) then 1 
+	when 
+	u.research_percent_tech > (
+	case when research_max_tech < 200 
+	then least(research_max_tech, floor(200 * (1 - exp(u.research_points_tech/(-10 * u.networth)))))
+	else least(research_max_tech, floor(research_max_tech * (1 - exp(u.research_points_tech/(-10 * u.networth)))))
+	end
+	) then -1 
+	else 0 end,	
+research_percent_population = u.research_percent_population + case when u.research_percent_population < (
+	case when research_max_population < 200 
+	then least(research_max_population, floor(200 * (1 - exp(u.research_points_population/(-10 * u.networth)))))
+	else least(research_max_population, floor(research_max_population * (1 - exp(u.research_points_population/(-10 * u.networth)))))
+	end
+	) then 1 
+	when 
+	u.research_percent_population > (
+	case when research_max_population < 200 
+	then least(research_max_population, floor(200 * (1 - exp(u.research_points_population/(-10 * u.networth)))))
+	else least(research_max_population, floor(research_max_population * (1 - exp(u.research_points_population/(-10 * u.networth)))))
+	end
+	) then -1 
+	else 0 end,	
+research_percent_culture = u.research_percent_culture + case when u.research_percent_culture < (
+	case when research_max_culture < 200 
+	then least(research_max_culture, floor(200 * (1 - exp(u.research_points_culture/(-10 * u.networth)))))
+	else least(research_max_culture, floor(research_max_culture * (1 - exp(u.research_points_culture/(-10 * u.networth)))))
+	end
+	) then 1 
+	when 
+	u.research_percent_culture > (
+	case when research_max_culture < 200 
+	then least(research_max_culture, floor(200 * (1 - exp(u.research_points_culture/(-10 * u.networth)))))
+	else least(research_max_culture, floor(research_max_culture * (1 - exp(u.research_points_culture/(-10 * u.networth)))))
+	end
+	) then -1 
+	else 0 end,	
+research_percent_operations = u.research_percent_operations + case when u.research_percent_operations < (
+	case when research_max_operations < 200 
+	then least(research_max_operations, floor(200 * (1 - exp(u.research_points_operations/(-10 * u.networth)))))
+	else least(research_max_operations, floor(research_max_operations * (1 - exp(u.research_points_operations/(-10 * u.networth)))))
+	end
+	) then 1 
+	when 
+	u.research_percent_operations > (
+	case when research_max_operations < 200 
+	then least(research_max_operations, floor(200 * (1 - exp(u.research_points_operations/(-10 * u.networth)))))
+	else least(research_max_operations, floor(research_max_operations * (1 - exp(u.research_points_operations/(-10 * u.networth)))))
+	end
+	) then -1 
+	else 0 end,	
+research_percent_portals = u.research_percent_portals + case when u.research_percent_portals < (
+	case when research_max_portals < 200 
+	then least(research_max_portals, floor(200 * (1 - exp(u.research_points_portals/(-10 * u.networth)))))
+	else least(research_max_portals, floor(research_max_portals * (1 - exp(u.research_points_portals/(-10 * u.networth)))))
+	end
+	) then 1 
+	when 
+	u.research_percent_portals > (
+	case when research_max_portals < 200 
+	then least(research_max_portals, floor(200 * (1 - exp(u.research_points_portals/(-10 * u.networth)))))
+	else least(research_max_portals, floor(research_max_portals * (1 - exp(u.research_points_portals/(-10 * u.networth)))))
+	end
+	) then -1 
+	else 0 end
+
+from app_userstatus u2
+
+join (
+	select id,
+	case when research_max_military = 0 then 200 else research_max_military end research_max_military,
+	case when research_max_construction = 0 then 200 else research_max_construction end research_max_construction,
+	case when research_max_tech = 0 then 200 else research_max_tech end research_max_tech,
+	case when research_max_energy = 0 then 200 else research_max_energy end research_max_energy,
+	case when research_max_population = 0 then 200 else research_max_population end research_max_population,
+	case when research_max_culture = 0 then 200 else research_max_culture end research_max_culture,
+	case when research_max_operations = 0 then 200 else research_max_operations end research_max_operations,
+	case when research_max_portals = 0 then 200 else research_max_portals end research_max_portals
+	from (
+	select u3.id, 
+max(case when c.name = 'research_max_military' then
+ case when c.num_val is not null then c.num_val end 
+ else 0 end )
+ research_max_military,
+    max(case when c.name = 'research_max_construction' then
+ case when c.num_val is not null then c.num_val  end 
+ else 0 end )
+ research_max_construction,
+   max(case when c.name = 'research_max_tech' then
+ case when c.num_val is not null then c.num_val  end 
+ else 0 end )
+ research_max_tech,
+ max(case when c.name = 'research_max_energy' then
+ case when c.num_val is not null then c.num_val  end 
+ else 0 end )
+ research_max_energy,
+ max(case when c.name = 'research_max_population' then
+ case when c.num_val is not null then c.num_val  end 
+ else 0 end ) 
+ research_max_population,
+  max(case when c.name = 'research_max_culture' then
+ case when c.num_val is not null then c.num_val  end 
+ else 0 end )
+ research_max_culture,
+   max(case when c.name = 'research_max_operations' then
+ case when c.num_val is not null then c.num_val  end 
+ else 0 end )
+ research_max_operations,
+    max(case when c.name = 'research_max_portals' then
+ case when c.num_val is not null then c.num_val  end 
+ else 0 end )
+ research_max_portals 
+ 
+ from app_userstatus u3
+ join classes l on l.name = u3.race
+ left join constants c on c.class = l.id --and c.name in('race_special_solar_15', 'energy_production')
+ group by u3.id ) v
+ ) r on r.id = u2.id;
+ 
    
   _end_ts   := clock_timestamp();
 

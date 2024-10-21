@@ -179,16 +179,31 @@ var x = setInterval(function() {
 <script>
 
  function startTime() {
-  var today = new Date();
+ /* var today = new Date();
   var m = today.getMinutes();
   var s = today.getSeconds();
+  
   m_left = 9 - (m % 10);
   s_left = 59 - (s % 60);
   s_left = fixTimeDigits(s_left);
   document.getElementById('headerTime1').innerHTML = m_left + ":" + s_left;
   document.getElementById('headerTime2').innerHTML = m_left + ":" + s_left;
+  
+  s_left = 29 - (s % 30);
+  s_left = fixTimeDigits(s_left);
+  document.getElementById('headerTime1').innerHTML = "0:" + s_left;
+  document.getElementById('headerTime2').innerHTML = "0:" + s_left;
   m_left + ":" + s_left;
-  var t = setTimeout(startTime, 600);
+  setTimeout(startTime, 100*/
+    var today = new Date();
+  var s = today.getSeconds();
+  s_left = 1 - (s % 2);
+  //s_left = fixTimeDigits(s_left);
+  document.getElementById('headerTime1').innerHTML = s_left;
+  document.getElementById('headerTime2').innerHTML = s_left;
+  var t = setTimeout(startTime, 60);
+
+  
 
 }
 

@@ -15,6 +15,7 @@ values
 ('research names', current_timestamp),
 ('unit upkeep costs', current_timestamp),
 ('units nw', current_timestamp),
+('other nw', current_timestamp),
 ('unit names', current_timestamp),
 ('unit labels', current_timestamp),
 ('building names', current_timestamp),
@@ -91,6 +92,9 @@ values
 ((select id from classes where name = 'units nw'),'ghost', 6,current_timestamp),
 ((select id from classes where name = 'units nw'),'exploration', 30,current_timestamp),
 
+((select id from classes where name = 'other nw'),'population nw', 0.0005, current_timestamp),
+((select id from classes where name = 'other nw'),'research nw', 0.001, current_timestamp),
+
 	/* HK = 'HK', _('Harks')
         MT = 'MT', _('Manticarias')
         FH = 'FH', _('Foohons')
@@ -144,6 +148,7 @@ values
 ((select id from classes where name = 'FH'),'crystal_production', 1.0,current_timestamp),
 ((select id from classes where name = 'FH'),'ectrolium_production', 1.2,current_timestamp),
 ((select id from classes where name = 'FH'),'travel_speed', (1.0*2.0),current_timestamp),
+((select id from classes where name = 'MT'),'race_special_pop_research', 6000 ,current_timestamp),
 
 ((select id from classes where name = 'SB'),'pop_growth', (1.2*0.02),current_timestamp),
 ((select id from classes where name = 'SB'),'research_bonus_military', 1.1,current_timestamp),
