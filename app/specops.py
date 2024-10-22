@@ -1230,7 +1230,7 @@ def perform_incantation(ghost_fleet):
             if empire2 == user1.empire:
                 empire2 = None
             ticks = random.randint(10,41)
-            opstrength = attack * np.random.randint(250, 500)
+            opstrength = round(attack * np.random.randint(250, 500))
             if ticks > 0 and opstrength > 0:
                 Specops.objects.create(user_to=user2.user, user_from = user1.user, specop_type='G', name='Planetary Shielding', specop_strength=opstrength, ticks_left=ticks, planet=target_planet)
                 news_message += "\nYour Ghost Ships managed to create a shield lasting " + str(ticks) + " weeks, able to withstand " + str(opstrength) + " damage!"
