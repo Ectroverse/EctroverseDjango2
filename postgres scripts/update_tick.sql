@@ -5,10 +5,13 @@ declare
    _start_ts timestamptz;
    _end_ts   timestamptz;
    _tmp numeric;
+   _round_number int;
 BEGIN 
    _start_ts := clock_timestamp();
    
- IF (select is_running from app_roundstatus where round_number = (select max(round_number) from app_roundstatus)) = false THEN
+   select max(round_number) into _round_number from app_roundstatus;
+   
+ IF (select is_running from app_roundstatus where round_number = _round_number) = false THEN
       return;
  END IF;
    
@@ -18,6 +21,11 @@ BEGIN
  
  -- population  
  lock table "PLANET";
+ lock table app_fleet;
+ lock table app_construction;
+ lock table app_userstatus;
+ lock table app_unitconstruction;
+ 
   
  UPDATE "PLANET" p
  SET max_population = ((select num_val from constants where name = 'building_production_cities') 
@@ -39,7 +47,6 @@ BEGIN
  and p.owner_id is not null;
  
   -- buildings   
- lock table app_construction;
  
  update app_construction
  set ticks_remaining = ticks_remaining - 1;
@@ -86,7 +93,6 @@ BEGIN
  where p.id = p4.id;
  
 
-lock table app_userstatus;
 
   -- user eco  		
 update app_userstatus u
@@ -229,76 +235,48 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 		 where a.name in ('Enlightenment') and specop_strength > 0
 		) b on u2.id = b.user_to_id
 
-  join (select u3.id, 
-		max(case when c.name = 'race_special_pop_research' then
-		 case when c.num_val is not null then c.num_val else 0 end 
-		 else 0 end )
-		 race_special_pop_research,
-		 max(case when c.name = 'race_special_solar_15' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 race_special_solar_15,
-		 max(case when c.name = 'energy_production' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 race_energy_production,
-		 max(case when c.name = 'mineral_production' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 race_mineral_production,
-		 max(case when c.name = 'crystal_production' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 race_crystal_production,
-		 max(case when c.name = 'ectrolium_production' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 race_ectrolium_production,
-		 max(case when c.name = 'race_special_resource_interest' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 race_special_resource_interest,
+  join (select id, race_special_pop_research,
 		 
-		 max(case when c.name = 'research_bonus_military' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 research_bonus_military,
-		 max(case when c.name = 'research_bonus_construction' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 research_bonus_construction,
-		 
-		 max(case when c.name = 'research_bonus_tech' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 research_bonus_tech,
-		 max(case when c.name = 'research_bonus_energy' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 research_bonus_energy,
-		 
-		 max(case when c.name = 'research_bonus_population' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 research_bonus_population,
-		 max(case when c.name = 'research_bonus_culture' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 research_bonus_culture,
-		 
-		  max(case when c.name = 'research_bonus_operations' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 research_bonus_operations,
-		 max(case when c.name = 'research_bonus_portals' then
-		 case when c.num_val is not null then c.num_val else 1 end 
-		 else 0 end )
-		 research_bonus_portals
-		 
-		 from app_userstatus u3
-		 join classes l on l.name = u3.race
-		 left join constants c on c.class = l.id --and c.name in('race_special_solar_15', 'energy_production')
-		 group by u3.id
+		case when race_special_solar_15 = 0 then 1 else race_special_solar_15 end,
+		case when race_special_resource_interest = 0 then 1 else race_special_resource_interest end,
+		
+		case when race_energy_production = 0 then 1 else race_energy_production end,
+		case when race_mineral_production = 0 then 1 else race_mineral_production end,
+		case when race_crystal_production = 0 then 1 else race_crystal_production end,
+		case when race_ectrolium_production = 0 then 1 else race_ectrolium_production end,
+		
+		case when research_bonus_military = 0 then 1 else research_bonus_military end,
+		case when research_bonus_construction = 0 then 1 else research_bonus_construction end,
+		case when research_bonus_tech = 0 then 1 else research_bonus_tech end,
+		case when research_bonus_energy = 0 then 1 else research_bonus_energy end,
+		case when research_bonus_population = 0 then 1 else research_bonus_population end,
+		case when research_bonus_culture = 0 then 1 else research_bonus_culture end,
+		case when research_bonus_operations = 0 then 1 else research_bonus_operations end,
+		case when research_bonus_portals = 0 then 1 else research_bonus_portals end
+		from (
+		
+			 select u3.id, 
+			 max(case when c.name = 'race_special_pop_research' then c.num_val else 0 end ) race_special_pop_research,
+			 max(case when c.name = 'race_special_solar_15' then c.num_val else 0 end ) race_special_solar_15,
+			 max(case when c.name = 'energy_production' then c.num_val else 0 end ) race_energy_production,
+			 max(case when c.name = 'mineral_production' then c.num_val  else 0 end ) race_mineral_production,
+			 max(case when c.name = 'crystal_production' then c.num_val else 0 end ) race_crystal_production,
+			 max(case when c.name = 'ectrolium_production' then	c.num_val else 0 end ) race_ectrolium_production,
+			 max(case when c.name = 'race_special_resource_interest' then c.num_val else 0 end ) race_special_resource_interest,
+			 max(case when c.name = 'research_bonus_military' then c.num_val else 0 end ) research_bonus_military,
+			 max(case when c.name = 'research_bonus_construction' then c.num_val else 0 end ) research_bonus_construction,
+			 max(case when c.name = 'research_bonus_tech' then c.num_val else 0 end ) research_bonus_tech,
+			 max(case when c.name = 'research_bonus_energy' then c.num_val else 0 end ) research_bonus_energy,
+			 max(case when c.name = 'research_bonus_population' then c.num_val else 0 end ) research_bonus_population,
+			 max(case when c.name = 'research_bonus_culture' then c.num_val else 0 end ) research_bonus_culture,
+			 max(case when c.name = 'research_bonus_operations' then c.num_val else 0 end ) research_bonus_operations,
+			 max(case when c.name = 'research_bonus_portals' then c.num_val else 0 end ) research_bonus_portals
+			 
+			 from app_userstatus u3
+			 join classes l on l.name = u3.race
+			 left join constants c on c.class = l.id --and c.name in('race_special_solar_15', 'energy_production')
+			 group by u3.id
+			 ) g
 		 ) r on r.id = u2.id
  left join 		(select user_to_id, 
 		 1*  EXP (SUM (LN (100 / (specop_strength + 100.0)))) dark_mist_effect  --EXP (SUM (LN )) is just multiplication
@@ -339,12 +317,11 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 update app_userstatus u
 set population_upkeep_reduction = least(population_upkeep_reduction, (portals_upkeep + buildings_upkeep + units_upkeep));
 
-lock table app_unitconstruction;
 
 update app_unitconstruction
 set ticks_remaining = ticks_remaining -1;
 
-lock table app_fleet;
+
 
 update app_fleet f
 set 
@@ -529,6 +506,20 @@ research_percent_tech = u.research_percent_tech + case when u.research_percent_t
 	end
 	) then -1 
 	else 0 end,	
+research_percent_energy = u.research_percent_energy + case when u.research_percent_energy < (
+	case when research_max_energy < 200 
+	then least(research_max_energy, floor(200 * (1 - exp(u.research_points_energy/(-10 * u.networth)))))
+	else least(research_max_energy, floor(research_max_energy * (1 - exp(u.research_points_energy/(-10 * u.networth)))))
+	end
+	) then 1 
+	when 
+	u.research_percent_energy > (
+	case when research_max_energy < 200 
+	then least(research_max_energy, floor(200 * (1 - exp(u.research_points_energy/(-10 * u.networth)))))
+	else least(research_max_energy, floor(research_max_energy * (1 - exp(u.research_points_energy/(-10 * u.networth)))))
+	end
+	) then -1 
+	else 0 end,	
 research_percent_population = u.research_percent_population + case when u.research_percent_population < (
 	case when research_max_population < 200 
 	then least(research_max_population, floor(200 * (1 - exp(u.research_points_population/(-10 * u.networth)))))
@@ -639,6 +630,97 @@ max(case when c.name = 'research_max_military' then
  group by u3.id ) v
  ) r on r.id = u2.id;
  
+ 
+-- move fleets 
+update app_fleet
+set ticks_remaining = ticks_remaining - 1
+where main_fleet = false and ticks_remaining > 0;
+ 
+-- explore planets
+
+with explored_planets as(
+	select p_id, a_id, owner_id, empire_id from (
+		select p.id p_id, a.id a_id, a.owner_id, u.empire_id, rank() over(partition by p.id order by a.id asc) rn
+		from "PLANET" p
+		join app_fleet a on a.target_planet_id = p.id
+		join app_userstatus u on u.id = a.owner_id
+		where p.owner_id is null
+		and	a.command_order = 10 --explore
+		and ticks_remaining = 0
+	) a where a.rn = 1
+), 
+upd_planet as (
+	update "PLANET" p
+	set owner_id = e.owner_id
+	from explored_planets e
+	where p.id = e.p_id 
+),
+del_explo as (
+	delete from app_fleet a
+	using explored_planets e 
+	where e.a_id = a.id 
+),
+upd_Arti as (
+	update app_artefacts r
+	set empire_holding_id = e.empire_id
+	from explored_planets e
+	where r.on_planet_id = e.p_id 
+),
+del_scout as (
+	delete from app_scouting a
+	using explored_planets e
+	where a.empire_id = e.empire_id and a.planet_id = e.p_id 
+),
+ins_scout as (insert into app_scouting (planet_id, empire_id, user_id, scout)
+	select e.p_id, e.empire_id, e.owner_id, 1.0
+	from explored_planets e
+),
+ins_news_success as (
+	insert into app_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, planet_id)
+	select e.owner_id, e.empire_id, 'SE', current_timestamp, true, true, false, (select tick_number from app_roundstatus where round_number = _round_number), e.p_id
+	from explored_planets e
+)
+update app_userstatus u
+set military_flag = 2 
+from (select owner_id from explored_planets group by owner_id) c 
+where u.id = c.owner_id;
+
+
+with unsucessfull_explos as 
+(
+	select p.id p_id, a.id a_id, a.owner_id, u.empire_id
+	from "PLANET" p
+	join app_fleet a on a.target_planet_id = p.id
+	join app_userstatus u on u.id = a.owner_id
+	where p.owner_id is not null
+	and	a.command_order = 10 --explore
+	and ticks_remaining = 0
+),
+upd_explos as (
+	update app_fleet a
+	set command_order = 2
+	from unsucessfull_explos u
+	where u.a_id = a.id
+),
+ins_news_failed as (
+	insert into app_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, planet_id)
+	select e.owner_id, e.empire_id, 'UE', current_timestamp, true, true, false, (select tick_number from app_roundstatus where round_number = _round_number), e.p_id
+	from unsucessfull_explos e
+)
+update app_userstatus u
+set military_flag = 1 
+from (select owner_id from unsucessfull_explos group by owner_id) c 
+where u.id = c.owner_id;
+
+
+
+/*
+private final String fleetsExplorationNewsUpdateQuery = "INSERT INTO app_news " +
+	" ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, " +
+	" is_empire_news, is_read, tick_number, planet_id) " +
+	" SELECT ? , ? , ? , ?, true, true, false, ?, ?  ;" ;
+*/
+
    
   _end_ts   := clock_timestamp();
 

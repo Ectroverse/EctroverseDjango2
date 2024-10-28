@@ -1,0 +1,4 @@
+docker exec -it ectroversedjango2-python-1 /bin/bash
+cd java
+javac *.java -d .
+java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTick_New >> log.txt &
