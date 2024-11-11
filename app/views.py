@@ -3227,7 +3227,7 @@ def fleets_orders_process(request, *args):
     # option value="4" Merge in system (auto/optimal)
     # option value="5" Join main fleet
     # option value="6" Split fleet
-
+    
     speed = travel_speed(status)
     if order == 0 or order == 1:
         for f in fleets_id2:
@@ -3235,11 +3235,17 @@ def fleets_orders_process(request, *args):
         # do instant merge of stationed fleets if allready present on that planet
         fleets_id3 = Fleet.objects.filter(id__in=fleets_id, ticks_remaining__lt=1, command_order=1)
         station_fleets(request, fleets_id3, status)
-    if order == 2 or order == 3:
+    if order == 2: 
         for f in fleets_id2:
             generate_fleet_order(f, x, y, speed, order)
+    if order == 3:
+        for f in fleets_id2:
+            generate_fleet_order(f, x, y, speed, order)
+        fleets_id3 = Fleet.objects.filter(id__in=fleets_id, ticks_remaining__lt=1)
+        # do instant merge of fleets allready present in same systems
+        merge_fleets(fleets_id3)
     # mass merge auto
-    if order == 3 or order == 4:
+    if order == 4:
         systems = []
         for f in fleets_id2:
             tmp = []

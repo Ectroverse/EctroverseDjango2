@@ -147,8 +147,8 @@ research_bonus_operations ,
 
 
 research_points_portals = u.research_points_portals + 1.2 * u.alloc_research_portals * 
-case when b.extra_effect = 'Research' then ( 1 + b.Enlightenment_effect/100) else 1 end
-* (RC * (select num_val from constants where name = 'building_production_research') + u.current_research_funding/100
+case when b.extra_effect = 'Research' then ( 1 + b.Enlightenment_effect/100.0) else 1 end
+* (RC * (select num_val from constants where name = 'building_production_research') + u.current_research_funding/100.0
  + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
 research_bonus_portals ,
 
@@ -157,24 +157,25 @@ population = cur_pop,
 num_planets = total_pl,
 energy_production = 
 -- solar
-r.race_energy_production* (1 + u.research_percent_energy/100)* 
+r.race_energy_production* (1 + u.research_percent_energy/100.0)* 
 				(SC_prod * r.race_special_solar_15 * COALESCE(a.dark_mist_effect,1) + FR_prod ) * 
-				case when b.extra_effect = 'Energy' then (1 + b.Enlightenment_effect/100) else 1 end,
+				case when b.extra_effect = 'Energy' then (1 + b.Enlightenment_effect/100.0) else 1 end
+				* coalesce((select (1 + effect1/100.0) from app_Artefacts f where name = 'Ether Gardens' and f.empire_holding_id = u.empire_id),1),
 
 
 energy_decay = greatest(0, u.energy * (select num_val from constants c where c.name = 'energy_decay_factor')), 
 energy_interest =  least(u.energy_production, u.energy * r.race_special_resource_interest), 
 
 --energy_specop_effect =, 
-mineral_production = MP_prod * r.race_mineral_production * case when b.extra_effect = 'Mineral' then (1 + b.Enlightenment_effect/100) else 1 end, 
+mineral_production = MP_prod * r.race_mineral_production * case when b.extra_effect = 'Mineral' then (1 + b.Enlightenment_effect/100.0) else 1 end, 
 mineral_decay = 0, 
 mineral_interest = least(u.mineral_production, u.minerals * r.race_special_resource_interest), 
 
-crystal_production = CL_prod * r.race_crystal_production * case when b.extra_effect = 'Crystal' then (1 + b.Enlightenment_effect/100) else 1 end ,  
+crystal_production = CL_prod * r.race_crystal_production * case when b.extra_effect = 'Crystal' then (1 + b.Enlightenment_effect/100.0) else 1 end ,  
 crystal_decay = greatest(0, u.crystals * (select num_val from constants c  where c.name = 'crystal_decay_factor')), 
 crystal_interest =  least(u.crystal_production, u.crystals * r.race_special_resource_interest), 
  
-ectrolium_production = RS_prod * r.race_ectrolium_production  * case when b.extra_effect = 'Ectrolium' then (1 + b.Enlightenment_effect/100) else 1 end ,
+ectrolium_production = RS_prod * r.race_ectrolium_production  * case when b.extra_effect = 'Ectrolium' then (1 + b.Enlightenment_effect/100.0) else 1 end ,
 ectrolium_decay = 0, 
 ectrolium_interest = least(u.ectrolium_production, u.ectrolium * r.race_special_resource_interest),
 
@@ -188,7 +189,7 @@ buildings_upkeep = SC * (select num_val from constants where name = 'upkeep_sola
  + DS * (select num_val from constants where name = 'upkeep_defense_sats')
  + SN * (select num_val from constants where name = 'upkeep_shield_networks'),
 
-portals_upkeep = pow(greatest(0, PL - 1), 1.2736) * 10000 / (1 + u.research_percent_portals/100), 
+portals_upkeep = pow(greatest(0, PL - 1), 1.2736) * 100.0 / (1 + u.research_percent_portals/100.0), 
 units_upkeep = COALESCE(fs.fleet_cost, 0),
 
 total_solar_collectors = SC, 
@@ -206,17 +207,17 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 -- select  SC, r.solar_bonus, a.dark_mist_effect
  from app_userstatus u2
  join (select owner_id, sum(current_population) cur_pop, count(*) total_pl,
-	   ((select num_val from constants where name = 'building_production_solar') * sum(solar_collectors* (1 + bonus_solar/100 ))
+	   ((select num_val from constants where name = 'building_production_solar') * sum(solar_collectors* (1 + bonus_solar/100.0 ))
 	    ) SC_prod,
 	   sum(solar_collectors) SC,
-	   ((select num_val from constants where name = 'building_production_fission') * sum(fission_reactors* (1 + bonus_fission/100 ))
+	   ((select num_val from constants where name = 'building_production_fission') * sum(fission_reactors* (1 + bonus_fission/100.0 ))
 	    ) FR_prod,
 	   sum(fission_reactors) FR,
-	   sum(mineral_plants * (1 + bonus_mineral/100 )) MP_prod, 
+	   sum(mineral_plants * (1 + bonus_mineral/100.0 )) MP_prod, 
 	   sum(mineral_plants) MP,
-	   sum(crystal_labs* (1 + bonus_crystal/100 )) CL_prod,
+	   sum(crystal_labs* (1 + bonus_crystal/100.0 )) CL_prod,
 	   sum(crystal_labs) CL,
-	   sum(refinement_stations* (1 + bonus_ectrolium/100 )) RS_prod,
+	   sum(refinement_stations* (1 + bonus_ectrolium/100.0 )) RS_prod,
 	   sum(refinement_stations) RS,
 	   sum(cities) CT,
 	   sum(research_centers) RC,
@@ -279,7 +280,7 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 			 ) g
 		 ) r on r.id = u2.id
  left join 		(select user_to_id, 
-		 1*  EXP (SUM (LN (100 / (specop_strength + 100.0)))) dark_mist_effect  --EXP (SUM (LN )) is just multiplication
+		 1*  EXP (SUM (LN (100.0 / (specop_strength + 100.0)))) dark_mist_effect  --EXP (SUM (LN )) is just multiplication
 		 from app_specops  a
 		 where a.name in ('Black Mist', 'Dark Web') and specop_strength > 0
 		 group by user_to_id
@@ -388,7 +389,7 @@ mineral_income = mineral_production + mineral_interest - mineral_decay,
 energy_income =  energy_production + population_upkeep_reduction +  energy_interest - energy_decay + energy_specop_effect
 		- buildings_upkeep - portals_upkeep - units_upkeep,
 networth = a.total_nw + u.population * (select num_val from constants where name = 'population nw') 
-+ (
++ ( 
 research_points_military +
 research_points_construction +
 research_points_tech +
@@ -399,7 +400,7 @@ research_points_operations +
 research_points_portals  ) * (select num_val from constants where name = 'research nw') 
 
  from (
- select n.owner_id, n.nw + fs.fleet_nw as total_nw from
+ select n.owner_id, coalesce(n.nw,0) + coalesce(fs.fleet_nw,0) as total_nw from
 	 (select owner_id, (sum(total_buildings)*(select num_val from constants where name = 'networth_per_building') +
 	 sum(bonus_solar)* 1.25 + sum(bonus_mineral)* 1.45 + sum(bonus_crystal)* 2.25 + sum(bonus_ectrolium) * 1.65  +
 	 sum(bonus_fission)* 5.0 +  sum(size)* 1.75) nw
@@ -631,10 +632,142 @@ max(case when c.name = 'research_max_military' then
  ) r on r.id = u2.id;
  
  
+-- find new nearest portal
+update app_fleet a
+	set i = s.i,
+	x = s.x,
+	y = s.y,
+	ticks_remaining = case when a.x = s.x and a.y = s.y then ticks_remaining 
+					  else floor(sqrt(pow((a.current_position_x - s.x),2) + pow((a.current_position_y - s.y),2))/c.num_val --num_val is speed 
+					  ) end
+from 
+	(select * from
+	(select a.id a_id, a.owner_id, p.id p_id, p.x, p.y, p.i,
+	rank() over(partition by a.owner_id, a.id order by (pow((p.x - a.current_position_x),2) + pow((p.y - a.current_position_y),2)) asc)  rn
+	from app_fleet a, "PLANET" p
+	where a.command_order = 5 --return to main fleet
+	and p.owner_id = a.owner_id
+	and p.portal = true
+	) g where g.rn = 1) s 
+join app_userstatus u on u.id = s.owner_id
+join classes l on l.name = u.race
+join constants c on c.class = l.id and c.name = 'travel_speed'
+where a.id = s.a_id;
+
+
+/*update app_fleet f
+where f.
+*/
+
 -- move fleets 
-update app_fleet
-set ticks_remaining = ticks_remaining - 1
-where main_fleet = false and ticks_remaining > 0;
+update app_fleet a1
+	set 
+	current_position_x = case when a1.ticks_remaining - 1 > 0 then a1.current_position_x + (a1.x - a1.current_position_x) / (a1.ticks_remaining )
+						 else a1.x end,
+	current_position_y = case when a1.ticks_remaining - 1 > 0 then a1.current_position_y + (a1.y - a1.current_position_y) / (a1.ticks_remaining )
+						else a1.y end,
+	ticks_remaining = greatest(0, a1.ticks_remaining -1)
+from app_fleet a2
+join app_userstatus u1 on u1.id = a2.owner_id
+join classes l on l.name = u1.race
+join constants c on c.class = l.id and c.name = 'travel_speed'
+where a1.main_fleet = false  
+and a1.id = a2.id;
+
+-- join main fleet
+update app_fleet a1
+set
+bomber = a1.bomber + b.bomber,
+fighter  = a1.fighter  + b.fighter ,
+transport  = a1.transport  + b.transport ,
+cruiser  = a1.cruiser  + b.cruiser ,
+carrier  = a1.carrier  + b.carrier ,
+soldier  = a1.soldier  + b.soldier ,
+droid  = a1.droid  + b.droid ,
+goliath  = a1.goliath  + b.goliath ,
+phantom  = a1.phantom  + b.phantom ,
+agent  = a1.agent  + b.agent ,
+ghost  = a1.ghost  + b.ghost ,
+exploration = a1.exploration + b.exploration
+from (select owner_id, 
+		sum(bomber) bomber ,
+		sum(fighter ) fighter  ,
+		sum(transport ) transport  ,
+		sum(cruiser ) cruiser  ,
+		sum(carrier ) carrier  ,
+		sum(soldier ) soldier  ,
+		sum(droid ) droid  ,
+		sum(goliath ) goliath  ,
+		sum(phantom ) phantom  ,
+		sum(agent ) agent  ,
+		sum(ghost ) ghost  ,
+		sum(exploration) exploration 
+	  from app_fleet a 
+	  where a.main_fleet = false
+	  and a.command_order = 5
+	  and a.ticks_remaining = 0
+	  group by owner_id) b
+where a1.main_fleet = true and
+a1.owner_id = b.owner_id;
+
+delete from app_fleet a
+where 
+a.main_fleet = false
+and a.command_order = 5
+and a.ticks_remaining = 0;
+
+-- merge
+update app_fleet a1
+set
+bomber = b.bomber,
+fighter  = b.fighter ,
+transport  = b.transport ,
+cruiser  = b.cruiser ,
+carrier  = b.carrier ,
+soldier  = b.soldier ,
+droid  = b.droid ,
+goliath  = b.goliath ,
+phantom  = b.phantom ,
+agent  = b.agent ,
+ghost  = b.ghost ,
+exploration =  b.exploration
+from (select owner_id, 
+		min(id) id,
+		sum(bomber) bomber ,
+		sum(fighter ) fighter  ,
+		sum(transport ) transport  ,
+		sum(cruiser ) cruiser  ,
+		sum(carrier ) carrier  ,
+		sum(soldier ) soldier  ,
+		sum(droid ) droid  ,
+		sum(goliath ) goliath  ,
+		sum(phantom ) phantom  ,
+		sum(agent ) agent  ,
+		sum(ghost ) ghost  ,
+		sum(exploration) exploration 
+	  from app_fleet a 
+	  where a.main_fleet = false
+	  and (a.command_order = 3 or a.command_order = 4)
+	  and a.ticks_remaining = 0
+	  group by owner_id, x, y) b
+where a1.main_fleet = false and
+a1.owner_id = b.owner_id
+and a1.id = b.id;
+
+delete from app_fleet a1
+where a1.id in
+(select id from 
+ (select a.owner_id, a.id, rank() over(partition by a.owner_id, a.x, a.y order by a.id asc) rn
+	  from app_fleet a 
+	  where a.main_fleet = false
+	  and (a.command_order = 3 or a.command_order = 4)
+	  and a.ticks_remaining = 0
+) b
+where rn > 1
+);
+
+
+-- station
  
 -- explore planets
 
@@ -712,6 +845,22 @@ set military_flag = 1
 from (select owner_id from unsucessfull_explos group by owner_id) c 
 where u.id = c.owner_id;
 
+-- delete empty fleets
+delete from app_fleet a 
+where a.main_fleet = false and
+bomber = 0 and
+fighter  = 0 and
+transport  = 0 and
+cruiser  = 0 and
+carrier  = 0 and
+soldier  = 0 and
+droid  = 0 and
+goliath  = 0 and
+phantom  = 0 and
+agent  = 0 and
+ghost  = 0 and
+exploration = 0;
+
 
 
 /*
@@ -724,11 +873,11 @@ private final String fleetsExplorationNewsUpdateQuery = "INSERT INTO app_news " 
    
   _end_ts   := clock_timestamp();
 
-  RAISE NOTICE 'Execution time in ms = %' , 1000 * (extract(epoch FROM _end_ts - _start_ts));
+  RAISE NOTICE 'Execution time in ms = %' , 100.0 * (extract(epoch FROM _end_ts - _start_ts));
   
   insert into ticks_log (round, calc_time_ms, dt)
   values ((select max(round_number) from app_roundstatus), 
-		  1000 * extract(epoch FROM _end_ts - _start_ts), current_timestamp);
+		  100.00 * extract(epoch FROM _end_ts - _start_ts), current_timestamp);
   
 END
 $$;

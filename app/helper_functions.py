@@ -92,7 +92,10 @@ def travel_speed(status):
 # option value="5" Join main fleet
 def generate_fleet_order(fleet, target_x, target_y, speed, order_type, *args):
     # args[0] - planet number
-    
+    print(fleet)
+    print(order_type)
+    print(target_x)
+    print(target_y)
     if args:
         fleet.i = args[0]
         planet = Planet.objects.filter(x=target_x, y=target_y, i=args[0]).first()

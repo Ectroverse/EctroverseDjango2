@@ -45,6 +45,25 @@ function maxunits() {
 </script>
 
 <script>
+ function show_order_options(id)
+ {
+    if (document.getElementById(id).style.display != 'table-cell' )
+        {document.getElementById(id).style.display = 'table-cell';}
+    else
+        {document.getElementById(id).style.display = 'none';}
+ }
+ 
+  function show_mass_orders(order) {
+    if (order == '5') { //recall
+			document.getElementById('mass_coord_X_Y').style.display = 'none';
+		}
+    if (order == '3') { //Merge in system (choose system yourself)
+			document.getElementById('mass_coord_X_Y').style.display = 'inline';
+		}
+    if (order == '4') { //Merge in system (auto/optimal)
+			document.getElementById('mass_coord_X_Y').style.display = 'none';
+		}
+  }
  
 {% for fleet_nr, fleet_units  in display_fleet.items %} 
  function show_orders{{fleet_nr.id}}() {
@@ -92,6 +111,64 @@ function maxunits() {
 {% endfor %}
 </script>
 
+<script>
+
+$(function (){
+    $(document).on('change', 'input[type=checkbox]', function () {
+        if ($('input[type=checkbox][name="fleets_id_mass"]:checked').length > 0 )
+        {
+            $("#mass_fleet_div").show();
+        }
+        else 
+        {
+            $("#mass_fleet_div").hide();
+        }
+        
+    });
+});
+
+
+function sub_mass_fl (){
+
+    var fd = new FormData();
+    
+    fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    fd.append('order', $('#mass_order').val() );
+    fd.append('X', $('#mass_fleet_select_X').val() );
+    fd.append('Y', $('#mass_fleet_select_Y').val() );
+    
+    $('input[name="fleets_id_mass"]:checked').each(function(){
+        fd.append('fleet_select_hidden', $(this).val() );
+    });
+    
+
+    fetch("fleets_orders_process", {
+    method: 'post',
+    body: fd,
+    })
+    .then(
+        () => {
+            window.location.reload();
+        });
+
+}
+
+/*
+$.post("fleets_orders_process",
+    {
+        csrfmiddlewaretoken: '{{ csrf_token }}',
+        order: $('#mass_order').val(),
+        X: $('#mass_fleet_select_X').val(),
+        Y: $('#mass_fleet_select_Y').val(),
+        c
+      });
+      */
+
+
+ 
+</script>
+
+           
 
 <style>
 input {
@@ -182,6 +259,7 @@ label {display: inline;}
 				<td>Status</td>
 				<td>Position</td>
 				<td></td>
+                <td width="2%"><div class="href" onclick="toggleForm('fleets_id_mass');"><font size="1">Toggle</font></div></font></td>
 				</tr>
 			
 				{% for fleet_nr, fleet_units  in display_fleet.items %}
@@ -269,8 +347,10 @@ label {display: inline;}
 						<td>{{fleet_nr.current_position_x | floatformat}}, {{fleet_nr.current_position_y | floatformat}}</td>
 
 						<td>
-						<input type="button" onclick="document.getElementById({{fleet_nr.id}}).style.display='table-cell';" value="Orders" name="fleet_select"/>
+						<input type="button" onclick="show_order_options({{fleet_nr.id}})" value="Orders" name="fleet_select"/>
 						</td>
+                        
+                        <td align="center"><input type="checkbox" name="fleets_id_mass" value="{{fleet_nr.id}}"></td>
 
 					</tr>
 					
@@ -286,12 +366,9 @@ label {display: inline;}
 			<option value="0" selected>Attack the planet
 			<option value="1">Station on planet
 			<option value="2">Move to system
-			<option value="3">Merge in system (choose system yourself)
-			<option value="4">Merge in system (auto/optimal)
-			<option value="5">Join main fleet
+            <option value="5">Join main fleet
 			<option value="6">Split fleets
 			</select>
-
 
 			<input type="hidden" name="fleet_select_hidden" value="{{fleet_nr.id}}" />
 
@@ -322,6 +399,24 @@ label {display: inline;}
 			{% endif %}
 			</p>
 	</div>
+    
+    <div class="center_box"  id="mass_fleet_div" style="display: none;"><p>
+
+            <b class="spaceUnder">Mass fleet order</b><br>
+            <select name="order" id="mass_order" class="spaceUnder" style="width: 110px;" onchange="show_mass_orders(this.value)">
+			<option value="3">Merge in system (choose system yourself)
+			<option value="4">Merge in system (auto/optimal)
+			<option value="5" selected>Join main fleet
+			</select>
+            
+            <div id="mass_coord_X_Y" style="display:none">
+			X:<input class="spaceUnder" id="mass_fleet_select_X" pattern="[0-9]+" type="text" name="X" size="4">
+			Y:<input class="spaceUnder" id="mass_fleet_select_Y" pattern="[0-9]+" type="text" name="Y" size="4"> 
+			</div>
+            <br>
+            <input type="button" onclick="sub_mass_fl()" value="Send" name="mass_fl_send_btn"/>
+
+    </p></div>
 
 	<div  id="attack_send" class="center_box">
 		<div class="center_box">
@@ -348,14 +443,14 @@ label {display: inline;}
 			<table class="spaceUnder" cellspacing="8" align="center">
 			<tr class="spaceUnder">
 			<td colspan="3" align="center"><input id="u_per" type="number" name="u_per" style="width: 5em" value="100" onkeyup="if(this.value > 100) this.value = 100;">% of units</td>
-			<td align="right"><div class="href" onclick="toggleForm();maxunits();"><font size="1">Toggle</font></div></font></td>
+			<td align="right"><div class="href" onclick="toggleForm('toggle_units');maxunits();"><font size="1">Toggle</font></div></font></td>
 			</tr>
 			{% for unit in send_fleet_list %}
 			<tr class="spaceUnder">
 				<td align="left">{{unit.value}}&nbsp;&nbsp;</td>
 				<td align="left">{{unit.name}}&nbsp;&nbsp;</td>
 				<td><input id="{{unit.i}}" type="text" name="u{{unit.i}}" size="10" value="0">&nbsp;&nbsp;</td>
-				<td align="right"><input type="checkbox" id="u{{unit.i}}" onclick="maxunits()"></td>
+				<td align="right"><input type="checkbox" id="u{{unit.i}}" name='toggle_units' onclick="maxunits()"></td>
 			</tr>
 			{% endfor %}
 			</table>

@@ -136,7 +136,7 @@ body
 
 <script>
 var countDownDate = new Date("{{round.round_start|date:'F d, y H:i:s'}} GMT+00:00").getTime();
-var x = setInterval(function() {
+window.onload = setInterval(function() {
 
   var now = new Date().getTime();
 
@@ -164,9 +164,17 @@ var x = setInterval(function() {
 	timer += minutes + "m " 
 	}
   timer += seconds + "s "
-  document.getElementById("roundstart").innerHTML = timer;
+  var check = document.getElementById("roundstart");
+  
+  if (check)  {
+    document.getElementById("roundstart").innerHTML = timer;
+  }
+  
+  check = document.getElementById("roundstart2");
+  
+  if (check)  {
   document.getElementById("roundstart2").innerHTML = message + timer;
-
+  }
   // If the count down is finished, write some text
   //if (distance < 0) {
     //clearInterval(x);
@@ -213,10 +221,17 @@ function fixTimeDigits(s_left) {
 }
 
 function toggleForm(form_name) {
-		var selectElements = document.querySelectorAll('input[type=checkbox]');
+        var selectElements = document.querySelectorAll('input[type=checkbox]');
+        if (form_name != '' && form_name != undefined)
+        {
+            var selectElements = document.querySelectorAll('input[type=checkbox][name='+form_name+']');
+        }
+            
 		for(var i = 0; i < selectElements.length; i++) {
-			selectElements[i].checked = !selectElements[i].checked;
+            {selectElements[i].checked = !selectElements[i].checked};
 		}
+        
+        if (selectElements.length > 0) { $('input[type=checkbox]').trigger("change");}
 	}
 
 function changeslider(newValue,field) {
