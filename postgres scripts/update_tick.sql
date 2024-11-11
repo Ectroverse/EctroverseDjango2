@@ -675,21 +675,8 @@ where a1.main_fleet = false
 and a1.id = a2.id;
 
 -- join main fleet
-update app_fleet a1
-set
-bomber = a1.bomber + b.bomber,
-fighter  = a1.fighter  + b.fighter ,
-transport  = a1.transport  + b.transport ,
-cruiser  = a1.cruiser  + b.cruiser ,
-carrier  = a1.carrier  + b.carrier ,
-soldier  = a1.soldier  + b.soldier ,
-droid  = a1.droid  + b.droid ,
-goliath  = a1.goliath  + b.goliath ,
-phantom  = a1.phantom  + b.phantom ,
-agent  = a1.agent  + b.agent ,
-ghost  = a1.ghost  + b.ghost ,
-exploration = a1.exploration + b.exploration
-from (select owner_id, 
+with recalled_fleets as 
+(select owner_id, 
 		sum(bomber) bomber ,
 		sum(fighter ) fighter  ,
 		sum(transport ) transport  ,
@@ -706,9 +693,59 @@ from (select owner_id,
 	  where a.main_fleet = false
 	  and a.command_order = 5
 	  and a.ticks_remaining = 0
-	  group by owner_id) b
+	  group by owner_id)
+      
+, join_main_fleet as (
+update app_fleet a1
+set
+bomber = a1.bomber + b.bomber,
+fighter  = a1.fighter  + b.fighter ,
+transport  = a1.transport  + b.transport ,
+cruiser  = a1.cruiser  + b.cruiser ,
+carrier  = a1.carrier  + b.carrier ,
+soldier  = a1.soldier  + b.soldier ,
+droid  = a1.droid  + b.droid ,
+goliath  = a1.goliath  + b.goliath ,
+phantom  = a1.phantom  + b.phantom ,
+agent  = a1.agent  + b.agent ,
+ghost  = a1.ghost  + b.ghost ,
+exploration = a1.exploration + b.exploration
+from recalled_fleets b
 where a1.main_fleet = true and
-a1.owner_id = b.owner_id;
+a1.owner_id = b.owner_id
+)
+,
+ins_news_success as (
+	insert into app_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, extra_info)
+	select e.owner_id, u.empire_id, 'FJ', current_timestamp, true, true, false, (select tick_number from app_roundstatus where round_number = _round_number),
+        'Theese fleets have returned: ' ||
+       	 case when bomber = 0 then '' when bomber = 1 then bomber || 'bomber' || chr(10) else bomber || 'bombers' || chr(10) END ||
+         case when fighter = 0 then '' when fighter = 1 then fighter ||  'fighter' || chr(10) else fighter ||  'fighters' ||chr(10) END ||
+         case when transport = 0 then '' when transport = 1 then transport || 'transport' || chr(10) else transport || 'transports' ||chr(10) END ||
+         case when cruiser = 0 then '' when cruiser = 1 then cruiser || 'cruiser' || chr(10) else cruiser || 'cruisers' ||chr(10) END  ||
+         case when carrier = 0 then '' when carrier = 1 then carrier || 'carrier' || chr(10) else carrier || 'carriers' ||chr(10) END ||
+         case when soldier = 0 then '' when soldier = 1 then soldier || 'soldier' || chr(10) else soldier || 'soldiers' ||chr(10) END ||
+         case when droid = 0 then '' when droid = 1 then droid || 'droid' || chr(10) else droid || 'droids' ||chr(10) END  ||
+         case when goliath = 0 then '' when goliath = 1 then goliath ||  'goliath' || chr(10) else goliath || 'goliaths' ||chr(10) END  ||
+         case when phantom = 0 then '' when phantom = 1 then phantom || 'phantom' || chr(10)  else phantom || 'phantoms' ||chr(10) END ||
+         case when agent = 0 then '' when agent = 1 then agent || 'agent' || chr(10) else agent || 'agents' ||chr(10)END  ||
+         case when ghost = 0 then '' when ghost = 1 then ghost || 'ghost' || chr(10) else ghost || 'ghosts' ||chr(10)END  ||
+         case when exploration = 0 then '' when exploration = 1 then exploration || 'exploration ship' || chr(10) else exploration || 'exploration ships' ||chr(10) END as extra_info
+	from recalled_fleets e
+    join app_userstatus u on u.id = e.owner_id
+)
+
+update app_userstatus u
+set military_flag = 2 
+from (select owner_id from recalled_fleets group by owner_id) c 
+where u.id = c.owner_id;
+
+/*
+INSERT INTO app_news " +
+	" ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, " + 
+	" is_empire_news, is_read, tick_number, extra_info ) " +
+	" SELECT  ?, ?, 'FJ',  ?, true, false, false, ?, ?  "*/
+
 
 delete from app_fleet a
 where 
