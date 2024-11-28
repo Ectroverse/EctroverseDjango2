@@ -67,6 +67,44 @@ BEGIN
  from app_construction a
  where p.id = a.planet_id and a.ticks_remaining = 0
  and p.owner_id is not null;
+
+ with news_buildings as 
+(select user_id
+	  from app_construction a 
+	  where a.ticks_remaining = 0
+	  group by user_id)
+,      
+ins_news_success as (
+    insert into app_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, extra_info)
+    select n.user_id, u.empire_id, 'BB', current_timestamp, true, false, false, (select tick_number from app_roundstatus where round_number = _round_number),
+        'These building constructions were finished: ' ||
+            ( select STRING_AGG('
+			',
+			case when building_type = 'SC' then n || ' solar collectors'
+			when building_type = 'FR' then n || ' fission reactors'
+			when building_type = 'MP' then n || ' mineral plants'
+			when building_type = 'CL' then n || ' crystal laboratories'
+			when building_type = 'RS' then n || ' refinement stations'
+			when building_type = 'CT' then n || ' cities'
+			when building_type = 'RC' then n || ' research centers'
+			when building_type = 'DS' then n || ' defense satelites'
+			when building_type = 'SN' then n || ' shield networks'
+			when building_type = 'PL' then n || ' portals' end
+			) extra_info
+     from app_construction
+     where ticks_remaining = 0
+     group by user_id
+
+    )     
+    as extra_info
+    from news_buildings n
+    join app_userstatus u on u.id = n.user_id
+)
+
+update app_userstatus u
+set construction_flag = 1 
+from (select user_id from news_buildings group by user_id) c 
+where u.id = c.user_id;
  
  delete from app_construction
  where ticks_remaining = 0;
@@ -376,6 +414,36 @@ from
 	 )
 ) a
 where a.user_id = f.owner_id and f.main_fleet = true;
+
+with news_fleets as 
+(select user_id
+	  from app_unitconstruction a 
+	  where a.ticks_remaining = 0
+	  group by user_id)
+,      
+ins_news_success as (
+    insert into app_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, extra_info)
+    select n.user_id, u.empire_id, 'UB', current_timestamp, true, false, false, (select tick_number from app_roundstatus where round_number = _round_number),
+        'These units constructions were finished: ' ||
+            ( select STRING_AGG(' 
+			',case when unit_type = 'wizard' then n || 'psychics' 
+			when unit_type = 'ghost' then n || 'ghost ships'   
+			when unit_type = 'exploration' then n || 'exploration  ships'
+			else n || ' '|| unit_type || 's'  END ) extra_info
+     from app_unitconstruction
+     where ticks_remaining = 0
+     group by user_id
+
+    )     
+    as extra_info
+    from news_fleets n
+    join app_userstatus u on u.id = n.user_id
+)
+
+update app_userstatus u
+set construction_flag = 1 
+from (select user_id from news_fleets group by user_id) c 
+where u.id = c.user_id;
 
 delete from app_unitconstruction
 where ticks_remaining = 0;
