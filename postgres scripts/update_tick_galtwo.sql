@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE calc_tick()
+CREATE OR REPLACE PROCEDURE calc_tick_galtwo()
 LANGUAGE plpgsql AS
 $$
 declare
@@ -9,40 +9,40 @@ declare
 BEGIN 
    _start_ts := clock_timestamp();
    
-   select max(round_number) into _round_number from app_roundstatus;
+   select max(round_number) into _round_number from galtwo_roundstatus;
    
- IF (select is_running from app_roundstatus where round_number = _round_number) = false THEN
+ IF (select is_running from galtwo_roundstatus where round_number = _round_number) = false THEN
       return;
  END IF;
    
- update app_roundstatus
+ update galtwo_roundstatus
  set tick_number = tick_number + 1
  where is_running = 'true';
  
  -- population  
- lock table "PLANET";
- lock table app_fleet;
- lock table app_construction;
- lock table app_userstatus;
- lock table app_unitconstruction;
- lock table app_scouting;
- lock table app_news;
+ lock table "PLANETS";
+ lock table galtwo_fleet;
+ lock table galtwo_construction;
+ lock table galtwo_userstatus;
+ lock table galtwo_unitconstruction;
+ lock table galtwo_scouting;
+ lock table galtwo_news;
  
   
- UPDATE "PLANET" p
+ UPDATE "PLANETS" p
  SET max_population = ((select num_val from constants where name = 'building_production_cities') 
 					   * cities +  size * 
 					  (select num_val from constants where name = 'population_size_factor') 
 					  )* (1.00 + 0.01 * u.research_percent_population)
- from app_userstatus u
+ from galtwo_userstatus u
  where u.id = p.owner_id
  and p.owner_id is not null;
  
- UPDATE "PLANET" as p
+ UPDATE "PLANETS" as p
  SET current_population = greatest(least(p.current_population + p.current_population
 										 * (1.00 + 0.01 * u.research_percent_population) * 
 										   t.num_val , p.max_population),100)
- from app_userstatus as u 
+ from galtwo_userstatus as u 
  join classes c on c.name = u.race
  join constants t on t.class = c.id and t.name = 'pop_growth'
  where u.id = p.owner_id
@@ -50,10 +50,10 @@ BEGIN
  
   -- buildings   
  
- update app_construction
+ update galtwo_construction
  set ticks_remaining = ticks_remaining - 1;
 
- update "PLANET" p
+ update "PLANETS" p
  set solar_collectors = solar_collectors + case when a.building_type = 'SC' then a.n else 0 end,
  fission_reactors =fission_reactors + case when a.building_type = 'FR' then a.n else 0 end,
  mineral_plants = mineral_plants + case when a.building_type = 'MP' then a.n else 0 end,
@@ -66,29 +66,29 @@ BEGIN
  portal = case when a.building_type = 'PL' then true else portal end,
  buildings_under_construction = buildings_under_construction - a.n,
  portal_under_construction = case when a.building_type = 'PL' then false else portal_under_construction end
- from app_construction a
+ from galtwo_construction a
  where p.id = a.planet_id and a.ticks_remaining = 0
  and p.owner_id is not null;
  
- delete from app_construction
+ delete from galtwo_construction
  where ticks_remaining = 0;
  
- update "PLANET" p
+ update "PLANETS" p
  set total_buildings = solar_collectors + fission_reactors + mineral_plants + crystal_labs + refinement_stations + 
  cities + research_centers + defense_sats + shield_networks + case when portal = true then 1 else 0 end
  where p.owner_id is not null;
  -- portal coverage
  
- update "PLANET" p
+ update "PLANETS" p
  set protection = p4.protection
   from 
  (select p1.id, 
   LEAST(100, 100 * GREATEST(0, 1.0 - sqrt(min(sqrt(power(p1.x-p2.x,2) + 
 												  power(p1.y-p2.y,2)))/ (7 + (1.0 + 0.01 * u.research_percent_portals))) )) 
    protection
-  from "PLANET" p1
-  join "PLANET" p2 on p1.owner_id = p2.owner_id and p2.portal = true
-  join app_userstatus u on u.id = p1.owner_id
+  from "PLANETS" p1
+  join "PLANETS" p2 on p1.owner_id = p2.owner_id and p2.portal = true
+  join galtwo_userstatus u on u.id = p1.owner_id
   where p1.owner_id is not null
   group by p1.id, u.research_percent_portals
   ) p4
@@ -97,7 +97,7 @@ BEGIN
 
 
   -- user eco  		
-update app_userstatus u
+update galtwo_userstatus u
 set 
 
 research_points_military = u.research_points_military + 1.2 * u.alloc_research_military * 
@@ -162,7 +162,7 @@ energy_production =
 r.race_energy_production* (1 + u.research_percent_energy/100.0)* 
 				(SC_prod * r.race_special_solar_15 * COALESCE(a.dark_mist_effect,1) + FR_prod ) * 
 				case when b.extra_effect = 'Energy' then (1 + b.Enlightenment_effect/100.0) else 1 end
-				* coalesce((select (1 + effect1/100.0) from app_Artefacts f where name = 'Ether Gardens' and f.empire_holding_id = u.empire_id),1),
+				* coalesce((select (1 + effect1/100.0) from galtwo_Artefacts f where name = 'Ether Gardens' and f.empire_holding_id = u.empire_id),1),
 
 
 energy_decay = greatest(0, u.energy * (select num_val from constants c where c.name = 'energy_decay_factor')), 
@@ -207,7 +207,7 @@ total_portals = PL,
 total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 
 -- select  SC, r.solar_bonus, a.dark_mist_effect
- from app_userstatus u2
+ from galtwo_userstatus u2
  join (select owner_id, sum(current_population) cur_pop, count(*) total_pl,
 	   ((select num_val from constants where name = 'building_production_solar') * sum(solar_collectors* (1 + bonus_solar/100.0 ))
 	    ) SC_prod,
@@ -227,14 +227,14 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 	   sum(shield_networks) SN , 
 	   sum(case when portal = true then 1 else 0 end) PL ,
 	   sum(population) pop
-	   from "PLANET" p1
-	   join app_userstatus u1 on u1.id = p1.owner_id
+	   from "PLANETS" p1
+	   join galtwo_userstatus u1 on u1.id = p1.owner_id
 	   where p1.owner_id is not null
 	   group by owner_id) p on p.owner_id = u2.id  
   left join (select user_to_id, 
 		 (specop_strength / 100.0) Enlightenment_effect,
 		 extra_effect
-		 from app_specops  a
+		 from galtwo_specops  a
 		 where a.name in ('Enlightenment') and specop_strength > 0
 		) b on u2.id = b.user_to_id
 
@@ -275,7 +275,7 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 			 max(case when c.name = 'research_bonus_operations' then c.num_val else 0 end ) research_bonus_operations,
 			 max(case when c.name = 'research_bonus_portals' then c.num_val else 0 end ) research_bonus_portals
 			 
-			 from app_userstatus u3
+			 from galtwo_userstatus u3
 			 join classes l on l.name = u3.race
 			 left join constants c on c.class = l.id --and c.name in('race_special_solar_15', 'energy_production')
 			 group by u3.id
@@ -283,7 +283,7 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 		 ) r on r.id = u2.id
  left join 		(select user_to_id, 
 		 1*  EXP (SUM (LN (100.0 / (specop_strength + 100.0)))) dark_mist_effect  --EXP (SUM (LN )) is just multiplication
-		 from app_specops  a
+		 from galtwo_specops  a
 		 where a.name in ('Black Mist', 'Dark Web') and specop_strength > 0
 		 group by user_to_id
 		)  a on u2.id = a.user_to_id
@@ -291,7 +291,7 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 			 sum(cruiser) cruiser, sum(soldier) soldier, sum(droid) droid, sum(goliath) goliath,
 			 sum(phantom) phantom, sum(wizard) wizard, sum(agent) agent, sum(ghost) ghost,
 			 sum(exploration) exploration
-			 from app_fleet
+			 from galtwo_fleet
 			 --join constants c on c.
 			 group by owner_id)
 			 f on f.owner_id = u2.id
@@ -311,22 +311,22 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 	sum(a1.agent  * u1.agent) +
 	sum(a1.ghost  * u1.ghost) +
 	sum(a1.exploration  * u1.exploration) as fleet_cost
-	from app_fleet a1
+	from galtwo_fleet a1
 	join unit_stats u1 on u1.class_name = 'unit upkeep costs'
 	group by owner_id) fs on fs.owner_id =  u2.id 
 ;
 
 
-update app_userstatus u
+update galtwo_userstatus u
 set population_upkeep_reduction = least(population_upkeep_reduction, (portals_upkeep + buildings_upkeep + units_upkeep));
 
 
-update app_unitconstruction
+update galtwo_unitconstruction
 set ticks_remaining = ticks_remaining -1;
 
 
 
-update app_fleet f
+update galtwo_fleet f
 set 
 bomber  = f.bomber  + coalesce(a.bomber ,0),
 fighter  = f.fighter  + coalesce(a.fighter ,0),
@@ -349,7 +349,7 @@ from
 	(
 	'
 	select user_id, unit_type, sum(n) n
-	 from app_unitconstruction
+	 from galtwo_unitconstruction
 	 where ticks_remaining = 0
 	 group by user_id, unit_type
 	 order by user_id, unit_type
@@ -379,11 +379,11 @@ from
 ) a
 where a.user_id = f.owner_id and f.main_fleet = true;
 
-delete from app_unitconstruction
+delete from galtwo_unitconstruction
 where ticks_remaining = 0;
 
 
-update app_userstatus u
+update galtwo_userstatus u
 set 
 ectrolium_income = ectrolium_production + ectrolium_interest - ectrolium_decay, 
 crystal_income = crystal_production + crystal_interest - crystal_decay,
@@ -406,7 +406,7 @@ research_points_portals  ) * (select num_val from constants where name = 'resear
 	 (select owner_id, (sum(total_buildings)*(select num_val from constants where name = 'networth_per_building') +
 	 sum(bonus_solar)* 1.25 + sum(bonus_mineral)* 1.45 + sum(bonus_crystal)* 2.25 + sum(bonus_ectrolium) * 1.65  +
 	 sum(bonus_fission)* 5.0 +  sum(size)* 1.75) nw
-	 from "PLANET" p
+	 from "PLANETS" p
 	 group by owner_id) n
  left join 
 	  (select 
@@ -424,26 +424,26 @@ research_points_portals  ) * (select num_val from constants where name = 'resear
 		sum(a1.agent  * u2.agent) +
 		sum(a1.ghost  * u2.ghost) +
 		sum(a1.exploration  * u2.exploration) as fleet_nw
-		from app_fleet a1
+		from galtwo_fleet a1
 		join unit_stats u2 on u2.class_name = 'units nw'
 		group by owner_id) fs on fs.owner_id =  n.owner_id
  ) as a
  where u.id = a.owner_id;
  
-update app_userstatus u
+update galtwo_userstatus u
 set energy = greatest(0, energy + energy_income),
 minerals = greatest(0, minerals + mineral_income),
 crystals = greatest(0, crystals + crystal_income),
 ectrolium = greatest(0, ectrolium + ectrolium_income);
  
 -- readiness update
-update app_userstatus u
+update galtwo_userstatus u
 set fleet_readiness = greatest(-100, least(fleet_readiness_max ,fleet_readiness + case when u.energy <= 0 then -3 else 2 end)) ,
 psychic_readiness = greatest(-100, least(psychic_readiness_max ,psychic_readiness + case when u.energy <= 0 then -3 else 2 end)),
 agent_readiness = greatest(-100, least(agent_readiness_max ,agent_readiness + case when u.energy <= 0 then -3 else 2 end));
 
 -- fleet decay
-update app_fleet a
+update galtwo_fleet a
 set  bomber = 0.98* bomber,
 fighter  = 0.98 * fighter,
 transport  = 0.98 * transport,
@@ -457,7 +457,7 @@ wizard = 0.98 * wizard,
 agent  = 0.98 * agent,
 ghost  = 0.98 * ghost,
 exploration  = 0.98 * exploration
-from app_userstatus u
+from galtwo_userstatus u
 where u.id = a.owner_id
 and u.energy <= 0;
 
@@ -465,7 +465,7 @@ and u.energy <= 0;
 
 -- research percentages update after nw and research points calucaltion
 
-update app_userstatus u
+update galtwo_userstatus u
 set 
 research_percent_military = u.research_percent_military + case when u.research_percent_military < (
 	case when research_max_military < 200 
@@ -580,7 +580,7 @@ research_percent_portals = u.research_percent_portals + case when u.research_per
 	) then -1 
 	else 0 end
 
-from app_userstatus u2
+from galtwo_userstatus u2
 
 join (
 	select id,
@@ -627,7 +627,7 @@ max(case when c.name = 'research_max_military' then
  else 0 end )
  research_max_portals 
  
- from app_userstatus u3
+ from galtwo_userstatus u3
  join classes l on l.name = u3.race
  left join constants c on c.class = l.id --and c.name in('race_special_solar_15', 'energy_production')
  group by u3.id ) v
@@ -635,7 +635,7 @@ max(case when c.name = 'research_max_military' then
  
  
 -- find new nearest portal
-update app_fleet a
+update galtwo_fleet a
 	set i = s.i,
 	x = s.x,
 	y = s.y,
@@ -646,31 +646,31 @@ from
 	(select * from
 	(select a.id a_id, a.owner_id, p.id p_id, p.x, p.y, p.i,
 	rank() over(partition by a.owner_id, a.id order by (pow((p.x - a.current_position_x),2) + pow((p.y - a.current_position_y),2)) asc)  rn
-	from app_fleet a, "PLANET" p
+	from galtwo_fleet a, "PLANETS" p
 	where a.command_order = 5 --return to main fleet
 	and p.owner_id = a.owner_id
 	and p.portal = true
 	) g where g.rn = 1) s 
-join app_userstatus u on u.id = s.owner_id
+join galtwo_userstatus u on u.id = s.owner_id
 join classes l on l.name = u.race
 join constants c on c.class = l.id and c.name = 'travel_speed'
 where a.id = s.a_id;
 
 
-/*update app_fleet f
+/*update galtwo_fleet f
 where f.
 */
 
 -- move fleets 
-update app_fleet a1
+update galtwo_fleet a1
 	set 
 	current_position_x = case when a1.ticks_remaining - 1 > 0 then a1.current_position_x + (a1.x - a1.current_position_x) / (a1.ticks_remaining )
 						 else a1.x end,
 	current_position_y = case when a1.ticks_remaining - 1 > 0 then a1.current_position_y + (a1.y - a1.current_position_y) / (a1.ticks_remaining )
 						else a1.y end,
 	ticks_remaining = greatest(0, a1.ticks_remaining -1)
-from app_fleet a2
-join app_userstatus u1 on u1.id = a2.owner_id
+from galtwo_fleet a2
+join galtwo_userstatus u1 on u1.id = a2.owner_id
 join classes l on l.name = u1.race
 join constants c on c.class = l.id and c.name = 'travel_speed'
 where a1.main_fleet = false  
@@ -691,14 +691,14 @@ with recalled_fleets as
 		sum(agent ) agent  ,
 		sum(ghost ) ghost  ,
 		sum(exploration) exploration 
-	  from app_fleet a 
+	  from galtwo_fleet a 
 	  where a.main_fleet = false
 	  and a.command_order = 5
 	  and a.ticks_remaining = 0
 	  group by owner_id)
       
 , join_main_fleet as (
-update app_fleet a1
+update galtwo_fleet a1
 set
 bomber = a1.bomber + b.bomber,
 fighter  = a1.fighter  + b.fighter ,
@@ -718,8 +718,8 @@ a1.owner_id = b.owner_id
 )
 ,
 ins_news_success as (
-	insert into app_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, extra_info)
-	select e.owner_id, u.empire_id, 'FJ', current_timestamp, true, true, false, (select tick_number from app_roundstatus where round_number = _round_number),
+	insert into galtwo_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, extra_info)
+	select e.owner_id, u.empire_id, 'FJ', current_timestamp, true, true, false, (select tick_number from galtwo_roundstatus where round_number = _round_number),
         'Theese fleets have returned: ' ||
        	 case when bomber = 0 then '' when bomber = 1 then bomber || 'bomber' || chr(10) else bomber || 'bombers' || chr(10) END ||
          case when fighter = 0 then '' when fighter = 1 then fighter ||  'fighter' || chr(10) else fighter ||  'fighters' ||chr(10) END ||
@@ -734,16 +734,16 @@ ins_news_success as (
          case when ghost = 0 then '' when ghost = 1 then ghost || 'ghost' || chr(10) else ghost || 'ghosts' ||chr(10)END  ||
          case when exploration = 0 then '' when exploration = 1 then exploration || 'exploration ship' || chr(10) else exploration || 'exploration ships' ||chr(10) END as extra_info
 	from recalled_fleets e
-    join app_userstatus u on u.id = e.owner_id
+    join galtwo_userstatus u on u.id = e.owner_id
 )
 
-update app_userstatus u
+update galtwo_userstatus u
 set military_flag = case when military_flag != 1 then 2 else 1 end
 from (select owner_id from recalled_fleets group by owner_id) c 
 where u.id = c.owner_id;
 
 
-delete from app_fleet a
+delete from galtwo_fleet a
 where 
 a.main_fleet = false
 and a.command_order = 5
@@ -765,14 +765,14 @@ with merge_fl as (
 		sum(agent ) agent  ,
 		sum(ghost ) ghost  ,
 		sum(exploration) exploration 
-	  from app_fleet a 
+	  from galtwo_fleet a 
 	  where a.main_fleet = false
 	  and (a.command_order = 3 or a.command_order = 4)
 	  and a.ticks_remaining = 0
 	  group by owner_id, x, y
 ),
 upd_planet as (
-update app_fleet a1
+update galtwo_fleet a1
 set
 bomber = b.bomber,
 fighter  = b.fighter ,
@@ -792,8 +792,8 @@ a1.owner_id = b.owner_id
 and a1.id = b.id
 ),
 ins_news_success as (
-	insert into app_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, extra_info)
-	select e.owner_id, u.empire_id, 'FM', current_timestamp, true, true, false, (select tick_number from app_roundstatus where round_number = _round_number),
+	insert into galtwo_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, extra_info)
+	select e.owner_id, u.empire_id, 'FM', current_timestamp, true, true, false, (select tick_number from galtwo_roundstatus where round_number = _round_number),
         'Theese fleets have merged: ' ||
        	 case when bomber = 0 then '' when bomber = 1 then bomber || 'bomber' || chr(10) else bomber || 'bombers' || chr(10) END ||
          case when fighter = 0 then '' when fighter = 1 then fighter ||  'fighter' || chr(10) else fighter ||  'fighters' ||chr(10) END ||
@@ -808,20 +808,20 @@ ins_news_success as (
          case when ghost = 0 then '' when ghost = 1 then ghost || 'ghost' || chr(10) else ghost || 'ghosts' ||chr(10)END  ||
          case when exploration = 0 then '' when exploration = 1 then exploration || 'exploration ship' || chr(10) else exploration || 'exploration ships' ||chr(10) END as extra_info
 	from merge_fl e
-    join app_userstatus u on u.id = e.owner_id
+    join galtwo_userstatus u on u.id = e.owner_id
 )
 
-update app_userstatus u
+update galtwo_userstatus u
 set military_flag = case when military_flag != 1 then 2 else 1 end -- red flag overrides green
 from (select owner_id from merge_fl group by owner_id) c 
 where u.id = c.owner_id;
 
 
-delete from app_fleet a1
+delete from galtwo_fleet a1
 where a1.id in
 (select id from 
  (select a.owner_id, a.id, rank() over(partition by a.owner_id, a.x, a.y order by a.id asc) rn
-	  from app_fleet a 
+	  from galtwo_fleet a 
 	  where a.main_fleet = false
 	  and (a.command_order = 3 or a.command_order = 4)
 	  and a.ticks_remaining = 0
@@ -837,46 +837,46 @@ where rn > 1
 with explored_planets as(
 	select p_id, a_id, owner_id, empire_id from (
 		select p.id p_id, a.id a_id, a.owner_id, u.empire_id, rank() over(partition by p.id order by a.id asc) rn
-		from "PLANET" p
-		join app_fleet a on a.target_planet_id = p.id
-		join app_userstatus u on u.id = a.owner_id
+		from "PLANETS" p
+		join galtwo_fleet a on a.target_planet_id = p.id
+		join galtwo_userstatus u on u.id = a.owner_id
 		where p.owner_id is null
 		and	a.command_order = 10 --explore
 		and ticks_remaining = 0
 	) a where a.rn = 1
 ), 
 upd_planet as (
-	update "PLANET" p
+	update "PLANETS" p
 	set owner_id = e.owner_id
 	from explored_planets e
 	where p.id = e.p_id 
 ),
 del_explo as (
-	delete from app_fleet a
+	delete from galtwo_fleet a
 	using explored_planets e 
 	where e.a_id = a.id 
 ),
 upd_Arti as (
-	update app_artefacts r
+	update galtwo_artefacts r
 	set empire_holding_id = e.empire_id
 	from explored_planets e
 	where r.on_planet_id = e.p_id 
 ),
 del_scout as (
-	delete from app_scouting a
+	delete from galtwo_scouting a
 	using explored_planets e
 	where a.empire_id = e.empire_id and a.planet_id = e.p_id 
 ),
-ins_scout as (insert into app_scouting (planet_id, empire_id, user_id, scout)
+ins_scout as (insert into galtwo_scouting (planet_id, empire_id, user_id, scout)
 	select e.p_id, e.empire_id, e.owner_id, 1.0
 	from explored_planets e
 ),
 ins_news_success as (
-	insert into app_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, planet_id)
-	select e.owner_id, e.empire_id, 'SE', current_timestamp, true, true, false, (select tick_number from app_roundstatus where round_number = _round_number), e.p_id
+	insert into galtwo_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, planet_id)
+	select e.owner_id, e.empire_id, 'SE', current_timestamp, true, true, false, (select tick_number from galtwo_roundstatus where round_number = _round_number), e.p_id
 	from explored_planets e
 )
-update app_userstatus u
+update galtwo_userstatus u
 set military_flag = case when military_flag != 1 then 2 else 1 end -- red flag overrides green
 from (select owner_id from explored_planets group by owner_id) c 
 where u.id = c.owner_id;
@@ -885,31 +885,31 @@ where u.id = c.owner_id;
 with unsucessfull_explos as 
 (
 	select p.id p_id, a.id a_id, a.owner_id, u.empire_id
-	from "PLANET" p
-	join app_fleet a on a.target_planet_id = p.id
-	join app_userstatus u on u.id = a.owner_id
+	from "PLANETS" p
+	join galtwo_fleet a on a.target_planet_id = p.id
+	join galtwo_userstatus u on u.id = a.owner_id
 	where p.owner_id is not null
 	and	a.command_order = 10 --explore
 	and ticks_remaining = 0
 ),
 upd_explos as (
-	update app_fleet a
+	update galtwo_fleet a
 	set command_order = 2
 	from unsucessfull_explos u
 	where u.a_id = a.id
 ),
 ins_news_failed as (
-	insert into app_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, planet_id)
-	select e.owner_id, e.empire_id, 'UE', current_timestamp, true, true, false, (select tick_number from app_roundstatus where round_number = _round_number), e.p_id
+	insert into galtwo_news ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, planet_id)
+	select e.owner_id, e.empire_id, 'UE', current_timestamp, true, true, false, (select tick_number from galtwo_roundstatus where round_number = _round_number), e.p_id
 	from unsucessfull_explos e
 )
-update app_userstatus u
+update galtwo_userstatus u
 set military_flag = 1 
 from (select owner_id from unsucessfull_explos group by owner_id) c 
 where u.id = c.owner_id;
 
 -- delete empty fleets
-delete from app_fleet a 
+delete from galtwo_fleet a 
 where a.main_fleet = false and
 bomber = 0 and
 fighter  = 0 and
@@ -931,8 +931,8 @@ exploration = 0;
 
   RAISE NOTICE 'Execution time in ms = %' , 100.0 * (extract(epoch FROM _end_ts - _start_ts));
   
-  insert into ticks_log (round, calc_time_ms, dt)
-  values ((select max(round_number) from app_roundstatus), 
+  insert into ticks_log_galtwo (round, calc_time_ms, dt)
+  values ((select max(round_number) from galtwo_roundstatus), 
 		  100.00 * extract(epoch FROM _end_ts - _start_ts), current_timestamp);
   
 END

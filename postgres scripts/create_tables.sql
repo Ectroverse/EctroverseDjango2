@@ -207,6 +207,11 @@ drop table if exists ticks_log;
 create table ticks_log
 (id serial primary key, round varchar(255), calc_time_ms numeric, dt timestamp);
 
+drop table if exists ticks_log_galtwo;
+
+create table ticks_log_galtwo
+(id serial primary key, round varchar(255), calc_time_ms numeric, dt timestamp);
+
 
 drop table if exists unit_stats;
 

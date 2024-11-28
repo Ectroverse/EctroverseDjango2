@@ -181,6 +181,11 @@ window.onload = setInterval(function() {
     //document.getElementById("roundstart").innerHTML = "Round Started!";
   //}
 }, 1000);
+
+// prevent form send on refresh
+   if ( window.history.replaceState ) {
+        window.history.replaceState( null, null, window.location.href );
+    }
 </script>
 
 {% if status.galsel == 1 %}
