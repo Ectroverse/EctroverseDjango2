@@ -157,6 +157,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         System.objects.all().delete()
         Sensing.objects.all().delete()
         Empire.objects.all().delete()  # remove all empires -remove after players
+        Ticks_log.objects.all().delete()
         planet_buffer = [] # MUCH quicker to save them all at once, like 100x faster
         empires_buffer = []
         game_round = RoundStatus.objects.filter().first()

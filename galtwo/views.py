@@ -4479,7 +4479,7 @@ def specop_show(request, specop_id):
             for p in planets:
                 scouting = Scouting.objects.filter(planet=p, user=status.user).first()
                 if scouting is None:
-                    Scouting.objects.create(user=specop.user_from, planet=p, scout=1)
+                    Scouting.objects.create(user=specop.user_from, planet=p, empire=status.empire, scout=1)
                 elif scouting.scout < 1:
                     scouting.scout = 1
                     scouting.save()

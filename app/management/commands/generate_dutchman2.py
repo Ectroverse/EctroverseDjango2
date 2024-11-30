@@ -28,7 +28,8 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                     scouting.scout += 1.0
                     scouting.save()
                 except:
-                    Scouting.objects.create(user = user.user,
+                    Scouting.objects.create(empire = user.empire,
+                                        user = user.user,
                                         planet = p,
                                         scout = '1')
                 

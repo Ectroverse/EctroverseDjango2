@@ -8,56 +8,68 @@ from galtwo.models import RoundStatus as RoundStat
 from datetime import datetime, timedelta
 import requests
 from discord import Webhook, RequestsWebhookAdapter
+import time
 
 class Command(BaseCommand): # must be called command, use file name to name the functionality
     @transaction.atomic # Makes it so all object saves get aggregated, otherwise process_tick would take a minute
     def handle(self, *args, **options):
-        agent_fleets = Fleet.objects.filter(agent__gt=0, main_fleet=False, command_order=6, ticks_remaining=0)
-        for agent_fleet in agent_fleets:
-            # perform operation
-            if agent_fleet.target_planet is None:
-                agent_fleet.command_order = 2
-                agent_fleet.save()
-                continue
-
-            perform_operation(agent_fleet)
-            # (operation, agents, user1, planet):
-            status = UserStatus.objects.get(id=agent_fleet.owner.id)
-            speed = travel_speed(status)
-
-            # send agents home after operation
-            portals = Planet.objects.filter(owner=agent_fleet.owner.id, portal=True)
-            if portals is None:
-                agent_fleet.command_order = 2 #if no portals the fleet cant return, make it hoover
-                agent_fleet.save()
-                continue
-
-            portal = find_nearest_portal(agent_fleet.x, agent_fleet.y, portals, status)
-            generate_fleet_order(agent_fleet, portal.x, portal.y, speed, 5)
+        start_t = time.time()
+        
+        cursor = get_connection().cursor()
+        cursor.execute(f'LOCK TABLE app_fleet; lock table app_userstatus; \
+            lock table app_news; lock table app_scouting; lock table app_artefacts;\
+            lock table app_specops;') 
+        fleets_processed = 0 
+        try:
             
-        ghost_fleets = Fleet.objects.filter(ghost__gt=0, main_fleet=False, command_order=7, ticks_remaining=0)
-        for ghost_fleet in ghost_fleets:
-            # perform incantation
-            if ghost_fleet.target_planet is None:
-                ghost_fleet.command_order = 2
-                ghost_fleet.save()
-                continue
+            agent_fleets = Fleet.objects.filter(agent__gt=0, main_fleet=False, command_order=6, ticks_remaining=0)
+            for agent_fleet in agent_fleets:
+                # perform operation
+                if agent_fleet.target_planet is None:
+                    agent_fleet.command_order = 2
+                    agent_fleet.save()
+                    continue
+                fleets_processed += 1
+                perform_operation(agent_fleet)
+                # (operation, agents, user1, planet):
+                status = UserStatus.objects.get(id=agent_fleet.owner.id)
+                speed = travel_speed(status)
 
-            perform_incantation(ghost_fleet)
-            status = UserStatus.objects.get(id=ghost_fleet.owner.id)
-            speed = travel_speed(status)
+                # send agents home after operation
+                portals = Planet.objects.filter(owner=agent_fleet.owner.id, portal=True)
+                if portals is None:
+                    agent_fleet.command_order = 2 #if no portals the fleet cant return, make it hoover
+                    agent_fleet.save()
+                    continue
 
-            # send home
-            if ghost_fleet.specop == "Vortex Portal":
-                main_fleet = Fleet.objects.get(owner=ghost_fleet.owner.id, main_fleet=True)
-                main_fleet.ghost += ghost_fleet.ghost
-                main_fleet.save()
-                ghost_fleet.delete()
-            else:
-                portals = Planet.objects.filter(owner=ghost_fleet.owner.id, portal=True)
-                portal = find_nearest_portal(ghost_fleet.x, ghost_fleet.y, portals, status)
-                generate_fleet_order(ghost_fleet, portal.x, portal.y, speed, 5)
+                portal = find_nearest_portal(agent_fleet.x, agent_fleet.y, portals, status)
+                generate_fleet_order(agent_fleet, portal.x, portal.y, speed, 5)
                 
+            ghost_fleets = Fleet.objects.filter(ghost__gt=0, main_fleet=False, command_order=7, ticks_remaining=0)
+            for ghost_fleet in ghost_fleets:
+                # perform incantation
+                if ghost_fleet.target_planet is None:
+                    ghost_fleet.command_order = 2
+                    ghost_fleet.save()
+                    continue
+                
+                fleets_processed += 1
+                perform_incantation(ghost_fleet)
+                status = UserStatus.objects.get(id=ghost_fleet.owner.id)
+                speed = travel_speed(status)
+
+                # send home
+                if ghost_fleet.specop == "Vortex Portal":
+                    main_fleet = Fleet.objects.get(owner=ghost_fleet.owner.id, main_fleet=True)
+                    main_fleet.ghost += ghost_fleet.ghost
+                    main_fleet.save()
+                    ghost_fleet.delete()
+                else:
+                    portals = Planet.objects.filter(owner=ghost_fleet.owner.id, portal=True)
+                    portal = find_nearest_portal(ghost_fleet.x, ghost_fleet.y, portals, status)
+                    generate_fleet_order(ghost_fleet, portal.x, portal.y, speed, 5)
+        finally:
+            cursor.close()    
             
             
 
@@ -144,3 +156,9 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
             webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
             webhook.send(msg)
+            
+        print("Process ops took: " +  str(time.time() - start_t) )
+        
+        f = open("process_ops_log.txt", "a")
+        f.write("Process ops took: " +  str(time.time() - start_t) + ' fleets processed ' + str(fleets_processed) + "\n")
+        f.close()

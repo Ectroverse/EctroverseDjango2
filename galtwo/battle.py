@@ -526,9 +526,10 @@ def attack_planet(attacking_fleet):
     p_protection = min(100, int(100.0 * battlePortalCalc(attacking_fleet.x, attacking_fleet.y, portal_xy_list, defender.research_percent_portals, defender)))
     
     if Specops.objects.filter(planet=attacked_planet, user_to=defender.user, name='Portal Force Field').exists():
+        op_str = 1
         for op in Specops.objects.filter(planet=attacked_planet, user_to=defender.user, name='Portal Force Field'):
-            ffstrength = op.specop_strength
-            p_protection = max(0, (p_protection-ffstrength))
+            op_str *= (1+op.specop_strength/100)
+        p_protection = max(0,(p_protection/op_str))
     
     if stationed_defender_fleet:
         for key in defending_fleets.keys():
@@ -778,6 +779,7 @@ def attack_planet(attacking_fleet):
         scouting = Scouting.objects.filter(user=User.objects.get(id=attacker.id), planet=attacked_planet).first()
         if scouting is None:
             Scouting.objects.create(user= User.objects.get(id=attacker.id),
+                                empire=attacker.empire,                       
                                 planet = attacked_planet,
                                 scout = '1')
         else:

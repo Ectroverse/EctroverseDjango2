@@ -545,7 +545,7 @@ def perform_operation(agent_fleet):
                     news_message += "\nArtefact: Present, the " + target_planet.artefact.name
             scouting = Scouting.objects.filter(user=user, planet=target_planet).first()
             if scouting is None:
-                Scouting.objects.create(user=user, planet=target_planet, scout=success)
+                Scouting.objects.create(user=user, planet=target_planet, empire=user1.empire, scout=success)
             else:
                 if scouting.scout < success:
                     scouting.scout = success
@@ -642,6 +642,7 @@ def perform_operation(agent_fleet):
                     else:
                         Scouting.objects.create(user=user1.user,
                                                 planet=s2.planet,
+                                                empire=user1.empire,
                                                 scout=s2.scout)
 
         if operation == "Planetary Beacon":
@@ -1130,7 +1131,7 @@ def perform_incantation(ghost_fleet):
                         foundarte = arte
                         scouting = Scouting.objects.filter(user=user1.user, planet=foundarte).first()
                         if scouting is None:
-                            Scouting.objects.create(user=user, planet=foundarte, scout=1.0)
+                            Scouting.objects.create(user=user, planet=foundarte, empire=user1.empire, scout=1.0)
                         else:
                             scouting = Scouting.objects.get(user=user1.user, planet=foundarte)
                             scouting.scout = 1.0
@@ -1186,6 +1187,7 @@ def perform_incantation(ghost_fleet):
                 if scouting is None:
                     Scouting.objects.create(user= User.objects.get(id=user1.id),
                                     planet = target_planet,
+                                    empire=user1.empire,
                                     scout = 1.0)
                 else:
                     scouting.scout = 1.0
@@ -1219,6 +1221,7 @@ def perform_incantation(ghost_fleet):
                 if scouting is None:
                     Scouting.objects.create(user= User.objects.get(id=user1.id),
                                     planet = target_planet,
+                                    empire=user1.empire,
                                     scout = 1.0)
                 else:
                     scouting.scout = 1.0

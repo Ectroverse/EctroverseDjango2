@@ -61,15 +61,38 @@ public class ProcessTick_New
 
 	private void processTick(Connection con){
 		
+		long beginTime = System.nanoTime();
+		
 		Statement statement;
 		try {
 
 			statement = con.createStatement();
-			statement.executeUpdate("call calc_tick();");
+			statement.executeUpdate("call calc_tick('fast');");
+			
+			// for slow tick
+			// tatement.executeUpdate("call calc_tick('slow');"); 
 		}
 		catch (SQLException ex){
 			ex.printStackTrace();
 		}
+		
+		long python_script1 = System.nanoTime();
+		try{
+			// for slow tick
+			// ProcessBuilder pb = new ProcessBuilder("python", "/code/manage.py", "process_ops");
+			
+			ProcessBuilder pb = new ProcessBuilder("python", "/code/manage.py", "process_py");
+			Process p = pb.start();
+
+		}
+		catch (Exception e){
+			System.out.println("Exception: " +  e.getMessage());
+		}
+
+		long endTime = System.nanoTime();
+		
+		System.out.println("Execute postgres population update procedure: " + (double)(python_script1-beginTime)/1_000_000_000.0 + " sec.");
+		System.out.println("Python script process_ops time: " + (double)(endTime-python_script1)/1_000_000_000.0 + " sec.");
 		
 	}
 }

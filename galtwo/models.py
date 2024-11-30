@@ -483,6 +483,7 @@ class Scouting(models.Model):
     user = models.ForeignKey(User, related_name='galtwousersc', on_delete=models.CASCADE)
     planet = models.ForeignKey(Planets, on_delete=models.SET_NULL, blank=True, null=True, default=None)
     scout = models.FloatField(default=0)
+    empire = models.ForeignKey(Empire, on_delete=models.SET_NULL, blank=True, null=True, default=None)
 
 
 class HallOfFame(models.Model):
@@ -525,3 +526,9 @@ class Sensing(models.Model):
     scout = models.FloatField(default=0)
     system = models.ForeignKey(System, on_delete=models.SET_NULL, blank=True, null=True, default=None)
     empire = models.ForeignKey(Empire, on_delete=models.SET_NULL, blank=True, null=True, default=None)
+
+class Ticks_log(models.Model):
+    round = models.IntegerField()
+    calc_time_ms = models.DecimalField(max_digits=12, decimal_places=6)
+    dt = models.DateTimeField()
+    error = models.TextField(null=True)

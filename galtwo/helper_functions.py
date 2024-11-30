@@ -33,7 +33,7 @@ def give_first_planet(user, status, planet):
     status.home_planet = planet
     status.num_planets = 1
     status.save()
-    Scouting.objects.create(user=status.user, planet=planet, scout=1.0 )
+    couting.objects.create(user=status.user, planet=planet, scout=1.0, empire=status.empire )
     MapSettings.objects.create(user=status.user, map_setting="YP", color_settings="B")
     MapSettings.objects.create(user=status.user, map_setting="YR", color_settings="Y")
     MapSettings.objects.create(user=status.user, map_setting="UE", color_settings="G")
@@ -258,6 +258,7 @@ def explore_planets(fleets):
                 if not Scouting.objects.filter(user=status.user, planet = planet).exists():
                     Scouting.objects.create(user= fl.owner,
                                             planet = planet,
+                                            empire = status.empire,
                                             scout = '1')
                 else:
                     scout = Scouting.objects.get(user=status.user, planet = planet)

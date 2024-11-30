@@ -35,7 +35,7 @@ BEGIN
 		_scouting_table := 'app_scouting';
 		_news_table := 'app_news';
 		_roundstatus := 'app_roundstatus';
-		_ticks_log_table := 'ticks_log';
+		_ticks_log_table := 'app_ticks_log';
 	else 
 		_planets_table := '"PLANETS"';
 		_userstatus_table := 'galtwo_userstatus';
@@ -45,7 +45,7 @@ BEGIN
 		_scouting_table := 'galtwo_scouting';
 		_news_table := 'galtwo_news';
 		_roundstatus := 'galtwo_roundstatus';
-		_ticks_log_table := 'ticks_log_galtwo';
+		_ticks_log_table := 'galtwo_ticks_log';
 	end if;
 
 	EXECUTE format('select max(round_number) from  %s ;', _roundstatus)
@@ -60,17 +60,14 @@ BEGIN
 	  return;
 	END IF;
 
-_sql := '	
- update '|| _roundstatus || '
- set tick_number = tick_number + 1
- where is_running = ''true'';
- ';
- 
- EXECUTE _sql;
- 
- -- population  
  _sql :=
  '
+  update '|| _roundstatus || '
+ set tick_number = tick_number + 1
+ where is_running = ''true'';
+ 
+  -- population  
+ 
  lock table '|| _planets_table ||';
  lock table '|| _userstatus_table ||';
  lock table '|| _fleet_table ||';
@@ -1049,13 +1046,23 @@ _end_ts   := clock_timestamp();
 
 select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
 
-RAISE NOTICE 'Execution time in ms = %' , _retstr;
+--RAISE NOTICE 'Execution time in ms = %' , _retstr;
 
 _sql := 
 'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt)
 values ('|| _round_number||' , '|| _retstr|| ', current_timestamp);
 ';
 
+execute _sql;
+
+EXCEPTION WHEN OTHERS THEN
+_end_ts   := clock_timestamp();
+select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
+--RAISE NOTICE 'error msg is %', SQLERRM;
+_sql := 
+'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt, error)
+values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, '''|| 'SQLSTATE: ' || SQLSTATE || ' SQLERRM: ' || SQLERRM ||''');
+';
 execute _sql;
   
 END
