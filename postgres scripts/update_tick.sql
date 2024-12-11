@@ -249,7 +249,6 @@ research_bonus_portals *
 coalesce((select (1.5) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),1)
 * coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
-
 population = cur_pop,
 num_planets = total_pl,
 energy_production = 
@@ -420,7 +419,8 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 
 update '|| _userstatus_table ||' u
 set population_upkeep_reduction = case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Darwinism'' ) = u.empire_id 
-	then u.population/315 else least(u.population/350, (portals_upkeep + buildings_upkeep + units_upkeep)) end;
+	then u.population/315 else least(u.population/350, (portals_upkeep + buildings_upkeep + units_upkeep)) end,
+	current_research_funding = current_research_funding * 0.9;
 
 
 update '|| _unitconstruction_table||'
@@ -604,117 +604,117 @@ update '|| _userstatus_table ||' u
 set 
 research_percent_military = u.research_percent_military + case when u.research_percent_military < (
 	case when research_max_military < 200 
-	then least(research_max_military, floor(200 * (1 - exp(u.research_points_military/(-10 * u.networth)))))
-	else least(research_max_military, floor(research_max_military * (1 - exp(u.research_points_military/(-10 * u.networth)))))
+	then least(research_max_military, floor(200 * (1 - exp((u.research_points_military+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_military, floor(research_max_military * (1 - exp((u.research_points_military+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_military > (
 	case when research_max_military < 200 
-	then least(research_max_military, floor(200 * (1 - exp(u.research_points_military/(-10 * u.networth)))))
-	else least(research_max_military, floor(research_max_military * (1 - exp(u.research_points_military/(-10 * u.networth)))))
+	then least(research_max_military, floor(200 * (1 - exp((u.research_points_military+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_military, floor(research_max_military * (1 - exp((u.research_points_military+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
 	else 0 end,
 research_percent_construction = u.research_percent_construction + case when u.research_percent_construction < (
 	case when research_max_construction < 200 
-	then least(research_max_construction, floor(200 * (1 - exp(u.research_points_construction/(-10 * u.networth)))))
-	else least(research_max_construction, floor(research_max_construction * (1 - exp(u.research_points_construction/(-10 * u.networth)))))
+	then least(research_max_construction, floor(200 * (1 - exp((u.research_points_construction+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_construction, floor(research_max_construction * (1 - exp((u.research_points_construction+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_construction > (
 	case when research_max_construction < 200 
-	then least(research_max_construction, floor(200 * (1 - exp(u.research_points_construction/(-10 * u.networth)))))
-	else least(research_max_construction, floor(research_max_construction * (1 - exp(u.research_points_construction/(-10 * u.networth)))))
+	then least(research_max_construction, floor(200 * (1 - exp((u.research_points_construction+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_construction, floor(research_max_construction * (1 - exp((u.research_points_construction+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
 	else 0 end,
 research_percent_tech = u.research_percent_tech + case when u.research_percent_tech < (
 	case when research_max_tech < 200 
-	then least(research_max_tech, floor(200 * (1 - exp(u.research_points_tech/(-10 * u.networth)))))
-	else least(research_max_tech, floor(research_max_tech * (1 - exp(u.research_points_tech/(-10 * u.networth)))))
+	then least(research_max_tech, floor(200 * (1 - exp((u.research_points_tech+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_tech, floor(research_max_tech * (1 - exp((u.research_points_tech+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_tech > (
 	case when research_max_tech < 200 
-	then least(research_max_tech, floor(200 * (1 - exp(u.research_points_tech/(-10 * u.networth)))))
-	else least(research_max_tech, floor(research_max_tech * (1 - exp(u.research_points_tech/(-10 * u.networth)))))
+	then least(research_max_tech, floor(200 * (1 - exp((u.research_points_tech+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_tech, floor(research_max_tech * (1 - exp((u.research_points_tech+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
 	else 0 end,	
 research_percent_energy = u.research_percent_energy + case when u.research_percent_energy < (
 	case when research_max_energy < 200 
-	then least(research_max_energy, floor(200 * (1 - exp(u.research_points_energy/(-10 * u.networth)))))
-	else least(research_max_energy, floor(research_max_energy * (1 - exp(u.research_points_energy/(-10 * u.networth)))))
+	then least(research_max_energy, floor(200 * (1 - exp((u.research_points_energy+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_energy, floor(research_max_energy * (1 - exp((u.research_points_energy+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_energy > (
 	case when research_max_energy < 200 
-	then least(research_max_energy, floor(200 * (1 - exp(u.research_points_energy/(-10 * u.networth)))))
-	else least(research_max_energy, floor(research_max_energy * (1 - exp(u.research_points_energy/(-10 * u.networth)))))
+	then least(research_max_energy, floor(200 * (1 - exp((u.research_points_energy+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_energy, floor(research_max_energy * (1 - exp((u.research_points_energy+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
 	else 0 end,	
 research_percent_population = u.research_percent_population + case when u.research_percent_population < (
 	case when research_max_population < 200 
-	then least(research_max_population, floor(200 * (1 - exp(u.research_points_population/(-10 * u.networth)))))
-	else least(research_max_population, floor(research_max_population * (1 - exp(u.research_points_population/(-10 * u.networth)))))
+	then least(research_max_population, floor(200 * (1 - exp((u.research_points_population+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_population, floor(research_max_population * (1 - exp((u.research_points_population+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_population > (
 	case when research_max_population < 200 
-	then least(research_max_population, floor(200 * (1 - exp(u.research_points_population/(-10 * u.networth)))))
-	else least(research_max_population, floor(research_max_population * (1 - exp(u.research_points_population/(-10 * u.networth)))))
+	then least(research_max_population, floor(200 * (1 - exp((u.research_points_population+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_population, floor(research_max_population * (1 - exp((u.research_points_population+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
 	else 0 end,	
 research_percent_culture = u.research_percent_culture + case when u.research_percent_culture < (
 	case when research_max_culture < 200 
-	then least(research_max_culture, floor(200 * (1 - exp(u.research_points_culture/(-10 * u.networth)))))
-	else least(research_max_culture, floor(research_max_culture * (1 - exp(u.research_points_culture/(-10 * u.networth)))))
+	then least(research_max_culture, floor(200 * (1 - exp((u.research_points_culture+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_culture, floor(research_max_culture * (1 - exp((u.research_points_culture+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_culture > (
 	case when research_max_culture < 200 
-	then least(research_max_culture, floor(200 * (1 - exp(u.research_points_culture/(-10 * u.networth)))))
-	else least(research_max_culture, floor(research_max_culture * (1 - exp(u.research_points_culture/(-10 * u.networth)))))
+	then least(research_max_culture, floor(200 * (1 - exp((u.research_points_culture+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_culture, floor(research_max_culture * (1 - exp((u.research_points_culture+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
 	else 0 end,	
 research_percent_operations = u.research_percent_operations + case when u.research_percent_operations < (
 	case when research_max_operations < 200 
-	then least(research_max_operations, floor(200 * (1 - exp(u.research_points_operations/(-10 * u.networth)))))
-	else least(research_max_operations, floor(research_max_operations * (1 - exp(u.research_points_operations/(-10 * u.networth)))))
+	then least(research_max_operations, floor(200 * (1 - exp((u.research_points_operations+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_operations, floor(research_max_operations * (1 - exp((u.research_points_operations+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_operations > (
 	case when research_max_operations < 200 
-	then least(research_max_operations, floor(200 * (1 - exp(u.research_points_operations/(-10 * u.networth)))))
-	else least(research_max_operations, floor(research_max_operations * (1 - exp(u.research_points_operations/(-10 * u.networth)))))
+	then least(research_max_operations, floor(200 * (1 - exp((u.research_points_operations+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_operations, floor(research_max_operations * (1 - exp((u.research_points_operations+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
 	else 0 end,	
 research_percent_portals = u.research_percent_portals + case when u.research_percent_portals < (
 	case when research_max_portals < 200 
-	then least(research_max_portals, floor(200 * (1 - exp(u.research_points_portals/(-10 * u.networth)))))
+	then least(research_max_portals, floor(200 * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
 	else least(
  coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
  research_max_portals, floor(
  coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
- research_max_portals * (1 - exp(u.research_points_portals/(-10 * u.networth)))))
+ research_max_portals * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_portals > (
 	case when research_max_portals < 200 
-	then least(research_max_portals, floor(200 * (1 - exp(u.research_points_portals/(-10 * u.networth)))))
-	else least(research_max_portals, floor(research_max_portals * (1 - exp(u.research_points_portals/(-10 * u.networth)))))
+	then least(research_max_portals, floor(200 * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
+	else least(research_max_portals, floor(research_max_portals * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
 	else 0 end
