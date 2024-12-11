@@ -148,7 +148,7 @@ values
 ((select id from classes where name = 'FH'),'crystal_production', 1.0,current_timestamp),
 ((select id from classes where name = 'FH'),'ectrolium_production', 1.2,current_timestamp),
 ((select id from classes where name = 'FH'),'travel_speed', (1.0*2.0),current_timestamp),
-((select id from classes where name = 'MT'),'race_special_pop_research', 6000 ,current_timestamp),
+((select id from classes where name = 'FH'),'race_special_pop_research', 6000 ,current_timestamp),
 
 ((select id from classes where name = 'SB'),'pop_growth', (1.2*0.02),current_timestamp),
 ((select id from classes where name = 'SB'),'research_bonus_military', 1.1,current_timestamp),
