@@ -149,3 +149,11 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         f = open("process_ops_log_fast2.txt", "a")
         f.write("Process ops took: " +  str(time.time() - start_t) + ' fleets processed ' + str(fleets_processed) + "\n")
         f.close()
+
+        arte = Artefacts.objects.get(name="Terraformer")    
+        if arte.empire_holding != None and arte.ticks_left == 0:
+            terraformer()
+            
+        arte = Artefacts.objects.get(name="Flying Dutchman")    
+        if arte.empire_holding != None and arte.ticks_left == 0:
+            dutchman()
