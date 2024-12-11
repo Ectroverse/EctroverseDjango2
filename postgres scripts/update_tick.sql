@@ -119,17 +119,17 @@ BEGIN
  and p.owner_id is not null;
 
  with news_buildings as 
-(select user_id
-	  from '|| _construction_table||' a 
-	  where a.ticks_remaining = 0
-	  group by user_id)
+(select user_id,
+		building_type,
+		sum(n) n
+	  from '|| _construction_table||'
+	  where ticks_remaining = 0
+	  group by user_id, building_type)
 ,      
 ins_news_success as (
     insert into '|| _news_table||' ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, extra_info)
-    select n.user_id, u.empire_id, ''BB'', current_timestamp, true, false, false, (select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'),
-        ''These building constructions were finished: '' ||
-            ( select STRING_AGG(''
-			'',
+    select nb.user_id, u.empire_id, ''BB'', current_timestamp, true, false, false, (select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'),
+        ''These building constructions were finished: '' || chr(10) ||
 			case when building_type = ''SC'' then n || '' solar collectors''
 			when building_type = ''FR'' then n || '' fission reactors''
 			when building_type = ''MP'' then n || '' mineral plants''
@@ -140,16 +140,10 @@ ins_news_success as (
 			when building_type = ''DS'' then n || '' defense satelites''
 			when building_type = ''SN'' then n || '' shield networks''
 			when building_type = ''PL'' then n || '' portals'' end
-			) extra_info
-     from '|| _construction_table||'
-     where ticks_remaining = 0
-     group by user_id
-
+     from news_buildings nb
+	join '|| _userstatus_table ||' u on u.id = nb.user_id
     )     
-    as extra_info
-    from news_buildings n
-    join '|| _userstatus_table ||' u on u.id = n.user_id
-)
+   
 
 update '|| _userstatus_table ||' u
 set construction_flag = 1 
