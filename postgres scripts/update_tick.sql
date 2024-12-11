@@ -158,8 +158,12 @@ where u.id = c.user_id;
  
  update '|| _planets_table ||' p
  set total_buildings = solar_collectors + fission_reactors + mineral_plants + crystal_labs + refinement_stations + 
- cities + research_centers + defense_sats + shield_networks + case when portal = true then 1 else 0 end
+ cities + research_centers + defense_sats + shield_networks + case when portal = true then 1 else 0 end,
+ buildings_under_construction = coalesce((select sum(n) from '|| _construction_table||' where planet_id = p.id),0)
  where p.owner_id is not null;
+ 
+ 
+ 
  -- portal coverage
  
  update '|| _planets_table ||' p
@@ -416,7 +420,7 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 
 update '|| _userstatus_table ||' u
 set population_upkeep_reduction = case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Darwinism'' ) = u.empire_id 
-	then population_upkeep_reduction * 1.1 else least(population_upkeep_reduction, (portals_upkeep + buildings_upkeep + units_upkeep)) end;
+	then u.population/315 else least(u.population/350, (portals_upkeep + buildings_upkeep + units_upkeep)) end;
 
 
 update '|| _unitconstruction_table||'
