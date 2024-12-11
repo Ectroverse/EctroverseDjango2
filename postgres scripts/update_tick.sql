@@ -19,6 +19,7 @@ declare
 	_scouting_table varchar(255);
 	_news_table varchar(255);
 	_ticks_log_table varchar(255);
+	_artefacts_table varchar(255);
 	
 	_roundstatus varchar(255);
 	_sql varchar;
@@ -36,6 +37,7 @@ BEGIN
 		_news_table := 'app_news';
 		_roundstatus := 'app_roundstatus';
 		_ticks_log_table := 'app_ticks_log';
+		_artefacts_table := 'app_artefacts';
 	else 
 		_planets_table := '"PLANETS"';
 		_userstatus_table := 'galtwo_userstatus';
@@ -46,6 +48,7 @@ BEGIN
 		_news_table := 'galtwo_news';
 		_roundstatus := 'galtwo_roundstatus';
 		_ticks_log_table := 'galtwo_ticks_log';
+		_artefacts_table := 'galtwo_artefacts';
 	end if;
 
 	EXECUTE format('select max(round_number) from  %s ;', _roundstatus)
@@ -178,59 +181,69 @@ where u.id = c.user_id;
 update '|| _userstatus_table ||' u
 set 
 
-research_points_military = u.research_points_military + 1.2 * u.alloc_research_military * 
+research_points_military = u.research_points_military + 1.2 * u.alloc_research_military/100 * 
 case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
 * (RC * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100 
  + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
-research_bonus_military ,
+research_bonus_military 
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
-research_points_construction = u.research_points_construction + 1.2 * u.alloc_research_construction * 
+research_points_construction = u.research_points_construction + 1.2 * u.alloc_research_construction/100 * 
 case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
 * (RC * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
   + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
-research_bonus_construction ,
+research_bonus_construction
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
 
-research_points_tech = u.research_points_tech + 1.2 * u.alloc_research_tech * 
+research_points_tech = u.research_points_tech + 1.2 * u.alloc_research_tech/100 * 
 case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
 * (RC * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
  + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus 
-research_bonus_tech ,
+research_bonus_tech
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
 
-research_points_energy = u.research_points_energy + 1.2 * u.alloc_research_energy * 
+research_points_energy = u.research_points_energy + 1.2 * u.alloc_research_energy/100 * 
 case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
 * (RC * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
  + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
-research_bonus_energy ,
+research_bonus_energy
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
 
-research_points_population = u.research_points_population + 1.2 * u.alloc_research_population * 
+research_points_population = u.research_points_population + 1.2 * u.alloc_research_population/100 * 
 case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
 * (RC * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
  + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
-research_bonus_population ,
+research_bonus_population * 
+coalesce((select (2) from '|| _artefacts_table ||' f where name = ''Rabbit Theorum'' and f.empire_holding_id = u.empire_id),1)
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
 
-research_points_culture = u.research_points_culture + 1.2 * u.alloc_research_culture * 
+research_points_culture = u.research_points_culture + 1.2 * u.alloc_research_culture/100 * 
 case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
 * (RC * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
  + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
-research_bonus_culture ,
+research_bonus_culture
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
 
-research_points_operations = u.research_points_operations + 1.2 * u.alloc_research_operations * 
+research_points_operations = u.research_points_operations + 1.2 * u.alloc_research_operations/100 * 
 case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
 * (RC * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
  + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus 
-research_bonus_operations ,
+research_bonus_operations
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
 
-research_points_portals = u.research_points_portals + 1.2 * u.alloc_research_portals * 
+research_points_portals = u.research_points_portals + 1.2 * u.alloc_research_portals/100 * 
 case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100.0) else 1 end
 * (RC * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100.0
  + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
-research_bonus_portals ,
+research_bonus_portals * 
+coalesce((select (1.5) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),1)
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
 
 population = cur_pop,
@@ -240,26 +253,29 @@ energy_production =
 r.race_energy_production* (1 + u.research_percent_energy/100.0)* 
 				(SC_prod * r.race_special_solar_15 * COALESCE(a.dark_mist_effect,1) + FR_prod ) * 
 				case when b.extra_effect = ''Energy'' then (1 + b.Enlightenment_effect/100.0) else 1 end
-				* coalesce((select (1 + effect1/100.0) from app_Artefacts f where name = ''Ether Gardens'' and f.empire_holding_id = u.empire_id),1),
+				* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Ether Gardens'' and f.empire_holding_id = u.empire_id),1),
 
 
 energy_decay = greatest(0, u.energy * (select num_val from constants c where c.name = ''energy_decay_factor'')), 
-energy_interest =  least(u.energy_production, u.energy * r.race_special_resource_interest), 
+energy_interest = case when r.race_special_resource_interest = 1 then 0 else least(u.energy_production, u.energy * r.race_special_resource_interest) end, 
 
 --energy_specop_effect =, 
-mineral_production = MP_prod * r.race_mineral_production * case when b.extra_effect = ''Mineral'' then (1 + b.Enlightenment_effect/100.0) else 1 end, 
+mineral_production = MP_prod * r.race_mineral_production * case when b.extra_effect = ''Mineral'' then (1 + b.Enlightenment_effect/100.0) else 1 end
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Mirny Mine'' and f.empire_holding_id = u.empire_id),1), 
 mineral_decay = 0, 
-mineral_interest = least(u.mineral_production, u.minerals * r.race_special_resource_interest), 
+mineral_interest = case when r.race_special_resource_interest = 1 then 0 else least(u.mineral_production, u.minerals * r.race_special_resource_interest) end, 
 
-crystal_production = CL_prod * r.race_crystal_production * case when b.extra_effect = ''Crystal'' then (1 + b.Enlightenment_effect/100.0) else 1 end ,  
+crystal_production = CL_prod * r.race_crystal_production * case when b.extra_effect = ''Crystal'' then (1 + b.Enlightenment_effect/100.0) else 1 end
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Crystal Synthesis'' and f.empire_holding_id = u.empire_id),1),  
 crystal_decay = greatest(0, u.crystals * (select num_val from constants c  where c.name = ''crystal_decay_factor'')), 
-crystal_interest =  least(u.crystal_production, u.crystals * r.race_special_resource_interest), 
+crystal_interest =  case when r.race_special_resource_interest = 1 then 0 else least(u.crystal_production, u.crystals * r.race_special_resource_interest) end, 
  
-ectrolium_production = RS_prod * r.race_ectrolium_production  * case when b.extra_effect = ''Ectrolium'' then (1 + b.Enlightenment_effect/100.0) else 1 end ,
+ectrolium_production = RS_prod * r.race_ectrolium_production  * case when b.extra_effect = ''Ectrolium'' then (1 + b.Enlightenment_effect/100.0) else 1 end
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Foohon Technology'' and f.empire_holding_id = u.empire_id),1),
 ectrolium_decay = 0, 
-ectrolium_interest = least(u.ectrolium_production, u.ectrolium * r.race_special_resource_interest),
+ectrolium_interest = case when r.race_special_resource_interest = 1 then 0 else least(u.ectrolium_production, u.ectrolium * r.race_special_resource_interest) end,
 
-buildings_upkeep = SC * (select num_val from constants where name = ''upkeep_solar_collectors'')
+buildings_upkeep = (SC * (select num_val from constants where name = ''upkeep_solar_collectors'')
  + FR * (select num_val from constants where name = ''upkeep_fission_reactors'')
  + MP * (select num_val from constants where name = ''upkeep_mineral_plants'')
  + CL * (select num_val from constants where name = ''upkeep_crystal_labs'')
@@ -267,10 +283,13 @@ buildings_upkeep = SC * (select num_val from constants where name = ''upkeep_sol
  + CT * (select num_val from constants where name = ''upkeep_cities'')
  + RC * (select num_val from constants where name = ''upkeep_research_centers'')
  + DS * (select num_val from constants where name = ''upkeep_defense_sats'')
- + SN * (select num_val from constants where name = ''upkeep_shield_networks''),
+ + SN * (select num_val from constants where name = ''upkeep_shield_networks'')) * 
+ case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Engineer'' ) = u.empire_id then
+ (case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Engineers Son'' ) = u.empire_id then 0.8 else 0.9 end)
+ else 1 end,
 
 portals_upkeep = pow(greatest(0, PL - 1), 1.2736) * 100.0 / (1 + u.research_percent_portals/100.0), 
-units_upkeep = COALESCE(fs.fleet_cost, 0),
+units_upkeep = COALESCE(fs.fleet_cost, 0) * coalesce((select (1 - effect1/100.0) from '|| _artefacts_table ||' f where name = ''Military Might'' and f.empire_holding_id = u.empire_id),1),
 
 total_solar_collectors = SC, 
 total_fission_reactors = FR , 
@@ -396,7 +415,8 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 
 
 update '|| _userstatus_table ||' u
-set population_upkeep_reduction = least(population_upkeep_reduction, (portals_upkeep + buildings_upkeep + units_upkeep));
+set population_upkeep_reduction = case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Darwinism'' ) = u.empire_id 
+	then population_upkeep_reduction * 1.1 else least(population_upkeep_reduction, (portals_upkeep + buildings_upkeep + units_upkeep)) end;
 
 
 update '|| _unitconstruction_table||'
@@ -546,7 +566,10 @@ ectrolium = greatest(0, ectrolium + ectrolium_income);
  
 -- readiness update
 update '|| _userstatus_table ||' u
-set fleet_readiness = greatest(-100, least(fleet_readiness_max ,fleet_readiness + case when u.energy <= 0 then -3 else 2 end)) ,
+set fleet_readiness = case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Churchills Brandy'' ) = u.empire_id and
+(select (tick_number%2) from '|| _roundstatus||' where round_number = '|| _round_number||') = 0 
+then greatest(-100, least(fleet_readiness_max ,fleet_readiness + case when u.energy <= 0 then -3 else 3 end)) 
+else greatest(-100, least(fleet_readiness_max ,fleet_readiness + case when u.energy <= 0 then -3 else 2 end))end,
 psychic_readiness = greatest(-100, least(psychic_readiness_max ,psychic_readiness + case when u.energy <= 0 then -3 else 2 end)),
 agent_readiness = greatest(-100, least(agent_readiness_max ,agent_readiness + case when u.energy <= 0 then -3 else 2 end));
 
@@ -676,7 +699,11 @@ research_percent_operations = u.research_percent_operations + case when u.resear
 research_percent_portals = u.research_percent_portals + case when u.research_percent_portals < (
 	case when research_max_portals < 200 
 	then least(research_max_portals, floor(200 * (1 - exp(u.research_points_portals/(-10 * u.networth)))))
-	else least(research_max_portals, floor(research_max_portals * (1 - exp(u.research_points_portals/(-10 * u.networth)))))
+	else least(
+ coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+ research_max_portals, floor(
+ coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+ research_max_portals * (1 - exp(u.research_points_portals/(-10 * u.networth)))))
 	end
 	) then 1 
 	when 
@@ -965,7 +992,7 @@ del_explo as (
 	where e.a_id = a.id 
 ),
 upd_Arti as (
-	update app_artefacts r
+	update '|| _artefacts_table ||' r
 	set empire_holding_id = e.empire_id
 	from explored_planets e
 	where r.on_planet_id = e.p_id 
@@ -1015,6 +1042,17 @@ update '|| _userstatus_table ||' u
 set military_flag = 1 
 from (select owner_id from unsucessfull_explos group by owner_id) c 
 where u.id = c.owner_id;
+
+-- countdown artis
+update '|| _artefacts_table||'
+set ticks_left = ticks_left -1 where name = ''Tyrs Justice'' and ticks_left > 0 and empire_holding_id is not null;
+update '|| _artefacts_table||'
+set ticks_left = ticks_left -1 where name = ''Flying Dutchman'' and ticks_left > 0 and empire_holding_id is not null;
+update '|| _artefacts_table||'
+set ticks_left = ticks_left -1 where name = ''Terraformer'' and ticks_left > 0 and empire_holding_id is not null;
+
+update '|| _planets_table||'
+set size = size +1 where id = (select on_planet_id from '|| _artefacts_table||' where name = ''You Grow, Girl!'');
 
 -- delete empty fleets
 delete from '|| _fleet_table ||' a 
