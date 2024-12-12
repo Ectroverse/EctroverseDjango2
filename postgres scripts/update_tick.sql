@@ -104,21 +104,26 @@ BEGIN
  update '|| _construction_table||'
  set ticks_remaining = ticks_remaining - 1;
 
+ with built_buildings as 
+(select planet_id
+	  from '|| _construction_table||'
+	  where ticks_remaining = 0
+	  group by planet_id)
+
  update '|| _planets_table ||' p
- set solar_collectors = solar_collectors + case when a.building_type = ''SC'' then a.n else 0 end,
- fission_reactors =fission_reactors + case when a.building_type = ''FR'' then a.n else 0 end,
- mineral_plants = mineral_plants + case when a.building_type = ''MP'' then a.n else 0 end,
- crystal_labs = crystal_labs + case when a.building_type = ''CL'' then a.n else 0 end,
- refinement_stations = refinement_stations + case when a.building_type = ''RS'' then a.n else 0 end,
- cities = cities + case when a.building_type = ''CT'' then a.n else 0 end,
- research_centers = research_centers + case when a.building_type = ''RC'' then a.n else 0 end,
- defense_sats = defense_sats + case when a.building_type = ''DS'' then a.n else 0 end,
- shield_networks = shield_networks + case when a.building_type = ''SN'' then a.n else 0 end,
- portal = case when a.building_type = ''PL'' then true else portal end,
- buildings_under_construction = buildings_under_construction - a.n,
- portal_under_construction = case when a.building_type = ''PL'' then false else portal_under_construction end
- from '|| _construction_table||' a
- where p.id = a.planet_id and a.ticks_remaining = 0
+ set solar_collectors = solar_collectors + coalesce((select sum(n) from '|| _construction_table||' where planet_id = p.id and building_type = ''SC'' and ticks_remaining = 0),0),
+ fission_reactors = fission_reactors + coalesce((select sum(n) from '|| _construction_table||' where planet_id = p.id and building_type = ''FR'' and ticks_remaining = 0),0),
+ mineral_plants = mineral_plants + coalesce((select sum(n) from '|| _construction_table||' where planet_id = p.id and building_type = ''MP'' and ticks_remaining = 0),0),
+ crystal_labs = crystal_labs + coalesce((select sum(n) from '|| _construction_table||' where planet_id = p.id and building_type = ''CL'' and ticks_remaining = 0),0),
+ refinement_stations = refinement_stations + coalesce((select sum(n) from '|| _construction_table||' where planet_id = p.id and building_type = ''RS'' and ticks_remaining = 0),0),
+ cities = cities + coalesce((select sum(n) from '|| _construction_table||' where planet_id = p.id and building_type = ''CT'' and ticks_remaining = 0),0),
+ research_centers = research_centers + coalesce((select sum(n) from '|| _construction_table||' where planet_id = p.id and building_type = ''RC'' and ticks_remaining = 0),0),
+ defense_sats = defense_sats + coalesce((select sum(n) from '|| _construction_table||' where planet_id = p.id and building_type = ''DS'' and ticks_remaining = 0),0),
+ shield_networks = shield_networks + coalesce((select sum(n) from '|| _construction_table||' where planet_id = p.id and building_type = ''SN'' and ticks_remaining = 0),0),
+ portal = coalesce((select true from '|| _construction_table||' where planet_id = p.id and building_type = ''PL'' and ticks_remaining = 0),portal),
+ portal_under_construction = coalesce((select true from '|| _construction_table||' where planet_id = p.id and building_type = ''PL'' and ticks_remaining != 0),false)
+ from built_buildings a
+ where p.id = a.planet_id
  and p.owner_id is not null;
 
  with news_buildings as 
@@ -145,8 +150,7 @@ ins_news_success as (
 			when building_type = ''PL'' then n || '' portals'' end
      from news_buildings nb
 	join '|| _userstatus_table ||' u on u.id = nb.user_id
-    )     
-   
+    ) 
 
 update '|| _userstatus_table ||' u
 set construction_flag = 1 
@@ -270,7 +274,8 @@ mineral_interest = case when r.race_special_resource_interest = 1 then 0 else le
 
 crystal_production = CL_prod * r.race_crystal_production * case when b.extra_effect = ''Crystal'' then (1 + b.Enlightenment_effect/100.0) else 1 end
 * coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Crystal Synthesis'' and f.empire_holding_id = u.empire_id),1),  
-crystal_decay = greatest(0, u.crystals * (select num_val from constants c  where c.name = ''crystal_decay_factor'')), 
+crystal_decay = greatest(0, u.crystals * (select num_val from constants c  where c.name = ''crystal_decay_factor'')) 
+* coalesce((select (0.25) from '|| _artefacts_table ||' f where name = ''Crystal Recharger'' and f.empire_holding_id = u.empire_id),1), 
 crystal_interest =  case when r.race_special_resource_interest = 1 then 0 else least(u.crystal_production, u.crystals * r.race_special_resource_interest) end, 
  
 ectrolium_production = RS_prod * r.race_ectrolium_production  * case when b.extra_effect = ''Ectrolium'' then (1 + b.Enlightenment_effect/100.0) else 1 end
@@ -420,7 +425,9 @@ total_buildings = SC + FR + MP + CL + RS + CT + RC + DS + SN + PL
 update '|| _userstatus_table ||' u
 set population_upkeep_reduction = case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Darwinism'' ) = u.empire_id 
 	then u.population/315 else least(u.population/350, (portals_upkeep + buildings_upkeep + units_upkeep)) end,
-	current_research_funding = current_research_funding * 0.9;
+	current_research_funding = (current_research_funding * 0.9) + 
+	case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''The Recycler'' ) = u.empire_id 
+	then u.energy_decay * u.research_percent_tech/200 else 0 end;
 
 
 update '|| _unitconstruction_table||'
