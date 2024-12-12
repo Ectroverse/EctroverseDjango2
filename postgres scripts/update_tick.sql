@@ -579,10 +579,14 @@ ectrolium = greatest(0, ectrolium + ectrolium_income);
 update '|| _userstatus_table ||' u
 set fleet_readiness = case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Churchills Brandy'' ) = u.empire_id and
 (select (tick_number%2) from '|| _roundstatus||' where round_number = '|| _round_number||') = 0 
-then greatest(-100, least(fleet_readiness_max ,fleet_readiness + case when u.energy <= 0 then -3 else 3 end)) 
-else greatest(-100, least(fleet_readiness_max ,fleet_readiness + case when u.energy <= 0 then -3 else 2 end))end,
-psychic_readiness = greatest(-100, least(psychic_readiness_max ,psychic_readiness + case when u.energy <= 0 then -3 else 2 end)),
-agent_readiness = greatest(-100, least(agent_readiness_max ,agent_readiness + case when u.energy <= 0 then -3 else 2 end));
+then greatest(-100, least(fleet_readiness_max ,fleet_readiness + case when u.energy <= 0 and (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep)
+> u.population_upkeep_reduction then -3 else 3 end)) 
+else greatest(-100, least(fleet_readiness_max ,fleet_readiness + case when u.energy <= 0 and (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep)
+> u.population_upkeep_reduction then -3 else 2 end))end,
+psychic_readiness = greatest(-100, least(psychic_readiness_max ,psychic_readiness + case when u.energy <= 0 and (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep)
+> u.population_upkeep_reduction then -3 else 2 end)),
+agent_readiness = greatest(-100, least(agent_readiness_max ,agent_readiness + case when u.energy <= 0 and (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep)
+> u.population_upkeep_reduction then -3 else 2 end));
 
 -- fleet decay
 update '|| _fleet_table ||' a
@@ -601,7 +605,8 @@ ghost  = 0.98 * ghost,
 exploration  = 0.98 * exploration
 from '|| _userstatus_table ||' u
 where u.id = a.owner_id
-and u.energy <= 0;
+and u.energy <= 0 and (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep)
+> u.population_upkeep_reduction;
 
 
 
