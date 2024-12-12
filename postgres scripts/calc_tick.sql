@@ -206,14 +206,14 @@ population = (select sum(current_population) from '|| _planets_table ||' where o
 num_planets = (select count(*) from '|| _planets_table ||' where owner_id = u.id),
 
 research_points_military = u.research_points_military + 1.2 * u.alloc_research_military/100 * 
-case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
+coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Research''),1)
 * (u.total_research_centers * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100 
  + case when race_special_pop_research != 0 then u.population / race_special_pop_research else 0 end) * -- foohon bonus
-research_bonus_military 
+research_bonus_military  
 * coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
 research_points_construction = u.research_points_construction + 1.2 * u.alloc_research_construction/100 * 
-case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
+coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Research''),1)
 * (u.total_research_centers * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
   + case when race_special_pop_research != 0 then u.population / race_special_pop_research else 0 end) * -- foohon bonus
 research_bonus_construction
@@ -221,7 +221,7 @@ research_bonus_construction
 
 
 research_points_tech = u.research_points_tech + 1.2 * u.alloc_research_tech/100 * 
-case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
+coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Research''),1)
 * (u.total_research_centers * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
  + case when race_special_pop_research != 0 then u.population / race_special_pop_research else 0 end) * -- foohon bonus 
 research_bonus_tech
@@ -229,32 +229,32 @@ research_bonus_tech
 
 
 research_points_energy = u.research_points_energy + 1.2 * u.alloc_research_energy/100 * 
-case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
+coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Research''),1)
 * (u.total_research_centers * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
  + case when race_special_pop_research != 0 then u.population / race_special_pop_research else 0 end) * -- foohon bonus
-research_bonus_energy
+research_bonus_population
 * coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
 
 research_points_population = u.research_points_population + 1.2 * u.alloc_research_population/100 * 
-case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
+coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Research''),1)
 * (u.total_research_centers * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
  + case when race_special_pop_research != 0 then u.population / race_special_pop_research else 0 end) * -- foohon bonus
-research_bonus_population * 
-coalesce((select (2) from '|| _artefacts_table ||' f where name = ''Rabbit Theorum'' and f.empire_holding_id = u.empire_id),1)
-* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
-
-
-research_points_culture = u.research_points_culture + 1.2 * u.alloc_research_culture/100 * 
-case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
-* (u.total_research_centers * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
- + case when race_special_pop_research != 0 then u.population / race_special_pop_research else 0 end) * -- foohon bonus
+coalesce((select num_val from constants where name = u.race and name = ''research_bonus_population''),1.0) * 
 research_bonus_culture
 * coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
 
+research_points_culture = u.research_points_culture + 1.2 * u.alloc_research_culture/100 * 
+coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Research''),1)
+* (u.total_research_centers * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
+ + case when race_special_pop_research != 0 then u.population / race_special_pop_research else 0 end) * -- foohon bonus
+coalesce((select num_val from constants where name = u.race and name = ''research_bonus_culture''),1.0)
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
+
+
 research_points_operations = u.research_points_operations + 1.2 * u.alloc_research_operations/100 * 
-case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) else 1 end
+coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Research''),1)
 * (u.total_research_centers * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100
  + case when race_special_pop_research != 0 then u.population / race_special_pop_research else 0 end) * -- foohon bonus 
 research_bonus_operations
@@ -262,17 +262,17 @@ research_bonus_operations
 
 
 research_points_portals = u.research_points_portals + 1.2 * u.alloc_research_portals/100 * 
-case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100.0) else 1 end
+coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Research''),1)
 * (u.total_research_centers * (select num_val from constants where name = ''building_production_research'') + u.current_research_funding/100.0
  + case when race_special_pop_research != 0 then u.population / race_special_pop_research else 0 end) * -- foohon bonus
-research_bonus_portals * 
-coalesce((select (1.5) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),1)
+coalesce((select num_val from constants where name = u.race and name = ''research_bonus_portals''),1.0) * 
+research_bonus_portals
 * coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
 
 
 energy_production = 
 -- solar
-r.race_energy_production* (1 + u.research_percent_energy/100.0)* 
+r.race_energy_production * (1 + u.research_percent_energy/100.0)* 
 	((select ((select num_val from constants where name = ''building_production_solar'') * sum(solar_collectors* (1 + bonus_solar/100.0))) from '|| _planets_table ||' 
 	where owner_id = u.id) * r.race_special_solar_15 * COALESCE(a.dark_mist_effect,1) + 
 	(select ((select num_val from constants where name = ''building_production_fission'') * sum(fission_reactors* (1 + bonus_fission/100.0))) from '|| _planets_table ||' 
@@ -283,23 +283,27 @@ r.race_energy_production* (1 + u.research_percent_energy/100.0)*
 energy_decay = greatest(0, u.energy * (select num_val from constants c where c.name = ''energy_decay_factor'')), 
 energy_interest = case when r.race_special_resource_interest = 1 then 0 else least(u.energy_production, u.energy * r.race_special_resource_interest) end, 
 
-energy_specop_effect = u.energy_production * case when b.extra_effect = ''Energy'' then (b.Enlightenment_effect/100.0) else 0 end, 
+energy_specop_effect = u.energy_production * coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Energy''),0), 
 
 mineral_production = (select sum(mineral_plants* (1 + bonus_mineral/100.0)) from '|| _planets_table ||' 
-	where owner_id = u.id) * r.race_mineral_production * case when b.extra_effect = ''Mineral'' then (1 + b.Enlightenment_effect/100.0) else 1 end
+	where owner_id = u.id) * r.race_mineral_production * 
+	coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Mineral''),1)
 * coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Mirny Mine'' and f.empire_holding_id = u.empire_id),1), 
 mineral_decay = 0, 
 mineral_interest = case when r.race_special_resource_interest = 1 then 0 else least(u.mineral_production, u.minerals * r.race_special_resource_interest) end, 
 
 crystal_production = (select sum(crystal_labs* (1 + bonus_crystal/100.0)) from '|| _planets_table ||' 
-	where owner_id = u.id) * r.race_crystal_production * case when b.extra_effect = ''Crystal'' then (1 + b.Enlightenment_effect/100.0) else 1 end
+	where owner_id = u.id) * r.race_crystal_production * 
+	coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Crystal''),1)
 * coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Crystal Synthesis'' and f.empire_holding_id = u.empire_id),1),  
 crystal_decay = greatest(0, u.crystals * (select num_val from constants c  where c.name = ''crystal_decay_factor'')) 
 * coalesce((select (0.25) from '|| _artefacts_table ||' f where name = ''Crystal Recharger'' and f.empire_holding_id = u.empire_id),1), 
 crystal_interest =  case when r.race_special_resource_interest = 1 then 0 else least(u.crystal_production, u.crystals * r.race_special_resource_interest) end, 
  
 ectrolium_production = (select sum(refinement_stations* (1 + bonus_ectrolium/100.0)) from '|| _planets_table ||' 
-	where owner_id = u.id) * r.race_ectrolium_production  * case when b.extra_effect = ''Ectrolium'' then (1 + b.Enlightenment_effect/100.0) else 1 end
+	where owner_id = u.id) * 
+	r.race_ectrolium_production  * 
+	coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Ectrolium''),1)
 * coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Foohon Technology'' and f.empire_holding_id = u.empire_id),1),
 ectrolium_decay = 0, 
 ectrolium_interest = case when r.race_special_resource_interest = 1 then 0 else least(u.ectrolium_production, u.ectrolium * r.race_special_resource_interest) end,
@@ -317,19 +321,34 @@ buildings_upkeep = (u.total_fission_reactors * (select num_val from constants wh
  else 1 end,
 
 portals_upkeep = pow(greatest(0, u.total_portals - 1), 1.2736) * 100.0 / (1 + u.research_percent_portals/100.0), 
-units_upkeep = COALESCE(fs.fleet_cost, 0) * coalesce((select (1 - effect1/100.0) from '|| _artefacts_table ||' f 
-where name = ''Military Might'' and f.empire_holding_id = u.empire_id),1)
+units_upkeep = (select 
+	(sum(a1.bomber  * u1.bomber) +
+	sum(a1.fighter  * u1.fighter) +
+	sum(a1.transport  * u1.transport) +
+	sum(a1.cruiser  * u1.cruiser) +
+	sum(a1.carrier  * u1.carrier) +
+	sum(a1.soldier  * u1.soldier) +
+	sum(a1.droid  * u1.droid) +
+	sum(a1.goliath  * u1.goliath) +
+	sum(a1.phantom  * u1.phantom) +
+	sum(a1.wizard  * u1.wizard) +
+	sum(a1.agent  * u1.agent) +
+	sum(a1.ghost  * u1.ghost) +
+	sum(a1.exploration  * u1.exploration))
+	from '|| _fleet_table ||' a1
+	join unit_stats u1 on u1.class_name = ''unit upkeep costs''
+	where a1.owner_id = u.id) 
+	* coalesce((select (1 - effect1/100.0) from '|| _artefacts_table ||' f where name = ''Military Might'' and f.empire_holding_id = u.empire_id),1)
 
 -- select  SC, r.solar_bonus, a.dark_mist_effect
  from '|| _userstatus_table ||' u2 
-  left join (select user_to_id, 
-		 (specop_strength / 100.0) Enlightenment_effect,
-		 extra_effect
+ left join 		(select user_to_id, 
+		 1*  EXP (SUM (LN (100.0 / (specop_strength + 100.0)))) dark_mist_effect  --EXP (SUM (LN )) is just multiplication
 		 from app_specops  a
-		 where a.name in (''Enlightenment'') and specop_strength > 0
-		) b on u2.id = b.user_to_id
-
-  join (select id, race_special_pop_research,
+		 where a.name in (''Black Mist'', ''Dark Web'') and specop_strength > 0
+		 group by user_to_id
+		)  a on u2.id = a.user_to_id
+ join (select id, race_special_pop_research,
 		 
 		case when race_special_solar_15 = 0 then 1 else race_special_solar_15 end,
 		case when race_special_resource_interest = 0 then 1 else race_special_resource_interest end,
@@ -372,13 +391,6 @@ where name = ''Military Might'' and f.empire_holding_id = u.empire_id),1)
 			 group by u3.id
 			 ) g
 		 ) r on r.id = u2.id
- left join 		(select user_to_id, 
-		 1*  EXP (SUM (LN (100.0 / (specop_strength + 100.0)))) dark_mist_effect  --EXP (SUM (LN )) is just multiplication
-		 from app_specops  a
-		 where a.name in (''Black Mist'', ''Dark Web'') and specop_strength > 0
-		 group by user_to_id
-		)  a on u2.id = a.user_to_id
-
   left join (select owner_id, sum(bomber) bomber, sum(fighter) fighter, sum(transport) transport,
 			 sum(cruiser) cruiser, sum(soldier) soldier, sum(droid) droid, sum(goliath) goliath,
 			 sum(phantom) phantom, sum(wizard) wizard, sum(agent) agent, sum(ghost) ghost,
@@ -387,25 +399,7 @@ where name = ''Military Might'' and f.empire_holding_id = u.empire_id),1)
 			 --join constants c on c.
 			 group by owner_id)
 			 f on f.owner_id = u2.id
-  left join 
-  (select 
-	owner_id, 
-	sum(a1.bomber  * u1.bomber) +
-	sum(a1.fighter  * u1.fighter) +
-	sum(a1.transport  * u1.transport) +
-	sum(a1.cruiser  * u1.cruiser) +
-	sum(a1.carrier  * u1.carrier) +
-	sum(a1.soldier  * u1.soldier) +
-	sum(a1.droid  * u1.droid) +
-	sum(a1.goliath  * u1.goliath) +
-	sum(a1.phantom  * u1.phantom) +
-	sum(a1.wizard  * u1.wizard) +
-	sum(a1.agent  * u1.agent) +
-	sum(a1.ghost  * u1.ghost) +
-	sum(a1.exploration  * u1.exploration) as fleet_cost
-	from '|| _fleet_table ||' a1
-	join unit_stats u1 on u1.class_name = ''unit upkeep costs''
-	group by owner_id) fs on fs.owner_id =  u2.id 
+  where u2.id = u.id
 ;
 
 
