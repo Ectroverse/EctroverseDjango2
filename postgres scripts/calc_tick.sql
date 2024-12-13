@@ -282,7 +282,11 @@ energy_production =
 -- solar
 coalesce((select num_val from constants where name = u.race and text_val = ''energy_production''),1.0) * (1 + u.research_percent_energy/100.0)* 
 	((select ((select num_val from constants where text_val = ''building_production_solar'') * sum(solar_collectors* (1 + bonus_solar/100.0))) from '|| _planets_table ||' 
-	where owner_id = u.id) * coalesce((select num_val from constants where name = u.race and text_val = ''race_special_solar_15''),1.0) * COALESCE(a.dark_mist_effect,1) + 
+	where owner_id = u.id) * coalesce((select num_val from constants where name = u.race and text_val = ''race_special_solar_15''),1.0) * 
+	coalesce((select 
+		 1*  EXP (SUM (LN (100.0 / (specop_strength + 100.0))))
+		 from app_specops  a
+		 where a.name in (''Black Mist'', ''Dark Web'') and specop_strength > 0 and user_to_id = u.id),1) + 
 	(select ((select num_val from constants where text_val = ''building_production_fission'') * sum(fission_reactors* (1 + bonus_fission/100.0))) from '|| _planets_table ||' 
 	where owner_id = u.id))  
 	* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Ether Gardens'' and f.empire_holding_id = u.empire_id),1),
@@ -292,7 +296,11 @@ energy_decay = greatest(0, u.energy * (select num_val from constants c where c.t
 energy_interest = least(u.energy_production, u.energy * 
 coalesce((select num_val from constants where name = u.race and text_val = ''race_special_resource_interest''),0)), 
 
-energy_specop_effect = u.energy_production * coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Energy''),0), 
+energy_specop_effect = u.energy_production * coalesce((select (specop_strength/100.0) from app_specops f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Energy''),0)+
+coalesce((select (((select energy_production from '|| _userstatus_table ||' 
+where id = (select user_to_id from app_specops f where name = ''Hack mainframe'' and f.user_from_id = u.id group by user_to_id)) * 
+((sum(specop_strength)/100))*(sum(specop_strength2)/100))/count(*)) from app_specops f where name = ''Hack mainframe'' and f.user_from_id = u.id group by user_from_id),0) -
+u.energy_production * coalesce((select(sum(specop_strength)/100) from app_specops f where name = ''Hack mainframe'' and f.user_to_id = u.id group by user_to_id),0),
 
 mineral_production = (select sum(mineral_plants* (1 + bonus_mineral/100.0)) from '|| _planets_table ||' 
 	where owner_id = u.id) * coalesce((select num_val from constants where name = u.race and text_val = ''mineral_production''),1.0) * 
@@ -354,12 +362,6 @@ units_upkeep = (select
 
 -- select  SC, r.solar_bonus, a.dark_mist_effect
  from '|| _userstatus_table ||' u2 
- left join 		(select user_to_id, 
-		 1*  EXP (SUM (LN (100.0 / (specop_strength + 100.0)))) dark_mist_effect  --EXP (SUM (LN )) is just multiplication
-		 from app_specops  a
-		 where a.name in (''Black Mist'', ''Dark Web'') and specop_strength > 0
-		 group by user_to_id
-		)  a on u2.id = a.user_to_id
   left join (select owner_id, sum(bomber) bomber, sum(fighter) fighter, sum(transport) transport,
 			 sum(cruiser) cruiser, sum(soldier) soldier, sum(droid) droid, sum(goliath) goliath,
 			 sum(phantom) phantom, sum(wizard) wizard, sum(agent) agent, sum(ghost) ghost,
@@ -386,6 +388,9 @@ set ticks_remaining = ticks_remaining -1;
 update app_specops
 set ticks_left = ticks_left -1
 where ticks_left is not null;
+
+delete from app_specops
+ where ticks_left = 0 and ticks_left is not null;
 
 update '|| _fleet_table ||' f
 set 
@@ -560,175 +565,117 @@ and u.energy <= 0 and (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep)
 update '|| _userstatus_table ||' u
 set 
 research_percent_military = u.research_percent_military + case when u.research_percent_military < (
-	case when research_max_military < 200 
-	then least(research_max_military, floor(200 * (1 - exp((u.research_points_military+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_military, floor(research_max_military * (1 - exp((u.research_points_military+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_military''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_military''),200), floor(200 * (1 - exp((u.research_points_military+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_military''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_military''),200) * (1 - exp((u.research_points_military+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_military > (
-	case when research_max_military < 200 
-	then least(research_max_military, floor(200 * (1 - exp((u.research_points_military+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_military, floor(research_max_military * (1 - exp((u.research_points_military+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_military''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_military''),200), floor(200 * (1 - exp((u.research_points_military+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_military''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_military''),200) * (1 - exp((u.research_points_military+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
 	else 0 end,
 research_percent_construction = u.research_percent_construction + case when u.research_percent_construction < (
-	case when research_max_construction < 200 
-	then least(research_max_construction, floor(200 * (1 - exp((u.research_points_construction+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_construction, floor(research_max_construction * (1 - exp((u.research_points_construction+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_construction''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_construction''),200), floor(200 * (1 - exp((u.research_points_construction+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_construction''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_construction''),200) * (1 - exp((u.research_points_construction+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_construction > (
-	case when research_max_construction < 200 
-	then least(research_max_construction, floor(200 * (1 - exp((u.research_points_construction+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_construction, floor(research_max_construction * (1 - exp((u.research_points_construction+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_construction''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_construction''),200), floor(200 * (1 - exp((u.research_points_construction+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_construction''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_construction''),200) * (1 - exp((u.research_points_construction+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
 	else 0 end,
 research_percent_tech = u.research_percent_tech + case when u.research_percent_tech < (
-	case when research_max_tech < 200 
-	then least(research_max_tech, floor(200 * (1 - exp((u.research_points_tech+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_tech, floor(research_max_tech * (1 - exp((u.research_points_tech+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_tech''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_tech''),200), floor(200 * (1 - exp((u.research_points_tech+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_tech''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_tech''),200) * (1 - exp((u.research_points_tech+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_tech > (
-	case when research_max_tech < 200 
-	then least(research_max_tech, floor(200 * (1 - exp((u.research_points_tech+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_tech, floor(research_max_tech * (1 - exp((u.research_points_tech+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_tech''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_tech''),200), floor(200 * (1 - exp((u.research_points_tech+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_tech''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_tech''),200) * (1 - exp((u.research_points_tech+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
-	else 0 end,	
+	else 0 end,
 research_percent_energy = u.research_percent_energy + case when u.research_percent_energy < (
-	case when research_max_energy < 200 
-	then least(research_max_energy, floor(200 * (1 - exp((u.research_points_energy+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_energy, floor(research_max_energy * (1 - exp((u.research_points_energy+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_energy''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_energy''),200), floor(200 * (1 - exp((u.research_points_energy+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_energy''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_energy''),200) * (1 - exp((u.research_points_energy+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_energy > (
-	case when research_max_energy < 200 
-	then least(research_max_energy, floor(200 * (1 - exp((u.research_points_energy+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_energy, floor(research_max_energy * (1 - exp((u.research_points_energy+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_energy''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_energy''),200), floor(200 * (1 - exp((u.research_points_energy+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_energy''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_energy''),200) * (1 - exp((u.research_points_energy+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
-	else 0 end,	
+	else 0 end,
 research_percent_population = u.research_percent_population + case when u.research_percent_population < (
-	case when research_max_population < 200 
-	then least(research_max_population, floor(200 * (1 - exp((u.research_points_population+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_population, floor(research_max_population * (1 - exp((u.research_points_population+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_population''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_population''),200), floor(200 * (1 - exp((u.research_points_population+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_population''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_population''),200) * (1 - exp((u.research_points_population+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_population > (
-	case when research_max_population < 200 
-	then least(research_max_population, floor(200 * (1 - exp((u.research_points_population+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_population, floor(research_max_population * (1 - exp((u.research_points_population+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_population''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_population''),200), floor(200 * (1 - exp((u.research_points_population+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_population''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_population''),200) * (1 - exp((u.research_points_population+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
-	else 0 end,	
+	else 0 end,
 research_percent_culture = u.research_percent_culture + case when u.research_percent_culture < (
-	case when research_max_culture < 200 
-	then least(research_max_culture, floor(200 * (1 - exp((u.research_points_culture+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_culture, floor(research_max_culture * (1 - exp((u.research_points_culture+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_culture''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_culture''),200), floor(200 * (1 - exp((u.research_points_culture+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_culture''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_culture''),200) * (1 - exp((u.research_points_culture+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_culture > (
-	case when research_max_culture < 200 
-	then least(research_max_culture, floor(200 * (1 - exp((u.research_points_culture+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_culture, floor(research_max_culture * (1 - exp((u.research_points_culture+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_culture''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_culture''),200), floor(200 * (1 - exp((u.research_points_culture+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_culture''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_culture''),200) * (1 - exp((u.research_points_culture+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
-	else 0 end,	
+	else 0 end,
 research_percent_operations = u.research_percent_operations + case when u.research_percent_operations < (
-	case when research_max_operations < 200 
-	then least(research_max_operations, floor(200 * (1 - exp((u.research_points_operations+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_operations, floor(research_max_operations * (1 - exp((u.research_points_operations+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_operations''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_operations''),200), floor(200 * (1 - exp((u.research_points_operations+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_operations''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_operations''),200) * (1 - exp((u.research_points_operations+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_operations > (
-	case when research_max_operations < 200 
-	then least(research_max_operations, floor(200 * (1 - exp((u.research_points_operations+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_operations, floor(research_max_operations * (1 - exp((u.research_points_operations+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select num_val from constants where name = u.race and text_val = ''research_max_operations''),200) < 200 
+	then least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_operations''),200), floor(200 * (1 - exp((u.research_points_operations+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_operations''),200), floor(coalesce((select num_val from constants where name = u.race and text_val = ''research_max_operations''),200) * (1 - exp((u.research_points_operations+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
-	else 0 end,	
+	else 0 end,
 research_percent_portals = u.research_percent_portals + case when u.research_percent_portals < (
-	case when research_max_portals < 200 
-	then least(research_max_portals, floor(200 * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
-	else least(
- coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
- research_max_portals, floor(
- coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
- research_max_portals * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select (num_val+coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0)) from constants where name = u.race and text_val = ''research_max_portals''),200) < 200 
+	then least(coalesce((select (num_val+coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0)) from constants where name = u.race and text_val = ''research_max_portals''),200), floor(200 * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select (num_val+coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0)) from constants where name = u.race and text_val = ''research_max_portals''),200), floor(coalesce((select (num_val+coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0)) from constants where name = u.race and text_val = ''research_max_portals''),200) * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_portals > (
-	case when research_max_portals < 200 
-	then least(research_max_portals, floor(200 * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
-	else least(research_max_portals, floor(research_max_portals * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
+	case when coalesce((select (num_val+coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0)) from constants where name = u.race and text_val = ''research_max_portals''),200) < 200 
+	then least(coalesce((select (num_val+coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0)) from constants where name = u.race and text_val = ''research_max_portals''),200), floor(200 * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
+	else least(coalesce((select (num_val+coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0)) from constants where name = u.race and text_val = ''research_max_portals''),200), floor(coalesce((select (num_val+coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0)) from constants where name = u.race and text_val = ''research_max_portals''),200) * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
-	else 0 end
-
-from '|| _userstatus_table ||' u2
-
-join (
-	select id,
-	case when research_max_military = 0 then 200 else research_max_military end research_max_military,
-	case when research_max_construction = 0 then 200 else research_max_construction end research_max_construction,
-	case when research_max_tech = 0 then 200 else research_max_tech end research_max_tech,
-	case when research_max_energy = 0 then 200 else research_max_energy end research_max_energy,
-	case when research_max_population = 0 then 200 else research_max_population end research_max_population,
-	case when research_max_culture = 0 then 200 else research_max_culture end research_max_culture,
-	case when research_max_operations = 0 then 200 else research_max_operations end research_max_operations,
-	case when research_max_portals = 0 then 200 else research_max_portals end research_max_portals
-	from (
-	select u3.id, 
-max(case when c.name = ''research_max_military'' then
- case when c.num_val is not null then c.num_val end 
- else 0 end )
- research_max_military,
-    max(case when c.name = ''research_max_construction'' then
- case when c.num_val is not null then c.num_val  end 
- else 0 end )
- research_max_construction,
-   max(case when c.name = ''research_max_tech'' then
- case when c.num_val is not null then c.num_val  end 
- else 0 end )
- research_max_tech,
- max(case when c.name = ''research_max_energy'' then
- case when c.num_val is not null then c.num_val  end 
- else 0 end )
- research_max_energy,
- max(case when c.name = ''research_max_population'' then
- case when c.num_val is not null then c.num_val  end 
- else 0 end ) 
- research_max_population,
-  max(case when c.name = ''research_max_culture'' then
- case when c.num_val is not null then c.num_val  end 
- else 0 end )
- research_max_culture,
-   max(case when c.name = ''research_max_operations'' then
- case when c.num_val is not null then c.num_val  end 
- else 0 end )
- research_max_operations,
-    max(case when c.name = ''research_max_portals'' then
- case when c.num_val is not null then c.num_val  end 
- else 0 end )
- research_max_portals 
- 
- from '|| _userstatus_table ||' u3
- join classes l on l.name = u3.race
- left join constants c on c.class = l.id --and c.name in(''race_special_solar_15'', ''energy_production'')
- group by u3.id ) v
- ) r on r.id = u2.id;
- 
+	else 0 end;
  
 -- find new nearest portal
 update '|| _fleet_table ||' a
@@ -1037,7 +984,26 @@ execute _sql;
    
 _end_ts   := clock_timestamp();
 
+select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
 
+--RAISE NOTICE 'Execution time in ms = %' , _retstr;
+
+_sql := 
+'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt)
+values ('|| _round_number||' , '|| _retstr|| ', current_timestamp);
+';
+
+execute _sql;
+
+EXCEPTION WHEN OTHERS THEN
+_end_ts   := clock_timestamp();
+select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
+--RAISE NOTICE 'error msg is %', SQLERRM;
+_sql := 
+'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt, error)
+values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, '''|| 'SQLSTATE: ' || SQLSTATE || ' SQLERRM: ' || SQLERRM ||''');
+';
+execute _sql;
   
 END
 $$;
