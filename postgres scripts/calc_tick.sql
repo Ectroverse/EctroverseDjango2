@@ -924,6 +924,9 @@ set military_flag = case when military_flag != 1 then 2 else 1 end -- red flag o
 from (select owner_id from explored_planets group by owner_id) c 
 where u.id = c.owner_id;
 
+update app_empire em
+set networth = (select sum(networth) from '|| _userstatus_table ||' where empire_id = em.id)
+where numplayers > 0;
 
 with unsucessfull_explos as 
 (
