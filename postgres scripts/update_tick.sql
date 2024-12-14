@@ -816,7 +816,8 @@ max(case when c.name = ''research_max_military'' then
  join classes l on l.name = u3.race
  left join constants c on c.class = l.id --and c.name in(''race_special_solar_15'', ''energy_production'')
  group by u3.id ) v
- ) r on r.id = u2.id;
+ ) r on r.id = u2.id
+ where u2.id = u.id;
  
  
 -- find new nearest portal
@@ -1130,7 +1131,26 @@ execute _sql;
    
 _end_ts   := clock_timestamp();
 
+select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
 
+--RAISE NOTICE 'Execution time in ms = %' , _retstr;
+
+_sql := 
+'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt)
+values ('|| _round_number||' , '|| _retstr|| ', current_timestamp);
+';
+
+execute _sql;
+
+EXCEPTION WHEN OTHERS THEN
+_end_ts   := clock_timestamp();
+select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
+--RAISE NOTICE 'error msg is %', SQLERRM;
+_sql := 
+'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt, error)
+values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, '''|| 'SQLSTATE: ' || SQLSTATE || ' SQLERRM: ' || SQLERRM ||''');
+';
+execute _sql;
   
 END
 $$;
