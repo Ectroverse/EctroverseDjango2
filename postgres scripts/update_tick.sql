@@ -174,9 +174,13 @@ where u.id = c.user_id;
  set protection = p4.protection
   from 
  (select p1.id, 
-  LEAST(100, 100 * GREATEST(0, 1.0 - sqrt(min(sqrt(power(p1.x-p2.x,2) + 
-												  power(p1.y-p2.y,2)))/ (7 + (1.0 + 0.01 * u.research_percent_portals))) )) 
-   protection
+  LEAST(100, 100 *  sum(GREATEST(0, 1.0 - sqrt(
+											sqrt(power(p1.x-p2.x,2) + power(p1.y-p2.y,2))
+											/ (7 + (1.0 + 0.01 * u.research_percent_portals))
+											)
+								)
+						)
+		) as protection
   from '|| _planets_table ||' p1
   join '|| _planets_table ||' p2 on p1.owner_id = p2.owner_id and p2.portal = true
   join '|| _userstatus_table ||' u on u.id = p1.owner_id
