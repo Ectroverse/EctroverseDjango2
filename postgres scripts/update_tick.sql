@@ -164,7 +164,7 @@ set construction_flag = 1
 from (select user_id from news_buildings group by user_id) c 
 where u.id = c.user_id;
  
- with update_build_count as 
+ with update_buildings as 
 (select planet_id
 	  from '|| _construction_table||'
 	  where ticks_remaining = 0
