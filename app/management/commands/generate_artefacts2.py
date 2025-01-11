@@ -28,7 +28,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
 
         arti_planets = random.sample(list(planets), len(arti_list))
 
-        excluded = ["Scroll of the Necromancer", "You Grow, Girl!"]
+        excluded = ["Scroll of the Necromancer"]
 
         for i, (key, val) in enumerate(arti_list.items()):        
             if key in excluded:
@@ -57,6 +57,8 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                 arti_planets[i].artefact = arti
                 if key == "You Grow, Girl!":
                     arti_planets[i].size = 1
+                    arti.description = "This Planet grows by 1 every 10 weeks!"
+                    arti.save()
                 arti_planets[i].save()
 
 

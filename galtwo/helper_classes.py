@@ -181,7 +181,7 @@ class Portals(Building):
 
 def raze_all_buildings2(planet, status):
     building_list = [SolarCollector(), FissionReactor(), MineralPlant(), CrystalLab(), RefinementStation(),
-                     Citie(), ResearchCenter(), DefenseSat(), ShieldNetwork(), Portals()]
+                     Citie(), ResearchCenter(), DefenseSat(), ShieldNetwork()]
     for building in building_list:
         num_on_planet = getattr(planet, building.model_name)
         if num_on_planet > 0:

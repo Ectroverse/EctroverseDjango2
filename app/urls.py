@@ -5,6 +5,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from galtwo.views import choose_empire
 from galtwo.views import register as tworegister
+from django.conf.urls import url
 
 urlpatterns = [
     path('', views.index, name='index'),  # root page
@@ -13,6 +14,7 @@ urlpatterns = [
     path('map', views.map, name='map'),
     path('smap', views.smap, name='smap'),
     path('pmap', views.pmap, name='pmap'),
+    path('cmap', views.cmap, name='cmap'),
     path('amap', views.amap, name='amap'),
     path('planets', views.planets, name='planets'),
     re_path(r'^planet(?P<planet_id>[0-9]+)/$', views.planet, name='planet'),
@@ -128,6 +130,10 @@ urlpatterns = [
     path('guide/units', views.gunits, name='gunits'),
     path('guide/upkeep', views.gupkeep, name='gupkeep'),
     path('kbguide', views.kbguide, name='kbguide'),
+    
+    url(r'^activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,32})/$',
+        views.activate, name='activate'),
+    path('confirm', views.confirm, name='confirm'),
 ]
 
 if settings.DEBUG:

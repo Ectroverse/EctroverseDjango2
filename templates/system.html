@@ -11,11 +11,19 @@
 
 <table width="100%">
 <tr>
-<form action="" method="POST"><td align="right" width="35%">{% csrf_token %}<input type="submit" name="explore_all" value="Explore"></td></form>
+{% if status.galsel == 1 %}
+<form action="/system{{system.id}}/" method="POST">
+{% elif status.galsel == 2 %}
+<form action="/galtwo/system{{system.id}}/" method="POST">
+{% endif %}<td align="right" width="35%">{% csrf_token %}<input type="submit" name="explore_all" value="Explore"></td></form>
 
 Distance from nearest Portal: {{travel_time}} weeks
 
-<form action="" method="POST"><td align="right" width="35%">{% csrf_token %}Agents to send to each planet: <td valign="top"><input type="number" max="999999" style="width: 5em" value = 100 name="obsagents"></td>
+{% if status.galsel == 1 %}
+<form action="/system{{system.id}}/" method="POST">
+{% elif status.galsel == 2 %}
+<form action="/galtwo/system{{system.id}}/" method="POST">
+{% endif %}<td align="right" width="35%">{% csrf_token %}Agents to send to each planet: <td valign="top"><input type="number" max="999999" style="width: 5em" value = 100 name="obsagents"></td>
 <td align="left" width="30%"><input type="submit" name="observe_all" value="Observe"></td></form>
 </tr>
 </table>
@@ -319,8 +327,12 @@ Travelling Fleets
 {% elif status.galsel == 2 %}
 <a href="/galtwo/systmap{{system.id}}">View System on Map</a>
 {% endif %}</td>
-{% if status.race == 'FH' or status.race == 'SB' or status.race == 'WK' or status.race == 'JK' %}
-<form action="" method="POST"><td align="right" width="35%">{% csrf_token %}Ghost Ships to send: <td valign="top"><input type="number" max="999999" style="width: 5em" value = 100 name="survghosts"></td>
+{% if status.race == 'FH' or status.race == 'SB' or status.race == 'WK' or status.race == 'JK' or status.race == 'FT' %}
+{% if status.galsel == 1 %}
+<form action="/system{{system.id}}/" method="POST">
+{% elif status.galsel == 2 %}
+<form action="/galtwo/system{{system.id}}/" method="POST">
+{% endif %}<td align="right" width="35%">{% csrf_token %}Ghost Ships to send: <td valign="top"><input type="number" max="999999" style="width: 5em" value = 100 name="survghosts"></td>
 <td align="left" width="30%"><input type="submit" name="survey_syst" value="Survey System"></td></form>
 {% else %}
 <td align="right" width="65%"></td>

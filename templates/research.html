@@ -47,8 +47,12 @@ Current research fundings : {{status.current_research_funding}}
 <td><input type="text" pattern="100|[0-9]{1,2}" maxlength="10" name="culture" size="10"  value ="{{status.alloc_research_culture}}"><td></tr>
 <tr><td>Operations</td> <td>{{status.research_points_operations|intcomma}} Points</td> <td>{{status.research_percent_operations}}%</td> <td>Increases the effectiveness of your agents</td>
 <td><input type="text" pattern="100|[0-9]{1,2}" maxlength="10" name="operations" size="10"  value ="{{status.alloc_research_operations}}"><td></tr>
-<tr><td>Portals</td> <td>{{status.research_points_portals|intcomma}} Points</td> <td>{{status.research_percent_portals}}%</td> <td>Increases portal coverage and reduces their upkeep cost</td>
+<tr><td>Portals</td> <td>{{status.research_points_portals|intcomma}} Points</td> <td>{{status.research_percent_portals}}%</td> <td>Increases portal coverage and reduces their upkeep cost{% if status.galsel == 2 %}, build costs and time{% endif %}</td>
 <td><input type="text" pattern="100|[0-9]{1,2}" maxlength="10" name="portals" size="10"  value ="{{status.alloc_research_portals}}"><td></tr>
+{% if tree.empire_holding == status.empire %}
+<tr><td>Resource Tree</td> <td>{{tree.effect1|intcomma}} Points</td> <td>{{tree.effect2}}%</td> <td>Increases Resource production!</td>
+<td></td></tr>
+{% endif %}
 </table>
 <input type="submit" name="rc_alloc_form" value="Change" >
 </form>
@@ -77,8 +81,12 @@ Current research fundings : {{status.current_research_funding}}
 <td><input type="text" pattern="100|[0-9]{1,2}" maxlength="10" name="culture" size="3"  value ="{{status.alloc_research_culture}}"><td></tr>
 <tr><td>Operations<br>{{status.research_points_operations|intcomma}} Points</td> <td>{{status.research_percent_operations}}%</td> <td>Increases the effectiveness of your agents</td>
 <td><input type="text" pattern="100|[0-9]{1,2}" maxlength="10" name="operations" size="3"  value ="{{status.alloc_research_operations}}"><td></tr>
-<tr><td>Portals<br>{{status.research_points_portals|intcomma}} Points</td> <td>{{status.research_percent_portals}}%</td> <td>Increases portal coverage and reduces their upkeep cost</td>
+<tr><td>Portals<br>{{status.research_points_portals|intcomma}} Points</td> <td>{{status.research_percent_portals}}%</td> <td>Increases portal coverage and reduces their upkeep cost{% if status.galsel == 2 %}, build costs and time{% endif %}</td>
 <td><input type="text" pattern="100|[0-9]{1,2}" maxlength="10" name="portals" size="3"  value ="{{status.alloc_research_portals}}"><td></tr>
+{% if tree.empire_holding == status.empire %}
+<tr><td>Resource Tree</td> <td>{{tree.effect1|intcomma}} Points</td> <td>{{tree.effect2}}%</td> <td>Increases Resource production!</td>
+<td><td></tr>
+{% endif %}
 </table>
 <input type="submit" name="rc_alloc_form" value="Change" >
 </form>

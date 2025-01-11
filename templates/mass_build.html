@@ -73,6 +73,13 @@ function costbuild() {
 					}
 			}
 			
+			{% if cost.name == "Defense Satellites" or cost.name == "Shield Network" %}
+			
+			q = +x
+			z = +1
+			
+			{% else %}
+			
 			ob = Math.min(Math.max(0, {{planet.size}} - build{{planet.id}}), x)
 			built = x - ob
 			n = Math.max(build{{planet.id}},{{planet.size}})
@@ -82,6 +89,8 @@ function costbuild() {
 			ob += (o - p) / Math.pow({{planet.size}},2)	
 			
 			q = ob/x
+			
+			{% endif %}
 			
 			{% if cost.name == "Portal" %}
 			if (document.getElementById('b_portal').checked) {
@@ -95,6 +104,8 @@ function costbuild() {
 				{% endif %}
 				}
 			{% endif %}
+			
+			
 			while (z > 0) {
 				{% for resource in cost.cost %}
 					{% if resource.value > 0 %}

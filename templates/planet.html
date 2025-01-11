@@ -332,7 +332,7 @@ Population: {{planet.current_population}}/{{planet.max_population}}
 			</form>
   <br><a href="#" onclick="window.parent.open('/raze{{planet.id}}', '_self');return false;">Raze buildings</a><br><br>
   
-<form action="/razeall{{planet.id}}/" method="post" onsubmit="return confirm('Are you sure you want to raze all?');" target="_top">
+<form action="/mrazeall{{planet.id}}/" method="post" onsubmit="return confirm('Are you sure you want to raze all?');">
 {% csrf_token %}
 <button type="submit">Raze All</button></form>
 {% elif status.galsel == 2 %}  
@@ -344,7 +344,7 @@ Population: {{planet.current_population}}/{{planet.max_population}}
 			</form>
   <a href="#" onclick="window.parent.open('/galtwo/raze{{planet.id}}', '_self');return false;">Raze buildings</a><br><br>
   
-<form action="#" onclick="window.parent.open('/galtwo/razeall{{planet.id}}', '_self');return false;" method="post" onsubmit="return confirm('Are you sure you want to raze all?');">
+<form action="#" onclick="window.parent.open('/galtwo/mrazeall{{planet.id}}', '_self');return false;" method="post" onsubmit="return confirm('Are you sure you want to raze all?');">
 {% csrf_token %}
 <button type="submit">Raze All</button>
 

@@ -60,7 +60,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'app.middleware.SessionTimeoutMiddleware',
+    #'app.middleware.SessionTimeoutMiddleware',
 
 ]
 
@@ -171,31 +171,31 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 #SESSION_COOKIE_SECURE = True
 #CSRF_COOKIE_SECURE = True
 
-#CSRF_TRUSTED_ORIGINS = ['domain.name']
+#CSRF_TRUSTED_ORIGINS = ['ectroverse.co.uk']
 
-#SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-#SESSION_COOKIE_AGE = 60*60
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 60*60
 
 #####CRSF TOKEN FAILURE EDIT IN VIEWS#####
 
-#CSRF_FAILURE_VIEW = 'app.views.csrf_failure'
+CSRF_FAILURE_VIEW = 'app.views.csrf_failure'
 
 #####EMAIL RELATED#####
 
-#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-#EMAIL_USE_TLS = True
+EMAIL_USE_TLS = True
 
-#EMAIL_HOST = 'email_host'
+EMAIL_HOST = 'smtp.zoho.eu'
 
-#EMAIL_HOST_USER = 'admin@domain.name'
+EMAIL_HOST_USER = 'admin@ectroverse.co.uk'
 
 #Must generate specific password for your app in [gmail settings][1]
-#EMAIL_HOST_PASSWORD = 'password'
+EMAIL_HOST_PASSWORD = 'Beau@8613'
 
-#EMAIL_PORT = 587
+EMAIL_PORT = 587
 
 #This did the trick
-#DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 SITE_ID = 1

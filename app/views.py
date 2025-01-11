@@ -29,6 +29,18 @@ from galtwo.models import RoundStatus as StatusRound, Artefacts as Fastartes, Pl
 from django.views.decorators.clickjacking import xframe_options_exempt
 from app.round_functions import arti_list
 
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.template.loader import render_to_string
+from .tokens import account_activation_token
+from django.contrib.auth.models import User
+from django.core.mail import EmailMessage
+from django.contrib.sites.models import Site
+import requests
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import AuthenticationForm
+
 import json
 import numpy as np
 import time
@@ -58,7 +70,10 @@ def reverse_race_check(user):
     else:
         return False
 
-def index(request):
+def index(request, *args):
+    error = None
+    if args:
+        error = args[0]
     adminz=[]
     a_users = [1]
     for u in a_users:
@@ -83,6 +98,7 @@ def index(request):
         active = u.last_active
         if (datetime.datetime.now() - active).seconds < 300:
             online_now += 1 
+    round2 = StatusRound.objects.filter().first()
     round_no2 = StatusRound.objects.get().round_number
     tick_time2 = StatusRound.objects.get().tick_number
     week2 = tick_time2 % 52
@@ -116,6 +132,7 @@ def index(request):
                    "avail_planets": avail_planets,
                    "time_tick": time_tick,
                    "online_now": online_now,
+                   "round2": round2,
                    "round_no2": round_no2,
                    "week2": week2,
                    "year2": year2,
@@ -126,7 +143,8 @@ def index(request):
                    "avail_spots2": avail_spots2,
                    "avail_planets2": avail_planets2,
                    "time_tick2": time_tick2,
-                   "formtime": formtime}
+                   "formtime": formtime,
+                   "errors": error}
     return render(request, "login.html", context)
     
 def update(request):
@@ -138,17 +156,37 @@ def faq(request):
 
 
 def custom_login(request):
+    form = AuthenticationForm(request.POST)
     username = request.POST['username']
     password = request.POST['password']
-    user = authenticate(request, username=username, password=password)
-    if user is not None:
-        login(request, user)
-        context = {"user": user}
-        return redirect("/portal", context)
-    else:
-        context = {"news_feed": NewsFeed.objects.all().order_by('-date_and_time'),
-                   "errors": "Wrong username/password!"}
-        return render(request, "login.html", context)
+    user = get_user_model().objects.filter(username=username).first()
+    if user:
+        if user.is_active:
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                context = {"user": user}
+                return redirect("/portal", context)
+            else:
+                context = {"news_feed": NewsFeed.objects.all().order_by('-date_and_time'),
+                           "errors": "Wrong username/password!"}
+                return index(request, "Wrong username/password!")
+        else:
+            current_site = Site.objects.get_current()
+            mail_subject = 'Activate your Ectroverse account.'
+            message = render_to_string('acc_active_email.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid':urlsafe_base64_encode(force_bytes(user.pk)),
+                'token':account_activation_token.make_token(user),
+            })
+            to_email = user.email
+            email = EmailMessage(
+                        mail_subject, message, to=[to_email]
+            )
+            email.send()
+            return render(request, "confirm.html", {"msg": "Please reactivate your account by confirming through email"})
+        
 
 
 # In contrast to HttpRequest objects, which are created automatically by Django, HttpResponse objects are your responsibility. Each view you write is responsible for instantiating, populating, and returning an HttpResponse.
@@ -158,24 +196,55 @@ def register(response):
         form = RegisterForm(response.POST)
         if form.is_valid():
             #inactive_user = send_verification_email(response, form)
-            form.save()
-            new_user = authenticate(username=form.cleaned_data['username'],
-                                    password=form.cleaned_data['password1'],
-                                    )
-            UserStatus.objects.create(id=new_user.id, user=new_user)
-            Fleet.objects.create(owner=new_user, main_fleet=True)
-            TwoStatus.objects.create(id=new_user.id, user=new_user)
-            Fleets.objects.create(owner=new_user, main_fleet=True)
-            login(response, new_user)
-            return redirect("/portal")
+            user=form.save(commit=False)
+            user.is_active = False
+            user.save()
+            current_site = Site.objects.get_current()
+            mail_subject = 'Activate your Ectroverse account.'
+            message = render_to_string('acc_active_email.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid':urlsafe_base64_encode(force_bytes(user.pk)),
+                'token':account_activation_token.make_token(user),
+            })
+            to_email = form.cleaned_data.get('email')
+            email = EmailMessage(
+                        mail_subject, message, to=[to_email]
+            )
+            email.send()
+            return render(response, "confirm.html", {"msg": "Please confirm your email address to complete the registration"})
     else:
         form = RegisterForm()
     return render(response, "register.html", {"form": form})
 
-def csrf_failure(request, reason=""):
-    msg = "Oops... It appears you have gone back and attempted to reuse a form, please try again."
+def activate(request, uidb64, token):
+    try:
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.save()
+        if not UserStatus.objects.filter(id=user.id):
+            UserStatus.objects.create(id=user.id, user=user)
+        if not Fleet.objects.filter(owner=user, main_fleet=True):
+            Fleet.objects.create(owner=user, main_fleet=True)
+        if not TwoStatus.objects.filter(id=user.id):
+            TwoStatus.objects.create(id=user.id, user=user)
+        if not Fleets.objects.filter(owner=user, main_fleet=True):
+            Fleets.objects.create(owner=user, main_fleet=True)
+        return index(request, "Account Activated")
+    else:
+        return confirm(request, "Activation link is invalid!")
+
+def confirm(request, step):
+    msg = step
     context = {"msg":msg}
-    return render(request, "login.html", context)
+    return render(request, "confirm.html", context)
+
+def csrf_failure(request, reason=""):
+    return index(request, "Oops... It appears you have gone back and attempted to reuse a form, please try again.")
 
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
@@ -193,6 +262,17 @@ def headquarters(request):
     News.objects.bulk_update(fresh_news, ['is_read'])
     
     msg = ''
+    
+    ground = RoundStatus.objects.get()
+    skrull = Artefacts.objects.get(name="Skrullos Fragment")
+    skrull_time = tick_hour = ((60/ground.tick_time) * 60)*24
+    a_change = ""
+    s_news = News.objects.filter(news_type='SK', user1=status.user)
+    if not s_news:
+        a_change = "Yes"
+    else:
+        s_news = News.objects.get(news_type='SK', user1=status.user)
+        skrull_time = int((s_news.tick_number + skrull_time) - tick_time)
     
     if request.method == 'POST':
         if request.POST['accept']:
@@ -258,6 +338,9 @@ def headquarters(request):
                "old_news": old_news,
                "news_feed": NewsFeed.objects.last(),
                "artis": Artefacts.objects.get(name="Ether Gardens"),
+               "skrull": skrull,
+               "skrull_time": skrull_time,
+               "a_change": a_change,
                "msg": msg}
     return render(request, "headquarters.html", context)
 
@@ -313,7 +396,7 @@ def offer(request):
                         p = Planet.objects.get(id=planet)
                         frloss = battleReadinessLoss(status, news.user2.userstatus, p)
                         p.owner = status.user
-                        p.solar_collectors = round(p.solar_collectors * 9 / 10)
+                        p.solar_collectors = round(p.solar_collectors * 8 / 10)
                         p.fission_reactors = round(p.fission_reactors * 8 / 10)
                         p.mineral_plants = round(p.mineral_plants * 8 / 10)
                         p.crystal_labs = round(p.crystal_labs * 8 / 10)
@@ -480,11 +563,14 @@ def ressies(request):
     return render(request, "ressies.html", context)
 
 @login_required
-def portal(request):
+def portal(request, *args):
+    error=None
     msg=''
+    if args:
+        msg = args[0]
     status = UserStatus.objects.get(user=request.user)
     status2 = TwoStatus.objects.get(user=request.user)
-    error=None
+    
     if request.method == 'POST':
         
         if 'one' in request.POST:
@@ -552,11 +638,11 @@ def portal(request):
                'empires_json': json.dumps(empires_have_pass),
                'empires_json2': json.dumps(empires_have_pass2),
                'error': error,
+               'msg': msg,
                "status": status,
                 "round": RoundStatus.objects.filter().first(),
                 "status2": status2,
                 "round2": StatusRound.objects.filter().first(),
-                "msg": msg,
                 "formtime": formtime,
                 "fortime": fortime}
     
@@ -567,7 +653,7 @@ def portal(request):
 def scouting(request):
     status = get_object_or_404(UserStatus, user=request.user)
     scouted = Scouting.objects.distinct('planet').filter(empire=status.empire)
-    scouted_list = Scouting.objects.filter(user=request.user).values_list('planet_id', flat=True)
+    scouted_list = Scouting.objects.filter(empire=status.empire, scout__gte=1.0).values_list('planet_id', flat=True)
     order_by = request.GET.get('order_by', 'planet')
     if order_by == 'planet':
         scouted = Scouting.objects.select_related('planet').filter(empire=status.empire). \
@@ -600,7 +686,7 @@ def scouting(request):
             p = Planet.objects.get(id=p)
             if main_fleet.exploration == 0:
                 msg += "\nYou do not have any Exploration Ships left!"
-            elif status.fleet_readiness <= 0:
+            elif status.fleet_readiness < 0:
                 msg += "\nYour forces are to tired to send an Exploration Ship!"
             else:
                 portal_planets = Planet.objects.filter(owner=status.user, portal=True)
@@ -636,7 +722,22 @@ def scouting(request):
             p = Planet.objects.get(id=p)
             fleets_buffer = Fleet.objects.filter(main_fleet=False, exploration=1, ticks_remaining__lt=1, owner=status.user, target_planet=p)
             explore_planets(fleets_buffer)
-        
+    
+    if 'sense_check' in request.POST:    
+        sense = Sensing.objects.filter(empire_id=status.empire.id, scout__gte=3).values_list('system_id', flat=True)
+        artis = Artefacts.objects.filter(on_planet__isnull=False)
+        user = User.objects.get(id=status.id)
+        for a in artis:
+            p = a.on_planet
+            system = System.objects.get(x=p.x, y=p.y)
+            if system.id in sense:
+                try:
+                    scout = Scouting.objects.get(empire=status.empire, planet=p)
+                    scout.scout = 1.0
+                    scout.save()
+                except:
+                    Scouting.objects.create(user=user, planet=p, scout=1.0)
+    
     expo_fleets = {}
     empmembs = UserStatus.objects.filter(empire=status.empire).values_list("user", flat=True)
     expfl = Fleet.objects.filter(owner__in=empmembs, main_fleet=False, exploration=1, ticks_remaining__gt=0)
@@ -683,6 +784,7 @@ def battle(request, fleet_id):
     status = get_object_or_404(UserStatus, user=request.user)
     fleet = get_object_or_404(Fleet, pk=fleet_id)
     attacked_planet = Planet.objects.get(x=fleet.x, y=fleet.y, i=fleet.i)
+    roundstatus = RoundStatus.objects.filter().first()
     
     portal_xy_list = Planet.objects.filter(portal=True, owner=attacked_planet.owner.id).values_list('x', 'y')
     if Specops.objects.filter(user_to=attacked_planet.owner, name='Vortex Portal').exists():
@@ -737,6 +839,19 @@ def battle(request, fleet_id):
             return fleets(request)
     if attacked_planet.owner == request.user:
         request.session['error'] = "Why would you want to attack yourself?"
+        messages.error(request, 'Document deleted.')
+        return fleets(request)
+    cdist = max(abs(status.home_planet.x-attacked_planet.x), abs(status.home_planet.y-attacked_planet.y))
+    adist = 99
+    if attacked_planet.owner:
+        adist = max(abs(attacked_planet.owner.userstatus.home_planet.x-attacked_planet.x), abs(attacked_planet.owner.userstatus.home_planet.y-attacked_planet.y))
+    if cdist > 8 and roundstatus.tick_number < 1008:
+        if attacked_planet.artefact is None:
+            request.session['error'] = "You cannot attack for " + str(1008 - roundstatus.tick_number) + " weeks!"
+            messages.error(request, 'Document deleted.')
+            return fleets(request)
+    if cdist <= 8 and adist <= 8 and roundstatus.tick_number < 1008:
+        request.session['error'] = "This system is safe for both parties for " + str(1008 - roundstatus.tick_number) + " weeks!"
         messages.error(request, 'Document deleted.')
         return fleets(request)
     if fleet.owner != status.user:
@@ -902,6 +1017,7 @@ def map_settings(request):
 
             map_settings = request.POST.getlist("map_settings")
             details = request.POST.getlist("details")
+            sense_count = 0
             for i in range(0, len(settings_id)):
                 if map_settings[i] == 'PF':
                     if not details[i]:
@@ -911,7 +1027,10 @@ def map_settings(request):
                     faction_setting, err_msg = get_userstatus_from_id_or_name(details[i])
                     if faction_setting == None:
                         break
-
+                elif map_settings[i] == 'SS':
+                    if sense_count > 0:
+                        err_msg = "You can only have 1 Sensed Systems setting!"
+                        break
                 elif map_settings[i] == 'PE':
                     if not details[i]:
                         err_msg = "You have to specify empire id or name for setting # " + str(i) + "!"
@@ -1033,7 +1152,6 @@ def choose_empire_race(request):
                 status.race = request.POST['chose_race']
                 status.empire = empire1
                 status.empire_role = ''
-                status.networth = 1
                 status.construction_flag = 0
                 status.economy_flag = 0
                 status.military_flag = 0
@@ -1075,14 +1193,20 @@ def council(request):
 
     msg = ""
     refund = [0, 0, 0, 0]
+    game_tick = RoundStatus.objects.filter().first()
+    if game_tick.is_running == False:
+        rfund = 1
+    else:
+        rfund = 2
+    
     if 'cancel_unit' in request.POST:
         cancelled_units = request.POST.getlist('cancel_unit')
         for cu in cancelled_units:
             cf = UnitConstruction.objects.get(id=cu)
-            refund[0] += int(cf.energy_cost / 2)
-            refund[1] += int(cf.mineral_cost / 2)
-            refund[2] += int(cf.crystal_cost / 2)
-            refund[3] += int(cf.ectrolium_cost / 2)
+            refund[0] += int(cf.energy_cost / rfund)
+            refund[1] += int(cf.mineral_cost / rfund)
+            refund[2] += int(cf.crystal_cost / rfund)
+            refund[3] += int(cf.ectrolium_cost / rfund)
             cf.delete()
         msg += "You were refunded with: " + str(refund[0]) + " energy, " + str(refund[1]) + " minerals, " + \
                str(refund[2]) + " crystals, " + str(refund[3]) + " ectrolium! "
@@ -1091,17 +1215,15 @@ def council(request):
         cancelled_buildings = request.POST.getlist('cancel_build')
         for cb in cancelled_buildings:
             cf = Construction.objects.get(id=cb)
-            refund[0] += int(cf.energy_cost / 2)
-            refund[1] += int(cf.mineral_cost / 2)
-            refund[2] += int(cf.crystal_cost / 2)
-            refund[3] += int(cf.ectrolium_cost / 2)
+            refund[0] += int(cf.energy_cost / rfund)
+            refund[1] += int(cf.mineral_cost / rfund)
+            refund[2] += int(cf.crystal_cost / rfund)
+            refund[3] += int(cf.ectrolium_cost / rfund)
             cf.planet.buildings_under_construction -= cf.n
             if cf.building_type == "PL":
-                cf.planet.portal_under_construction = False            
-            cf.delete()
-            cf.planet.overbuilt = calc_overbuild(cf.planet.size, cf.planet.total_buildings + cf.planet.buildings_under_construction)
-            cf.planet.overbuilt_percent = (cf.planet.overbuilt - 1.0) * 100            
+                cf.planet.portal_under_construction = False
             cf.planet.save()
+            cf.delete()
         msg += "You were refunded with: " + str(refund[0]) + " energy, " + str(refund[1]) + " minerals, " + \
                str(refund[2]) + " crystals, " + str(refund[3]) + " ectrolium! "
 
@@ -1165,11 +1287,14 @@ def map(request, *args):
     show_t = 'Red'
     show_p = None
     show_arts = None
+    show_c = None
     if args:
         if args[0] == "portmap":
             show_p = True
         elif args[0] == "artmap":
             show_arts = True
+        elif args[0] == "core":
+            show_c = True
         elif UserStatus.objects.filter(id=args[0]):
             tuser = UserStatus.objects.get(id=args[0])
         elif System.objects.filter(id=args[0]):
@@ -1192,9 +1317,9 @@ def map(request, *args):
                 ssettings = MapSettings.objects.get(user=status.id, map_setting='SS')
                 sense = ssettings.get_color_settings_display
         if s.home == True:
-            mapgen[s.x*10000+s.y]={"id" : s.id, "color" : "Grey", "color2" : "None", "color3" : "None", "color4" : "None", "gradient": "", "x":s.x,"y":s.y, "imgarti" : "", "scout": "", "portal": "", "home": "/static/home_syst.png", "sense":sense, "show": ""}
+            mapgen[s.x*10000+s.y]={"id" : s.id, "color" : "Grey", "color2" : "None", "color3" : "None", "color4" : "None", "gradient": "", "x":s.x,"y":s.y, "imgarti" : "", "scout": "", "portal": "", "home": "/static/home_syst.png", "sense":sense, "show": "", "cover":"", "core": ""}
         else:
-            mapgen[s.x*10000+s.y]={"id" : s.id, "color" : "Grey", "color2" : "None", "color3" : "None", "color4" : "None", "gradient": "", "x":s.x,"y":s.y, "imgarti" : "", "scout": "", "portal": "", "home": "", "sense":sense, "show": ""}
+            mapgen[s.x*10000+s.y]={"id" : s.id, "color" : "Grey", "color2" : "None", "color3" : "None", "color4" : "None", "gradient": "", "x":s.x,"y":s.y, "imgarti" : "", "scout": "", "portal": "", "home": "", "sense":sense, "show": "", "cover":"", "core": ""}
         if s.x>maxX:
             maxX=s.x
         if s.y>maxY:
@@ -1203,6 +1328,15 @@ def map(request, *args):
             minX=s.x
         if s.y>minY:
             minY=s.y
+        cdist = max(abs(status.home_planet.x-s.x), abs(status.home_planet.y-s.y))
+        if show_c == True and cdist <= 8:
+            yp_setting = MapSettings.objects.filter(user=status.id, map_setting="YP")
+            if yp_setting:
+                yp_setting = MapSettings.objects.get(user=status.id, map_setting="YP")
+                colour = yp_setting.get_color_settings_display
+            else:
+                colour = "blue"
+            mapgen[s.x*10000+s.y]['core']= colour
             
     if show_s != None:
         mapgen[show_s.x*10000+show_s.y]['show']= "gold"
@@ -1275,6 +1409,7 @@ def map(request, *args):
                         mapgen[p.x*10000+p.y]["show"] = "Yellow"
                     else:
                         mapgen[p.x*10000+p.y]["show"] = "Red"
+                    mapgen[p.x*10000+p.y]["cover"] = p.protection
                 if setting.map_setting == "YP" and ownercount == 0:
                     ownercount += 1
                     if mapgen[p.x*10000+p.y]["color"]== "Grey":
@@ -1422,6 +1557,11 @@ def systmap(request, system_id):
 @user_passes_test(race_check, login_url="/choose_empire_race")
 def tmap(request, player_id):
     return map(request, player_id)
+
+@login_required
+@user_passes_test(race_check, login_url="/choose_empire_race")
+def cmap(request):
+    return map(request, "core")
 
 @login_required
 @user_passes_test(race_check, login_url="/choose_empire_race")
@@ -2355,20 +2495,8 @@ def build(request, planet_id):
         for building in building_list:
             building_list_dict = {}
             num = None
-            if building.building_index == 5 and request.POST.get(building.building_index) != None:
-                cur_cities = planet.cities
-                build_cities = request.POST.get(str(building.building_index), None)
-                tot_cities = cur_cities + int(build_cities)
-                if tot_cities >= 70000:
-                    num = 70000 - cur_cities
-                    building_list_dict[building] = 70000 - cur_cities
-                    msg += "\nPlanet cannot exceed 70000 Cities"
-                else:
-                    num = request.POST.get(str(building.building_index), None)
-                    building_list_dict[building] = request.POST.get(str(building.building_index), None)
-            else:
-                num = request.POST.get(str(building.building_index), None)
-                building_list_dict[building] = request.POST.get(str(building.building_index), None)
+            num = request.POST.get(str(building.building_index), None)
+            building_list_dict[building] = request.POST.get(str(building.building_index), None)
 
             if num:
                 list_building, list_cost = build_on_planet(status, planet, building_list_dict)
@@ -2411,7 +2539,11 @@ def build(request, planet_id):
             if building.building_index == 8:
                 tech = 140
             
-        cost_list, penalty = building.calc_cost(1, status.research_percent_construction, tech,
+        if building.building_index == 9:
+            cost_list, penalty = building.calc_costs(1, status.research_percent_portals, tech,
+                                                status)
+        else:
+            cost_list, penalty = building.calc_costs(1, status.research_percent_construction, tech,
                                                 status)
         # Add resource names to the cost_list, for the sake of the for loop in the view
         if cost_list:  # Remember that cost_list will be None if the tech is too low
@@ -2582,27 +2714,11 @@ def mass_build(request):
                         building_list_dict[RefinementStations()] = rf
                         totalbuild -= rf
                     if ci >= totalbuild:
-                        cur_cities = planet.cities
-                        tot_cities = cur_cities + totalbuild
-                        if tot_cities > 70000:
-                            build_cities = 70000 - cur_cities
-                            building_list_dict[Cities()] = build_cities
-                            totalbuild -= build_cities
-                            msg += "\nPlanet cannot exceed 70000 Cities\n"
-                        else:
-                            building_list_dict[Cities()] = totalbuild
-                            totalbuild -= totalbuild
+                        building_list_dict[Cities()] = totalbuild
+                        totalbuild -= totalbuild
                     else:
-                        cur_cities = planet.cities
-                        tot_cities = cur_cities + ci
-                        if tot_cities > 70000:
-                            build_cities = 70000 - cur_cities
-                            building_list_dict[Cities()] = build_cities
-                            totalbuild -= build_cities
-                            msg += "\nPlanet cannot exceed 70000 Cities\n"
-                        else:
-                            building_list_dict[Cities()] = ci
-                            totalbuild -= ci
+                        building_list_dict[Cities()] = ci
+                        totalbuild -= ci
                     if rc >= totalbuild:
                         building_list_dict[ResearchCenters()] = totalbuild
                         totalbuild -= totalbuild
@@ -2643,19 +2759,7 @@ def mass_build(request):
                 b_planets.append(planet)
                 for building in building_list:
                     building_list_dict = {}
-                    if building.building_index == 5:
-                        cur_cities = planet.cities
-                        build_cities = request.POST.get(str(building.building_index), None)
-                        tot_cities = cur_cities + int(build_cities)
-                        if tot_cities > 70000:
-                            to_build_cities = 70000 - cur_cities
-                            if to_build_cities > 0:
-                                building_list_dict[building] = to_build_cities
-                            msg += "\nPlanet "+ str(planet.x) + ":" + str(planet.y) + "," + str(planet.i) + " cannot exceed 70000 Cities\n"
-                        else:
-                            building_list_dict[building] = request.POST.get(str(building.building_index), None)
-                    else:
-                        building_list_dict[building] = request.POST.get(str(building.building_index), None)
+                    building_list_dict[building] = request.POST.get(str(building.building_index), None)
                 
 
                     list_building, list_cost = build_on_planet(status, planet, building_list_dict)
@@ -2704,7 +2808,11 @@ def mass_build(request):
             if building.building_index == 8:
                 tech = 140
             
-        cost_list, penalty = building.calc_cost(1, status.research_percent_construction, tech,
+        if building.building_index == 9:
+            cost_list, penalty = building.calc_costs(1, status.research_percent_portals, tech,
+                                                status)
+        else:
+            cost_list, penalty = building.calc_costs(1, status.research_percent_construction, tech,
                                                 status)
         # Add resource names to the cost_list, for the sake of the for loop in the view
         if cost_list:  # Remember that cost_list will be None if the tech is too low
@@ -2777,6 +2885,8 @@ def ranking(request):
 def empire_ranking(request):
     status = None
     empartis = 0
+    arte_found = Artefacts.objects.filter(empire_holding__isnull=False).count()
+    tot_arte = Artefacts.objects.filter().exclude(on_planet=None).count()
     try:
         status = UserStatus.objects.filter(user=request.user).first()
         my_template = 'base.html'
@@ -2798,11 +2908,12 @@ def empire_ranking(request):
 
         for e in empires:
             artefacts = []
-            artis = Artefacts.objects.filter(empire_holding=e)
-            if 3 * len(artis) >= round_arti_nr or 3 * max_artis / 2 >= round_arti_nr or e == status.empire:
-                for a in artis:
-                    if status.id != 1:
-                        artefacts.append(a)
+            if arte_found != tot_arte:
+                artis = Artefacts.objects.filter(empire_holding=e)
+                if 3 * len(artis) >= round_arti_nr or 3 * max_artis / 2 >= round_arti_nr or e == status.empire:
+                    for a in artis:
+                        if status.id != 1:
+                            artefacts.append(a)
             table[e.name_with_id] = {"planets": e.planets,
                                      "numplayers": e.numplayers,
                                      "nw": e.networth,
@@ -2850,8 +2961,6 @@ def empire_ranking(request):
         empartis = max_artis
         relations = Relations.objects.filter(relation_type="W") 
     
-    arte_found = Artefacts.objects.filter(empire_holding__isnull=False).count()
-    tot_arte = Artefacts.objects.filter().exclude(on_planet=None).count()
     
     context = {"table": table,
                "page_title": "Empire ranking",
@@ -2877,7 +2986,20 @@ def account(request, player_id):
     status = get_object_or_404(UserStatus, user=request.user)
     msg = ""
     ground = RoundStatus.objects.get()
-    if request.method == 'POST':
+    skrull = Artefacts.objects.get(name="Skrullos Fragment")
+    a_change = ""
+    s_news = News.objects.filter(news_type='SK', user1=status.user)
+    if not s_news:
+        a_change = "Yes"
+    
+    if 'chosen_race' in request.POST:
+        status.race = request.POST['chosen_race']
+        status.save()
+        if skrull.empire_holding == status.empire:
+            actskrull(skrull, status)
+            return redirect(request.META['HTTP_REFERER'])
+    
+    elif request.method == 'POST':
         if ground.tick_number < 1:
             if 'Rejoin' in request.POST:
                 emp = status.empire
@@ -2923,10 +3045,8 @@ def account(request, player_id):
                     status.user_name = request.POST['Uname']
                     status.save()
             if 'chose_race' in request.POST:
-                    status.race = request.POST['chose_race']
-                    status.save()
-        
-        
+                status.race = request.POST['chose_race']
+                status.save()           
         
     player = UserStatus.objects.get(id=player_id)
     tag = ""
@@ -2941,6 +3061,8 @@ def account(request, player_id):
                "tag": tag,
                "races": races,
                "ground": ground,
+               "skrull": skrull,
+               "a_change": a_change,
                "msg": msg}
     return render(request, "account.html", context)
 
@@ -2974,6 +3096,9 @@ def units(request):
     bribe_resource_multiplier = 1
     bribe_time_multiplier = 1
     arte_multiplier = 1
+    robo = Artefacts.objects.get(name="Advanced Robotics")
+    eson = Artefacts.objects.get(name="Engineers Son")
+    maryc = Artefacts.objects.get(name="Mary Celeste")
     if Specops.objects.filter(user_to=status.user, name="Bribe officials",
                               extra_effect="resource_cost").exists():
         bribe = Specops.objects.filter(user_to=status.user, name="Bribe officials",
@@ -3002,8 +3127,8 @@ def units(request):
                 num = int(num)
             if num:
                 # calc_building_cost was designed to give the View what it needed, so pull out just the values and multiply by num
-                arte = Artefacts.objects.get(name="Advanced Robotics")
-                if arte.empire_holding == status.empire:
+                
+                if robo.empire_holding == status.empire:
                     tech = unit_info[unit]['required_tech'] / 2
                 else:
                     tech = unit_info[unit]['required_tech']
@@ -3013,14 +3138,12 @@ def units(request):
                     msg += 'Not enough tech research to build ' + unit_info[unit]['label'] + '<br>'
                     continue
 
-                arte = Artefacts.objects.get(name="Engineers Son")
-                if arte.empire_holding == status.empire and unit == 'fighter':
-                    arte_multiplier = 0.8
-                    
-                '''maryc = Artefacts.objects.get(name="Mary Celeste")
+                if eson.empire_holding == status.empire and unit == 'fighter':
+                    arte_multiplier = 1 - (eson.effect1/100)
+                  
                 if maryc.empire_holding == status.empire and unit == 'ghost':
-                    arte_multiplier = 0.5
-				'''
+                    arte_multiplier = 1 - (maryc.effect1/100)
+
                 total_resource_cost = [int(np.ceil(x * mult * arte_multiplier)) for x in unit_info[unit]['cost']]
                 
                 for j in range(4):  # multiply all resources except time by number of units
@@ -3070,22 +3193,19 @@ def units(request):
         if unit == 'phantom':
             continue
         d = {}
-        arte = Artefacts.objects.get(name="Advanced Robotics")
-        if arte.empire_holding == status.empire:
+        if robo.empire_holding == status.empire:
             tech = unit_info[unit]['required_tech'] / 2
         else:
             tech = unit_info[unit]['required_tech']
         mult, penalty = unit_cost_multiplier(status.research_percent_construction, status.research_percent_tech,
                                              tech)
 
-        arte = Artefacts.objects.get(name="Engineers Son")
-        if arte.empire_holding == status.empire and unit == 'fighter':
-            arte_multiplier = 0.8
+        if eson.empire_holding == status.empire and unit == 'fighter':
+            arte_multiplier = 1 - (eson.effect1/100)
 
-        '''maryc = Artefacts.objects.get(name="Mary Celeste")
         if maryc.empire_holding == status.empire and unit == 'ghost':
-            arte_multiplier = 0.5
-'''
+            arte_multiplier = 1 - (maryc.effect1/100)
+
         if not mult:
             cost = None
         else:
@@ -3531,8 +3651,7 @@ def fleetsend(request):
             else:
                 num = 0
             if getattr(main_fleet, unit) < num:
-                request.session['error'] = "Don't have enough" + unit_info[unit]["label"]
-                return fleets(request)
+                num = getattr(main_fleet, unit)
             send_unit_dict[unit] = num
             total_sent_units += num
 
@@ -3638,10 +3757,10 @@ def fleetssend(request):
     if request.method != 'POST':
         return HttpResponse("You shouldnt be able to get to this page!")
 
-    total_fleets = Fleet.objects.filter(owner=status.user.id, main_fleet=False)
+    '''total_fleets = Fleet.objects.filter(owner=status.user.id, main_fleet=False)
     if len(total_fleets) >= 50:
         request.session['error'] = "You cant send more than 50 fleets out at the same time!"
-        return fleets_orders(request)
+        return fleets_orders(request)'''
 
     # Process POST
     print(request.POST)
@@ -3673,8 +3792,9 @@ def fleetssend(request):
             else:
                 num = 0
             if getattr(main_fleet, unit) < num:
-                request.session['error'] = "Don't have enough" + unit_info[unit]["label"]
-                return fleets(request)
+                num = getattr(main_fleet, unit)
+                '''request.session['error'] = "Don't have enough" + unit_info[unit]["label"]
+                return fleets(request)'''
             send_unit_dict[unit] = num
             total_sent_units += num
 
@@ -4029,6 +4149,7 @@ def pm_options(request):
     msg = ""
     player_list = UserStatus.objects.filter(empire=status.empire)
 
+    roundstat = RoundStatus.objects.get().tick_number
     if request.method == 'POST':
         print(request.POST)
         
@@ -4154,6 +4275,9 @@ def pm_options(request):
             defender_size = Empire.objects.get(id=target_empire.id)
             if defender_size.planets / attacker_size.planets < 0.6:
             	msg = "You cannot declare war on an empire less than 60% of your size!"
+            
+            elif roundstat < 1008:
+                msg = "Peace for " + str(1008 - roundstat) + " weeks!"
             else:
                 set_relation(request, 'war', status.empire, target_empire)
                 News.objects.create(empire1=status.empire,
@@ -4188,7 +4312,7 @@ def pm_options(request):
     
         
     context = {"status": status,
-               "round": RoundStatus.objects.filter().first,
+               "round": roundstat,
                "page_title": "Prime Minister options",
                "empire": status.empire,
                "relation_empires": relation_empires,
@@ -4315,6 +4439,7 @@ def research(request):
     race_info = race_info_list[status.get_race_display()]
     calcs = {"calc": 'None', "milpoints":'', "rpmil": '', "conpoints":'', "rpcon":'', "techpoints":'', "rptech":'', "nrgpoints":'', "rpnrg":'', "poppoints":'', "rppop":'', "culpoints":'', "rpcul":'', "opspoints":'', "rpops":'', "portpoints":'', "rpport":''}
     wks = 0
+    tree = Artefacts.objects.get(name="Resource Tree")
     print(request.POST)
     if request.method == 'POST':
         if 'fund_form' in request.POST:
@@ -4371,6 +4496,9 @@ def research(request):
                 status.save()
         if 'rc_calc_form' in request.POST:
             rc = status.total_research_centers * 6 * 1.2
+            arterl = Artefacts.objects.get(name="Research Laboratory")
+            if arterl.empire_holding == status.empire:
+                rc * 1.1
             wks = int(request.POST['weeks'])
             fund = status.current_research_funding
             fpoints = 0
@@ -4417,6 +4545,9 @@ def research(request):
             pop = (rc * (status.alloc_research_population / 100)) * race_info["research_bonus_population"] 
             if status.race == "FH":
                 pop += (status.population / 6000) * status.alloc_research_population / 100
+            rabbit = Artefacts.objects.get(name="Rabbit Theorum")
+            if rabbit.empire_holding == status.empire:
+                pop *= 1 + (rabbit.effect1 /100)
             pwpop = pop
             pop *= wks
             pop += status.research_points_population 
@@ -4444,6 +4575,9 @@ def research(request):
             port = (rc * (status.alloc_research_portals / 100)) * race_info["research_bonus_portals"] 
             if status.race == "FH":
                 port += (status.population / 6000) * status.alloc_research_portals / 100
+            quantum = Artefacts.objects.get(name="Playboy Quantum")
+            if quantum.empire_holding == status.empire:
+                port *= 1 + (quantum.effect1/100)
             pwpor = port
             port *= wks
             port += status.research_points_portals
@@ -4478,9 +4612,10 @@ def research(request):
             if rpops - status.research_percent_operations > wks:
                 rpops = status.research_percent_operations + wks
             rpport = int(race_info.get("research_max_portals") * (1.0-np.exp(port / (-10.0 * netw))))
-            arte = Artefacts.objects.get(name="Playboy Quantum")
-            if arte.empire_holding == status.empire:
-                rpport = int(250 * (1.0-np.exp(port / (-10.0 * netw))))
+            if quantum.empire_holding == status.empire:
+                rpport = int((race_info.get("research_max_portals") + quantum.effect2) * (1.0-np.exp(port / (-10.0 * netw))))
+            else:
+                rpport = int(race_info.get("research_max_portals") * (1.0-np.exp(port / (-10.0 * netw))))
             if rpport - status.research_percent_portals > wks:
                 rpport = status.research_percent_portals + wks
             
@@ -4515,6 +4650,7 @@ def research(request):
                "page_title": "Research",
                "calcs": calcs,
                "wks": wks,
+               "tree": tree,
                "message": message}
     return render(request, "research.html", context)
 
@@ -4560,33 +4696,56 @@ def specops(request, *args):
         if planet_to_template_specop.owner is not None:
             user_to_template_specop = (UserStatus.objects.get(id=planet_to_template_specop.owner.id))
 
+    off_ops = ["Irradiate Ectrolium",
+                "Black Mist", 
+                "Psychic Assault", 
+                "Network Infiltration", 
+                "Bio Infection",
+                "Hack mainframe",
+                "Bribe officials",
+                "Military Sabotage",
+                "Nuke Planet",
+                "Mind Control", 
+                "Energy Surge"]
+
+    roundstatus = RoundStatus.objects.filter().first()
+    
+    #Round Special, steal resources
+    if roundstatus.tick_number >= 1008:
+        race_ops.append("Steal Resources")
+    
     ops = {}
     for o in agentop_specs:
-        if o in race_ops:
-            specs = [None] * 8
-            for j in range(len(agentop_specs[o])):
-                specs[j] = agentop_specs[o][j]
-            if user_to_template_specop:
-                specs[6] = specopReadiness(agentop_specs[o], "Op", status, user_to_template_specop)
-            else:
-                specs[6] = None
-            arte = Artefacts.objects.get(name="Advanced Robotics")
-            if arte.empire_holding == status.empire:
-                specs[7] = get_op_penalty(status.research_percent_operations, (agentop_specs[o][0]/2))
-            else:
-                specs[7] = get_op_penalty(status.research_percent_operations, agentop_specs[o][0])
-            ops[o] = specs
+        if roundstatus.tick_number < 1008 and o not in off_ops or roundstatus.tick_number >= 1008:
+            if o in race_ops:
+                specs = [None] * 8
+                for j in range(len(agentop_specs[o])):
+                    specs[j] = agentop_specs[o][j]
+                if user_to_template_specop:
+                    specs[6] = specopReadiness(agentop_specs[o], "Op", status, user_to_template_specop)
+                else:
+                    specs[6] = None
+                arte = Artefacts.objects.get(name="Advanced Robotics")
+                if arte.empire_holding == status.empire:
+                    specs[7] = get_op_penalty(status.research_percent_operations, (agentop_specs[o][0]/2))
+                else:
+                    specs[7] = get_op_penalty(status.research_percent_operations, agentop_specs[o][0])
+                ops[o] = specs
 
     spells = {}
     cloak = Artefacts.objects.get(name="Magus Cloak")
+    alch = Artefacts.objects.get(name="Alchemist")
+    
+    alch_sp = race_spells
+    
     for s in psychicop_specs:
-        if s in race_spells:
+        if s == "Alchemist" and alch.empire_holding == status.empire:
             specs = [None] * 8
             for j in range(len(psychicop_specs[s])):
                 specs[j] = psychicop_specs[s][j]
                 if cloak.empire_holding == status.empire and j == 1:
                     if psychicop_specs[s][3] == True:
-                        c_cost = int(psychicop_specs[s][1] * 0.75)
+                        c_cost = int(psychicop_specs[s][1] * (1-(effect/100)))
                         specs[1] = c_cost
                         
             if user_to_template_specop:
@@ -4599,82 +4758,90 @@ def specops(request, *args):
             else:
                 specs[7] = get_op_penalty(status.research_percent_culture, psychicop_specs[s][0])
             spells[s] = specs
+        else:
+            if roundstatus.tick_number < 1008 and g not in off_ops or roundstatus.tick_number >= 1008:
+                if s in race_spells and s != "Alchemist":
+                    specs = [None] * 8
+                    for j in range(len(psychicop_specs[s])):
+                        specs[j] = psychicop_specs[s][j]
+                        if cloak.empire_holding == status.empire and j == 1:
+                            if psychicop_specs[s][3] == True:
+                                c_cost = int(psychicop_specs[s][1] * (1-(effect/100)))
+                                specs[1] = c_cost
+                                
+                    if user_to_template_specop:
+                        specs[6] = specopReadiness(psychicop_specs[s], "Spell", status, user_to_template_specop)
+                    else:
+                        specs[6] = None
+                    arte = Artefacts.objects.get(name="Advanced Robotics")
+                    if arte.empire_holding == status.empire:
+                        specs[7] = get_op_penalty(status.research_percent_culture, (psychicop_specs[s][0]/2))
+                    else:
+                        specs[7] = get_op_penalty(status.research_percent_culture, psychicop_specs[s][0])
+                    spells[s] = specs
             
     cloak_spells = {}
     self_spells = []
     if cloak.empire_holding != None:
-        for s in psychicop_specs:
-            if cloak.empire_holding.id == status.empire.id:
-                if s not in race_spells and psychicop_specs[s][3] == True:
-                    self_spells.append(s)
-                    
-        for s in self_spells:
-            cspecs = [None] * 8
-            for j in range(len(psychicop_specs[s])):
-                cspecs[j] = psychicop_specs[s][j]
-                if cloak.empire_holding == status.empire and j == 1:
-                    if psychicop_specs[s][3] == True:
-                        c_cost = int(psychicop_specs[s][1] * 0.75)
-                        cspecs[1] = c_cost
+        if roundstatus.tick_number < 1008 and g not in off_ops or roundstatus.tick_number >= 1008:
+            for s in psychicop_specs:
+                if cloak.empire_holding.id == status.empire.id:
+                    if s not in race_spells and psychicop_specs[s][3] == True and s != "Alchemist":
+                        self_spells.append(s)
                         
-            if user_to_template_specop:
-                cspecs[6] = specopReadiness(psychicop_specs[s], "Spell", status, user_to_template_specop)
-            else:
-                cspecs[6] = None
-            arte = Artefacts.objects.get(name="Advanced Robotics")
-            if arte.empire_holding == status.empire:
-                cspecs[7] = get_op_penalty(status.research_percent_culture, (psychicop_specs[s][0]/2))
-            else:
-                cspecs[7] = get_op_penalty(status.research_percent_culture, psychicop_specs[s][0])
-            cloak_spells[s] = cspecs
-
-        cloak_spells = {**spells, **cloak_spells}
-
-    inca = {}
-    for g in inca_specs:
-        if g in race_inca:
-            specs = [None] * 8
-            for j in range(len(inca_specs[g])):
-                specs[j] = inca_specs[g][j]
-            if user_to_template_specop:
-                ig_incs = ["Survey System", "Sense Artefact", "Vortex Portal", "Planetary Shielding", "Call to Arms"]
-                if g in ig_incs:
-                    specs[6] = inca_specs[g][1]
-                else:
-                    specs[6] = specopReadiness(inca_specs[g], "Inca", status, user_to_template_specop)
-            else:
-                specs[6] = None
-            arte = Artefacts.objects.get(name="Advanced Robotics")
-            if arte.empire_holding == status.empire:
-                specs[7] = get_op_penalty(status.research_percent_culture, (inca_specs[g][0]/2))
-            else:
-                specs[7] = get_op_penalty(status.research_percent_culture, inca_specs[g][0])
-            inca[g] = specs
-    
-    '''maryc = Artefacts.objects.get(name="Mary Celeste")
-    maryc_inca = {}
-    if maryc.empire_holding != None:
-        if maryc.empire_holding.id == status.empire.id:
-            for g in inca_specs:
-                specs = [None] * 8
-                for j in range(len(inca_specs[g])):
-                    specs[j] = inca_specs[g][j]
+            for s in self_spells:
+                cspecs = [None] * 8
+                for j in range(len(psychicop_specs[s])):
+                    cspecs[j] = psychicop_specs[s][j]
+                    if cloak.empire_holding == status.empire and j == 1:
+                        if psychicop_specs[s][3] == True:
+                            c_cost = int(psychicop_specs[s][1] * (1-(effect/100)))
+                            cspecs[1] = c_cost
+                            
                 if user_to_template_specop:
-                    ig_incs = ["Survey System", "Sense Artefact", "Vortex Portal", "Planetary Shielding", "Call to Arms"]
-                    if g in ig_incs:
-                        specs[6] = inca_specs[g][1]
-                    else:
-                        specs[6] = specopReadiness(inca_specs[g], "Inca", status, user_to_template_specop)
+                    cspecs[6] = specopReadiness(psychicop_specs[s], "Spell", status, user_to_template_specop)
                 else:
-                    specs[6] = None
+                    cspecs[6] = None
                 arte = Artefacts.objects.get(name="Advanced Robotics")
                 if arte.empire_holding == status.empire:
-                    specs[7] = get_op_penalty(status.research_percent_culture, (inca_specs[g][0]/2))
+                    cspecs[7] = get_op_penalty(status.research_percent_culture, (psychicop_specs[s][0]/2))
                 else:
-                    specs[7] = get_op_penalty(status.research_percent_culture, inca_specs[g][0])
-                maryc_inca[g] = specs
+                    cspecs[7] = get_op_penalty(status.research_percent_culture, psychicop_specs[s][0])
+                cloak_spells[s] = cspecs
+
+            cloak_spells = {**spells, **cloak_spells}
+
+    maryc = Artefacts.objects.get(name="Mary Celeste")
+    if maryc.empire_holding == status.empire:
+        inca_ops = inca_specs
+    else:
+        inca_ops = race_inca
+    inca = {}
+    for g in inca_specs:
+        if roundstatus.tick_number < 1008 and g not in off_ops or roundstatus.tick_number >= 1008:
+            if g in inca_ops:
+                if g == "Sense Artefact" and Artefacts.objects.filter(on_planet__isnull=False).count() == 0:
+                    continue
+                else:
+                    specs = [None] * 8
+                    for j in range(len(inca_specs[g])):
+                        specs[j] = inca_specs[g][j]
+                    if user_to_template_specop:
+                        ig_incs = ["Survey System", "Sense Artefact", "Vortex Portal"]
+                        if g in ig_incs:
+                            specs[6] = inca_specs[g][1]
+                        else:
+                            specs[6] = specopReadiness(inca_specs[g], "Inca", status, user_to_template_specop)
+                    else:
+                        specs[6] = None
+                    arte = Artefacts.objects.get(name="Advanced Robotics")
+                    if arte.empire_holding == status.empire:
+                        specs[7] = get_op_penalty(status.research_percent_culture, (inca_specs[g][0]/2))
+                    else:
+                        specs[7] = get_op_penalty(status.research_percent_culture, inca_specs[g][0])
+                    inca[g] = specs
                 
-    '''
+    
     msg = ""
     main_fleet = Fleet.objects.get(owner=status.user.id, main_fleet=True)
 
@@ -4740,7 +4907,7 @@ def specops(request, *args):
         if 'incantation' in request.POST and 'unit_ammount' in request.POST:
             if int(request.POST['unit_ammount']) > main_fleet.ghost:
                 msg = "You don't have that many ghost ships!"
-            elif request.POST['X'] == "" and request.POST['Y'] == "" and request.POST['I'] == "":
+            elif request.POST['incantation'] != "Call to Arms" and request.POST['X'] == "" or request.POST['incantation'] != "Call to Arms" and request.POST['Y'] == "" or request.POST['incantation'] != "Call to Arms" and request.POST['I'] == "":
                 msg = "You must specify a planet!"
             elif get_op_penalty(status.research_percent_culture, inca_specs[request.POST['incantation']][0]) == -1:
                 msg = "You don't have enough culture research to perform this incantation!"
@@ -4816,8 +4983,6 @@ def specops(request, *args):
                "user_to_template_specop": template_name,
                "cloak_spells": cloak_spells,
                "cloak": cloak,
-               #"maryc_inca": maryc_inca,
-               #"maryc": maryc,
                }
     
     return render(request, "specops.html", context)
@@ -5351,6 +5516,18 @@ def races(request):
     jacks_ops = race_display_list["Jackos"]["op_list"]
     jacks_spells = race_display_list["Jackos"]["spell_list"]
     jacks_incas = race_display_list["Jackos"]["incantation_list"]
+    
+    furts_bonus = race_display_list["Furtifons"]["bonuses"]
+    furts_research = race_display_list["Furtifons"]["research"]
+    furts_ops = race_display_list["Furtifons"]["op_list"]
+    furts_spells = race_display_list["Furtifons"]["spell_list"]
+    furts_incas = race_display_list["Furtifons"]["incantation_list"]
+    
+    samts_bonus = race_display_list["Samsonites"]["bonuses"]
+    samts_research = race_display_list["Samsonites"]["research"]
+    samts_ops = race_display_list["Samsonites"]["op_list"]
+    samts_spells = race_display_list["Samsonites"]["spell_list"]
+    samts_incas = race_display_list["Samsonites"]["incantation_list"]
 
     context = {"page_title": "Races",
                "hark_bonus":hark_bonus,
@@ -5388,6 +5565,16 @@ def races(request):
                "jacks_ops":jacks_ops,
                "jacks_spells":jacks_spells,
                "jacks_incas":jacks_incas,
+               "furts_bonus":furts_bonus,
+               "furts_research":furts_research,
+               "furts_ops":furts_ops,
+               "furts_spells":furts_spells,
+               "furts_incas":furts_incas,
+               "samts_bonus":samts_bonus,
+               "samts_research":samts_research,
+               "samts_ops":samts_ops,
+               "samts_spells":samts_spells,
+               "samts_incas":samts_incas,
                }
 
     return render(request, "races.html", context)

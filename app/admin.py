@@ -10,8 +10,10 @@ from django.db import models
 # admin.site.register(Fleet)
 admin.site.register(UnitConstruction)
 admin.site.register(RoundStatus)
+#admin.site.register(Ops)
 #admin.site.register(Empire)
 admin.site.register(Relations)
+#admin.site.register(Ticks_log)
 #admin.site.register(Messages)
 #admin.site.register(News)
 admin.site.register(Bot)
@@ -32,9 +34,17 @@ class FleetAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Fleet._meta.get_fields()]
 admin.site.register(Fleet, FleetAdmin)
 
+class OpsAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in Ops._meta.get_fields()]
+admin.site.register(Ops, OpsAdmin)
+
 class SpecopsAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Specops._meta.get_fields()]
 admin.site.register(Specops, SpecopsAdmin)
+
+class TicksLogAdmin(admin.ModelAdmin):
+    list_display = ["calc_time_ms", "error"]
+admin.site.register(Ticks_log, TicksLogAdmin)
 
 class UserStatusAdmin(admin.ModelAdmin):
     list_display = ["id","user","user_name"]

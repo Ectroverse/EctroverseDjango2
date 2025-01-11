@@ -9,6 +9,7 @@ from datetime import timedelta
 from django.template import RequestContext
 from .helper_classes import *
 from .calculations import *
+import random
 
 
 def give_first_planet(user, status, planet):
@@ -29,11 +30,13 @@ def give_first_planet(user, status, planet):
     status.total_crystal_labs = starting_crystal_labs
     status.total_cities = starting_cities
     status.total_portals = 1
-    status.total_buildings = 200
+    status.total_buildings = 201
     status.home_planet = planet
     status.num_planets = 1
+    if players_per_empire == 1:
+        status.empire_role = 'PM'
     status.save()
-    couting.objects.create(user=status.user, planet=planet, scout=1.0, empire=status.empire )
+    Scouting.objects.create(user=status.user, planet=planet, scout=1.0, empire=status.empire)
     MapSettings.objects.create(user=status.user, map_setting="YP", color_settings="B")
     MapSettings.objects.create(user=status.user, map_setting="YR", color_settings="Y")
     MapSettings.objects.create(user=status.user, map_setting="UE", color_settings="G")
@@ -49,7 +52,7 @@ def give_first_fleet(main_fleet):
 def find_nearest_portal(x, y, portal_list, status):
     if Specops.objects.filter(user_to=status.user, name='Vortex Portal').exists():
         for vort in Specops.objects.filter(user_to=status.user, name='Vortex Portal'):
-            vort_por = Planets.objects.filter(id=vort.planet.id).values_list('x', 'y')
+            vort_por = Planets.objects.filter(id=vort.planet.id)
             portal_list = portal_list | vort_por
     min_dist = (portal_list[0].x- x)**2+ (portal_list[0].y -y)**2;
     portal = portal_list[0]
@@ -92,6 +95,10 @@ def travel_speed(status):
 # option value="5" Join main fleet
 def generate_fleet_order(fleet, target_x, target_y, speed, order_type, *args):
     # args[0] - planet number
+    print(fleet)
+    print(order_type)
+    print(target_x)
+    print(target_y)
     fleet.x = target_x
     fleet.y = target_y
     if args:
@@ -258,8 +265,7 @@ def explore_planets(fleets):
                 if not Scouting.objects.filter(user=status.user, planet = planet).exists():
                     Scouting.objects.create(user= fl.owner,
                                             planet = planet,
-                                            empire = status.empire,
-                                            scout = '1')
+                                            scout = '1', empire=status.empire)
                 else:
                     scout = Scouting.objects.get(user=status.user, planet = planet)
                     scout.scout = 1
@@ -384,10 +390,9 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     if fleet_time < 1:
         if ghost > 0:
             msg = perform_incantation(ghost_fleet)
-            if specop != "Call to Arms":
-                main_fleet.ghost += ghost_fleet.ghost
-                main_fleet.save()
-                ghost_fleet.delete()
+            main_fleet.ghost += ghost_fleet.ghost
+            main_fleet.save()
+            ghost_fleet.delete()
     return msg
 
 def build_on_planet(status, planet, building_list_dict):
@@ -424,8 +429,13 @@ def build_on_planet(status, planet, building_list_dict):
                 if artesn.empire_holding == status.empire:
                     if building.building_index == 8:
                         tech = 140
-                total_resource_cost, penalty = building.calc_costs(num, status.research_percent_construction,
-                                                                  tech, status)
+                
+                if building.building_index == 9:
+                    total_resource_cost, penalty = building.calc_costs(num, status.research_percent_portals, tech,
+                                                        status)
+                else:
+                    total_resource_cost, penalty = building.calc_costs(num, status.research_percent_construction, tech,
+                                                status)
 
                 if not total_resource_cost:
                     list_buildings[planet]['number'] += "Planet "+ str(planet.x) + ":" + str(planet.y) + "," + str(planet.i) + "\nNot enough tech research to build"  + building.label  + "\n"
@@ -438,7 +448,7 @@ def build_on_planet(status, planet, building_list_dict):
                 total_buildings = planet.total_buildings - (planet.defense_sats + planet.shield_networks + pportal)
                 
                 total_resource_cost = ResourceSet(total_resource_cost)  # convert to more usable object
-                if isinstance(building, Portals):
+                if isinstance(building, Portals) or isinstance(building, DefenseSat) or isinstance(building, ShieldNetwork):
                     ob_factor = 1
                 else:
                     ob_factor = calc_overbuild_multi(planet.size,
@@ -532,3 +542,183 @@ def hex_format(x):
 def sum_tuple(a,b):
     return tuple(item1 + item2 for item1, item2 in zip(a, b))
 
+def terraformer():
+    arte = Artefacts.objects.get(name="Terraformer")    
+    choosebonus = random.randint(1,5)
+    bonus = random.randint(10,100)
+    for player in UserStatus.objects.filter(empire=arte.empire_holding):
+        planet = []
+        plcount = 0
+        pl = Planets.objects.filter(home_planet=False, bonus_solar='0', bonus_mineral='0', bonus_crystal='0', bonus_ectrolium='0', bonus_fission = '0', owner=player.id, artefact=None)
+        for p in pl:
+            planet.append(p)
+            plcount += 1
+        if plcount == 0:
+            if choosebonus == 1:
+                planet = random.choice(Planets.objects.filter(home_planet=False, bonus_solar__gte=1, owner=player.id, artefact=None))
+            if choosebonus == 2:
+                planet = random.choice(Planets.objects.filter(home_planet=False, bonus_crystal__gte=1, owner=player.id, artefact=None))
+            if choosebonus == 3:
+                planet = random.choice(Planets.objects.filter(home_planet=False, bonus_mineral__gte=1, owner=player.id, artefact=None))
+            if choosebonus == 4:
+                planet = random.choice(Planets.objects.filter(home_planet=False, bonus_ectrolium__gte=1, owner=player.id, artefact=None))
+            if choosebonus == 5:
+                planet = random.choice(Planets.objects.filter(home_planet=False, bonus_fission__gte=1, owner=player.id, artefact=None))
+        else:
+            planet = random.choice(planet)
+        if choosebonus == 1:
+            planet.bonus_solar += bonus
+            planet.save()
+            news_message = str(bonus) +"% Solar "
+        elif choosebonus == 2:
+            planet.bonus_crystal += bonus
+            planet.save()
+            news_message = str(bonus) +"% Crystal "
+        elif choosebonus == 3:
+            planet.bonus_mineral += bonus
+            planet.save()
+            news_message = str(bonus) +"% Mineral "
+        elif choosebonus == 4:
+            planet.bonus_ectrolium += bonus
+            planet.save()
+            news_message = str(bonus) +"% Ectrolium "
+        elif choosebonus == 5:
+            planet.bonus_fission += bonus
+            planet.save()
+            news_message = str(bonus) +"% Fission "
+        print(planet)
+        News.objects.create(user1=User.objects.get(id=player.id),
+                    user2=User.objects.get(id=player.id),
+                    empire1=player.empire,
+                    fleet1="Terraformer",
+                    news_type='TE',
+                    date_and_time=datetime.now(),
+                    is_personal_news=True,
+                    is_empire_news=False,
+                    extra_info=news_message,
+                    planet=planet,
+                    tick_number=RoundStatus.objects.get().tick_number
+                    )
+    game_tick = RoundStatus.objects.filter().first()
+    tick_hour = (60/game_tick.tick_time) * 60
+    ticks = random.randint(tick_hour*3, tick_hour*6)
+    arte.ticks_left = ticks
+    arte.save()
+        
+def dutchman():
+    arte = Artefacts.objects.get(name="Flying Dutchman")     
+    user = UserStatus.objects.filter(empire=arte.empire_holding).first()
+    users = UserStatus.objects.filter(empire=arte.empire_holding)
+    system = random.choice(System.objects.filter(home=False))
+    planets = Planets.objects.filter(x=system.x, y=system.y).order_by("i")
+    planet = Planets.objects.get(x=system.x, y=system.y, i=0)
+    news_message = "System " + str(system.x) + "," + str(system.y) + " has been scouted by the Flying Dutchman!"
+    for p in planets:
+        try:
+            scouting = Scouting.objects.get(empire=user.empire, planet=p)
+            scouting.scout += 1.0
+            scouting.save()
+        except:
+            Scouting.objects.create(empire = user.empire,
+                                user = user.user,
+                                planet = p,
+                                scout = '1')
+        
+        
+        news_message += "\nPlanet: " + str(p.i)
+        if p.owner is not None:
+            news_message += "\nOwned by: " + str(p.owner.galtwouser.user_name)
+        news_message += "\nPlanet size: " + str(p.size)
+        if p.bonus_solar > 0:
+            news_message += "\nSolar bonus: " + str(p.bonus_solar)
+        if p.bonus_fission > 0:
+            news_message += "\nFission bonus: " + str(p.bonus_fission)
+        if p.bonus_mineral > 0:
+            news_message += "\nMineral bonus: " + str(p.bonus_mineral)
+        if p.bonus_crystal > 0:
+            news_message += "\nCrystal bonus: " + str(p.bonus_crystal)
+        if p.bonus_ectrolium > 0:
+            news_message += "\nEctrolium bonus: " + str(p.bonus_ectrolium)
+        if p.owner is not None:
+            news_message += "\nCurrent population: " + str(p.current_population)
+            news_message += "\nMax population: " + str(p.max_population)
+            news_message += "\nPortal protection: " + str(p.protection)
+            news_message += "\nSolar collectors: " + str(p.solar_collectors)
+            news_message += "\nFission Reactors: " + str(p.fission_reactors)
+            news_message += "\nMineral Plants: " + str(p.mineral_plants)
+            news_message += "\nCrystal Labs: " + str(p.crystal_labs)
+            news_message += "\nRefinement Stations: " + str(p.refinement_stations)
+            news_message += "\nCities: " + str(p.cities)
+            news_message += "\nResearch Centers: " + str(p.research_centers)
+            news_message += "\nDefense Sats: " + str(p.defense_sats)
+            news_message += "\nShield Networks: " + str(p.shield_networks)
+            if p.portal:
+                news_message += "\nPortal: Present"
+            elif p.portal_under_construction:
+                news_message += "\nPortal: Under construction"
+            else:
+                news_message += "\nPortal: Absent"
+        if p.artefact is not None:
+            news_message += "\nArtefact: Present, the " + p.artefact.name
+            news_message += "\n"
+            
+    for u in users:
+        if u.id == user.id:
+            News.objects.create(user1=User.objects.get(id=u.id),
+                    user2=User.objects.get(id=u.id),
+                    empire1=user.empire,
+                    fleet1="Dutchman",
+                    news_type='DU',
+                    date_and_time=datetime.now(),
+                    is_personal_news=True,
+                    planet = planet,
+                    is_empire_news=True,
+                    extra_info=news_message,
+                    tick_number=RoundStatus.objects.get().tick_number
+                    )
+        else:
+            News.objects.create(user1=User.objects.get(id=u.id),
+                    user2=User.objects.get(id=u.id),
+                    empire1=user.empire,
+                    fleet1="Dutchman",
+                    news_type='DU',
+                    date_and_time=datetime.now(),
+                    is_personal_news=True,
+                    planet = planet,
+                    is_empire_news=False,
+                    extra_info=news_message,
+                    tick_number=RoundStatus.objects.get().tick_number
+                    )
+                    
+    game_tick = RoundStatus.objects.filter().first()
+    tick_hour = (60/game_tick.tick_time) * 60
+    ticks = random.randint(tick_hour*3, tick_hour*6)
+    arte.ticks_left = ticks
+    arte.save()
+    
+def actskrull(arte, status):
+    News.objects.create(user1=User.objects.get(id=status.id),
+            user2=User.objects.get(id=status.id),
+            empire1=status.empire,
+            news_type='SK',
+            date_and_time=datetime.now(),
+            is_read=True,
+            is_personal_news=False,
+            is_empire_news=False,
+            tick_number=RoundStatus.objects.get().tick_number
+            )
+    
+def actobelisk():
+    user = UserStatus.objects.filter(fleet_readiness_max__gt=100)
+    arte = Artefacts.objects.get(name="Obelisk")
+    emp = UserStatus.objects.filter(empire=arte.empire_holding)
+    for u in user:
+        u.fleet_readiness_max = 100
+        u.psychic_readiness_max = 100
+        u.agent_readiness_max = 100
+        u.save()
+    for e in emp:
+        e.fleet_readiness_max = 115
+        e.psychic_readiness_max = 115
+        e.agent_readiness_max = 115
+        e.save()

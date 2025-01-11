@@ -136,6 +136,11 @@ class News(models.Model): # a single type of building under construction
         FM = 'FM', _('Fleet Merged')
         FJ = 'FJ', _('Fleet Joined Main')
         E = 'E', _('Something Extra')
+        RCP = 'RCP', _('Ceasefire Proposed')
+        RCD = 'RCD', _('Ceasefire Declared')
+        DU = 'DU', _('Flying Dutchman')
+        TE = 'TE', _('Terraformer')
+        SK = 'SK', _('Skrull')
 
     news_type = models.CharField(max_length=3, choices=NewsType.choices, default=NewsType.N)
     tick_number = models.IntegerField(default=0)
@@ -191,6 +196,7 @@ class UserStatus(models.Model):
         SB = 'SB', _('Spacebornes')
         DW = 'DW', _('Dreamweavers')
         WK = 'WK', _('Wookiees')
+        JK = 'JK', _('Jackos')
     race = models.CharField(max_length=2, choices=Races.choices, blank=True, default=None, null=True)
 
     # Resources
@@ -412,6 +418,8 @@ class RoundStatus(models.Model):
     artetimer = models.IntegerField(default=144)
     round_start = models.DateTimeField(blank=True, null=True, default=None)
     artedelay = models.IntegerField(default=5)
+    tick_time = models.IntegerField(default=600)
+    emphold = models.ForeignKey(Empire, on_delete=models.SET_NULL, blank=True, null=True, default=None)
 
 class Bot(models.Model):
     year = models.IntegerField(default=52)
@@ -437,6 +445,8 @@ class Relations(models.Model):
         NC = 'NC', _('Non agression pact cancelled')
         PC = 'PC', _('Permanent non agression pact cancelled')
         N = 'N', _('Non agression pact')
+        C = 'C', _('Ceasefire')
+        CO = 'CO', _('Ceasefire offered')
     relation_type = models.CharField(max_length=2, choices=RelationTypes.choices)
     relation_length = models.IntegerField(blank=True, null=True, default=None)
     relation_creation_tick = models.IntegerField(default=0)
@@ -539,3 +549,19 @@ class Ticks_log(models.Model):
     calc_time_ms = models.DecimalField(max_digits=12, decimal_places=6)
     dt = models.DateTimeField()
     error = models.TextField(null=True)
+    
+class Ops(models.Model):
+    class SpecopType(models.TextChoices):
+        O = 'O', _('Agent operation')
+        S = 'S', _('Psychic spell')
+        G = 'G', _('Ghost incantation')
+    specop_type = models.CharField(max_length=1, choices=SpecopType.choices, default='O')
+    name = models.CharField(max_length=50, blank=True, null=True, default=None)
+    ident = models.CharField(max_length=2)
+    tech = models.IntegerField()
+    readiness = models.IntegerField()
+    difficulty = models.DecimalField(max_digits=2, decimal_places=1)
+    selfsp = models.BooleanField(default=False)
+    stealth = models.BooleanField(default=False)
+    description = models.CharField(max_length=255, default=None)
+    

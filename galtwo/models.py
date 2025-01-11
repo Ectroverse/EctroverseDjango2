@@ -121,7 +121,7 @@ class News(models.Model): # a single type of building under construction
         BB = 'BB', _('Buildings Built')
         UB = 'UB', _('Units Built')
         MS = 'MS', _('Message Sent')
-        MR = 'MR', _('Message Reseived')
+        MR = 'MR', _('Message Received')
         RWD = 'RWD', _('Relation War Declared')
         RWE = 'RWE', _('Relation War Ended')
         RNP = 'RNP', _('Relation Nap Proposed')
@@ -135,6 +135,11 @@ class News(models.Model): # a single type of building under construction
         FM = 'FM', _('Fleet Merged')
         FJ = 'FJ', _('Fleet Joined Main')
         E = 'E', _('Something Extra')
+        RCP = 'RCP', _('Ceasefire Proposed')
+        RCD = 'RCD', _('Ceasefire Declared')
+        DU = 'DU', _('Flying Dutchman')
+        TE = 'TE', _('Terraformer')
+        SK = 'SK', _('Skrull')
 
     news_type = models.CharField(max_length=3, choices=NewsType.choices, default=NewsType.N)
     tick_number = models.IntegerField(default=0)
@@ -191,6 +196,8 @@ class UserStatus(models.Model):
         WK = 'WK', _('Wookiees')
         JK = 'JK', _('Jackos')
         #SO = 'SO', _('Shootout')
+        FT = 'FT', _('Furtifons')
+        SM = 'SM', _('Samsonites')
     race = models.CharField(max_length=2, choices=Races.choices, blank=True, default=None, null=True)
 
     # Resources
@@ -409,6 +416,8 @@ class RoundStatus(models.Model):
     artetimer = models.IntegerField(default=1440)
     round_start = models.DateTimeField(blank=True, null=True, default=None)
     artedelay = models.IntegerField(default=59)
+    tick_time = models.IntegerField(default=30)
+    emphold = models.ForeignKey(Empire, on_delete=models.SET_NULL, blank=True, null=True, default=None)
 
 class Bot(models.Model):
     year = models.IntegerField(default=52)
@@ -434,6 +443,8 @@ class Relations(models.Model):
         NC = 'NC', _('Non agression pact cancelled')
         PC = 'PC', _('Permanent non agression pact cancelled')
         N = 'N', _('Non agression pact')
+        C = 'C', _('Ceasefire')
+        CO = 'CO', _('Ceasefire offered')
     relation_type = models.CharField(max_length=2, choices=RelationTypes.choices)
     relation_length = models.IntegerField(blank=True, null=True, default=None)
     relation_creation_tick = models.IntegerField(default=0)
@@ -526,7 +537,7 @@ class Sensing(models.Model):
     scout = models.FloatField(default=0)
     system = models.ForeignKey(System, on_delete=models.SET_NULL, blank=True, null=True, default=None)
     empire = models.ForeignKey(Empire, on_delete=models.SET_NULL, blank=True, null=True, default=None)
-
+    
 class Ticks_log(models.Model):
     round = models.IntegerField()
     calc_time_ms = models.DecimalField(max_digits=12, decimal_places=6)

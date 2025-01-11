@@ -103,6 +103,19 @@ Tag points : {{player.tag_points}}
 <input type="submit" name = "Rejoin" value="Rejoin"></form>
 </form>
 {% endif %}
+{% if skrull.empire_holding == player.empire and a_change == "Yes" %}
+<br><br>
+<form action="" method="POST" name="choose_race">
+	{% csrf_token %}
+	<select name="chosen_race">
+	{% for r in races %}
+	<option value="{{r.0}}"> {{r.1}}</option>
+	{% endfor %}
+	</select>
+	<br><input type="submit" value="Change">
+</form>
+<br>
+{% endif %}
 {% else %}
 {% if status.galsel == 1 %}
 <a href="/compose_message{{player.user.id}}">Send Message</a>

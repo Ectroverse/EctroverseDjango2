@@ -336,12 +336,19 @@ label {display: inline;}
 						{% elif fleet_nr.command_order == 8 %}
 							Stationed
 						{% elif fleet_nr.command_order == 0 %}
+						{% if bare == "Yes" %}
+						{% if status.galsel == 1 %}
+						<a href = "/batt{{fleet_nr.id}}">Attack planet!</a>
+						{% elif status.galsel == 2 %}
+						<a href = "/galtwo/batt{{fleet_nr.id}}">Attack planet!</a>
+						{% endif %}
+						{% else %}
 						{% if status.galsel == 1 %}
 						<a href = "/battle{{fleet_nr.id}}">Attack planet!</a>
 						{% elif status.galsel == 2 %}
 						<a href = "/galtwo/battle{{fleet_nr.id}}">Attack planet!</a>
 						{% endif %}
-							
+						{% endif %}	
 						{% endif %}
 						</td>
 						<td>{{fleet_nr.current_position_x | floatformat}}, {{fleet_nr.current_position_y | floatformat}}</td>
@@ -424,7 +431,11 @@ label {display: inline;}
 			{% if attack_cost and owner_of_attacked_pl.user_name != status.user_name %}
 			It will cost {{attack_cost}}% to attack the planet and take {{travel_time}} weeks, owned by {{owner_of_attacked_pl.user_name}}!<br>
 			{% endif %}
+			{% if bare == "Yes" %}
+			<form action="fleetssend" method="POST">
+			{% else %}
 			<form action="fleetsend" method="POST">
+			{% endif %}
 			{% csrf_token %}
 			
 			{% if owner_of_attacked_pl.user_name == status.user_name %}

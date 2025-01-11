@@ -70,7 +70,7 @@ public class ProcessTick_New
 			statement.executeUpdate("call calc_tick('fast');");
 			
 			// for slow tick
-			// tatement.executeUpdate("call calc_tick('slow');"); 
+			//statement.executeUpdate("call calc_tick('slow');"); 
 		}
 		catch (SQLException ex){
 			ex.printStackTrace();
@@ -79,7 +79,7 @@ public class ProcessTick_New
 		long python_script1 = System.nanoTime();
 		try{
 			// for slow tick
-			// ProcessBuilder pb = new ProcessBuilder("python", "/code/manage.py", "process_ops");
+			//ProcessBuilder pb = new ProcessBuilder("python", "/code/manage.py", "process_ops");
 			
 			ProcessBuilder pb = new ProcessBuilder("python", "/code/manage.py", "process_py");
 			Process p = pb.start();

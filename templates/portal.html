@@ -245,6 +245,8 @@ input[type=submit]:hover{
 	top: 21px;
 }
 
+p {text-align: center;font-size: 14px;}
+
 </style>
 
 
@@ -259,13 +261,13 @@ input[type=submit]:hover{
   var s = today.getSeconds();
   m_left = 9 - (m % 10);
   s_left = 59 - (s % 60);  
-  {% if round.is_running == True %}
+  {% if round.is_running == True and status.user_name != "" %}
   s_left = fixTimeDigits(s_left);
   document.getElementById('headerTime1').innerHTML = m_left + ":" + s_left;
   document.getElementById('headerTime2').innerHTML = m_left + ":" + s_left;
   {% endif %}
-  {% if round2.is_running == True %}
-  s_left = 59 - (s % 60);
+  {% if round2.is_running == True and status2.user_name != "" %}
+  s_left = {{round2.tick_time}} - 1 - (s % {{round2.tick_time}});
   document.getElementById('headerTime3').innerHTML = s_left;
   document.getElementById('headerTime4').innerHTML = s_left;
   {% endif %}
@@ -352,18 +354,18 @@ function fixTimeDigits(s_left) {
 </body>
 
 {% if msg != '' %}
-<div width="100">
+<div width="80%">
 	<div class="display_box_header">
 		<div class="display_box_header_left"></div>
 		<div class="display_box_header_center">
-			<div class="display_box_header_center_content">News</div>
+			<div class="display_box_header_center_content"></div>
 		</div>
 		<div class="display_box_header_right"></div>
 	</div>
 	<div class="display_box_content" style =" margin: 0 auto;" >
 		<div class="display_box_content_left"></div>
 		<div class="display_box_content_center" align="center" >
-		{{msg}}
+		<p>{{msg}}</p>
 
 
 	{% include "box_bottom.html" %}
@@ -566,7 +568,7 @@ function fixTimeDigits(s_left) {
 	<div class="display_box_header">
 		<div class="display_box_header_left"></div>
 		<div class="display_box_header_center">
-			<div class="display_box_header_center_content">Fast Tick</div>
+			<div class="display_box_header_center_content">Fast Tick: {{round2.tick_time}} seconds</div>
 		</div>
 		<div class="display_box_header_right"></div>
 	</div>

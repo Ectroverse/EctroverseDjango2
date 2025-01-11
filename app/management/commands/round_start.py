@@ -6,9 +6,7 @@ from django.db.models import Q, Sum
 from datetime import datetime
 import copy
 import math
-from discord import SyncWebhook
-#from app.models import NewsFeed
-#from galtwo.models import *
+from discord import Webhook, RequestsWebhookAdapter
 from galtwo.models import RoundStatus as StatusRound
 from app.models import *
 
@@ -29,9 +27,9 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             msg += "The Regular Round has now started, Good Luck!"
             NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
             msg = "<@&1201666532753547315> " + str(msg)
-            webhook = SyncWebhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE")
+            webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
             webhook.send(msg)
-            webhk = SyncWebhook.from_url("https://discord.com/api/webhooks/1227218151629000744/MeckPYnnT6hoiznfBz5oxm6pjWdgCXxVLOmLf7kFa78cYpimyDNK1BxgBdQOyZgD9qgu")
+            webhk = Webhook.from_url("https://discord.com/api/webhooks/1227218151629000744/MeckPYnnT6hoiznfBz5oxm6pjWdgCXxVLOmLf7kFa78cYpimyDNK1BxgBdQOyZgD9qgu", adapter=RequestsWebhookAdapter())
             webhk.send(msg)
             
         start()

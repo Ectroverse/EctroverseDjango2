@@ -30,6 +30,16 @@ background-color: rgb(25,38,51);
     {{msg|linebreaksbr}}
 {% endif %}
 
+{% if status.id == 1 %}
+<form action="" method="POST">{% csrf_token %}
+User: <input type="text" required="required" pattern="[0-9]+" maxlength="4" name="user" size="4"><input type="submit" name="checkartis" value="Go" >
+</form>
+{% endif %}
+
+<form action="" method="POST">{% csrf_token %}
+Confirm Sense Artefacts: <input type="submit" name="sense_check" value="Go" >
+</form>
+
 <form action="" method="POST">{% csrf_token %}
 <table style="width:100%">
 <tbody>
@@ -104,23 +114,25 @@ background-color: rgb(25,38,51);
 {% elif scouting.planet.owner.id == status.user.id %}
 	<font color="#FFFF00">{% if status.galsel == 1 %}{{scouting.planet.owner.userstatus.user_name}}
 	{% elif status.galsel == 2 %}{{scouting.planet.owner.galtwouser.user_name}}{% endif %}</font></td>
-{% elif scouting.planet.owner.userstatus.empire.id != status.user.userstatus.empire.id or scouting.planet.owner.userstatus.empire == None %}
-
-	{% if status.galsel == 1 %}
-	<a href="/account{{scouting.planet.owner.id}}" style="color: #FF0000">
-	{{scouting.planet.owner.userstatus.user_name}}
-	{% elif status.galsel == 2 %}
-	<a href="/galtwo/account{{scouting.planet.owner.id}}" style="color: #FF0000">
-	{{scouting.planet.owner.galtwouser.user_name}}
-	{% endif %}
-	
 {% else %}
 	{% if status.galsel == 1 %}
-	<a href="/account{{scouting.planet.owner.id}}" style="color: #0293FF">
-	{{scouting.planet.owner.userstatus.user_name}}
+		{% if scouting.planet.owner.userstatus.empire.id != status.user.userstatus.empire.id %}
+			<a href="/account{{scouting.planet.owner.id}}" style="color: #FF0000">
+			{{scouting.planet.owner.userstatus.user_name}}
+		{% else %}
+			<a href="/account{{scouting.planet.owner.id}}" style="color: #0293FF">
+			{{scouting.planet.owner.userstatus.user_name}}
+		{% endif %}
+		
 	{% elif status.galsel == 2 %}
-	<a href="/galtwo/account{{scouting.planet.owner.id}}" style="color: #0293FF">
-	{{scouting.planet.owner.galtwouser.user_name}}
+		{% if scouting.planet.owner.galtwouser.empire.id != status.user.galtwouser.empire.id %}
+			<a href="/galtwo/account{{scouting.planet.owner.id}}" style="color: #FF0000">
+			{{scouting.planet.owner.galtwouser.user_name}}
+		{% else %}
+			<a href="/galtwo/account{{scouting.planet.owner.id}}" style="color: #0293FF">
+			{{scouting.planet.owner.galtwouser.user_name}}
+		{% endif %}
+		
 	{% endif %}
 </td>
 {% endif %}

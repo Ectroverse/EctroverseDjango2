@@ -357,7 +357,7 @@ Travelling Fleets
 {% elif status.galsel == 2 %}
 <a id="system" href="#" onclick="window.parent.open('/galtwo/systmap{{system.id}}', '_self');return false;">View System on Map</a>
 {% endif %}</td>
-{% if status.race == 'FH' or status.race == 'SB' or status.race == 'WK' or status.race == 'JK' %}
+{% if status.race == 'FH' or status.race == 'SB' or status.race == 'WK' or status.race == 'JK' or status.race == 'FT' %}
 <form action="" method="POST"><td align="right" width="35%">{% csrf_token %}Ghost Ships to send: <td valign="top"><input type="number" max="999999" style="width: 5em" value = 100 name="survghosts"></td>
 <td align="left" width="30%"><input type="submit" name="survey_syst" value="Survey System"></td></form>
 {% else %}

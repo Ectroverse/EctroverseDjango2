@@ -1,0 +1,496 @@
+{% extends "baseex.html" %}
+
+{% load static %}
+
+{% block content %}
+
+{% if error %}
+<span style="color:red"><b>{{error}}</b></span>
+{% endif %}
+
+
+{% if planet_to_template_explore %}
+	<script>
+		$(document).ready(function () {
+			// Handler for .ready() called.
+			$('html, body').animate({
+				scrollTop: $('#exploration_send').offset().top
+			}, 'slow');
+		});
+	</script>
+{% endif %}
+
+{% if planet_to_template_attack %}
+	<script>
+		$(document).ready(function () {
+			// Handler for .ready() called.
+			$('html, body').animate({
+				scrollTop: $('#attack_send').offset().top
+			}, 'slow');
+		});
+	</script>
+{% endif %}
+
+<script>
+function maxunits() {
+	{% for unit in send_fleet_list %}
+		if (document.getElementById('u{{unit.i}}').checked) {
+			var per = document.getElementById('u_per').value;
+			document.getElementById('{{unit.i}}').value = Math.round({{unit.value}}*per/100);
+		}
+		else document.getElementById('{{unit.i}}').value = 0;
+
+	{% endfor %}
+}
+function toggleForm(form_name) {
+		var selectElements = document.querySelectorAll('input[type=checkbox]');
+		for(var i = 0; i < selectElements.length; i++) {
+			selectElements[i].checked = !selectElements[i].checked;
+		}
+	}
+
+</script>
+
+<script>
+ 
+{% for fleet_nr, fleet_units  in display_fleet.items %} 
+ function show_orders{{fleet_nr.id}}() {
+		var val = document.getElementById('{{fleet_nr.id}}order').value;
+		if (val == '0' || val == '1') {
+			document.getElementById('{{fleet_nr.id}}coord_X_Y').style.display = 'inline';
+			document.getElementById('{{fleet_nr.id}}coord_I').style.display = 'inline';
+			document.getElementById('split_fleet').style.display = 'none';
+		}
+		else if (val == '2' || val == '3'){
+			document.getElementById('{{fleet_nr.id}}coord_X_Y').style.display = 'inline';
+			document.getElementById('{{fleet_nr.id}}coord_I').style.display = 'none';
+			document.getElementById('{{fleet_nr.id}}split_fleet').style.display = 'none';
+		}
+		else if (val == '6'){
+			document.getElementById('{{fleet_nr.id}}coord_X_Y').style.display = 'none';
+			document.getElementById('{{fleet_nr.id}}coord_I').style.display = 'none';
+			document.getElementById('{{fleet_nr.id}}split_fleet').style.display = 'inline';
+		}
+		else {
+			document.getElementById('{{fleet_nr.id}}coord_X_Y').style.display = 'none';
+			document.getElementById('{{fleet_nr.id}}coord_I').style.display = 'none';
+			document.getElementById('{{fleet_nr.id}}split_fleet').style.display = 'none';
+		}
+	}
+{% endfor %}
+
+{% for fleet_nr  in display_fleet_exploration %}
+  function expo_orders{{fleet_nr.id}}() {
+		var val = document.getElementById('{{fleet_nr.id}}eorder').value;
+		if (val == '10' ) {
+			document.getElementById('{{fleet_nr.id}}ecoord_X_Y').style.display = 'inline';
+			document.getElementById('{{fleet_nr.id}}ecoord_I').style.display = 'inline';
+
+		}
+		else if (val == '2' ){
+			document.getElementById('{{fleet_nr.id}}ecoord_X_Y').style.display = 'inline';
+			document.getElementById('{{fleet_nr.id}}ecoord_I').style.display = 'none';
+		}
+		else {
+			document.getElementById('{{fleet_nr.id}}ecoord_X_Y').style.display = 'none';
+			document.getElementById('{{fleet_nr.id}}ecoord_I').style.display = 'none';
+		}
+	}
+{% endfor %}
+</script>
+
+
+<style>
+input {
+text-align: center;
+}
+
+label {display: inline;}
+</style>
+<style>
+#content-desktop {display: block;}
+#content-mobile {display: none;}
+
+@media screen and (max-width: 837px) {
+
+#content-desktop {display: none;}
+#content-mobile {display: block;}
+
+}
+
+
+</style>
+
+<div style="width:100%; float:left; ">
+	
+	<div class ="left_box" >
+		<b>Main Fleet</b><br>
+		{% for unit in main_fleet_list %}
+
+		{{unit.name}}
+		&nbsp;&nbsp;
+		{{unit.value}}
+		<br>
+		{% endfor %}
+
+		
+		{% if necro.empire_holding == status.empire %}
+		<br><br><b>Necromancers</b><br>
+		{{ necro.effect1 }}
+		{% endif %}
+		
+		
+
+
+	</div>
+	<div class ="right_box" align="center">	
+		<b>Fleets orders</b>
+		{% if status.galsel == 1 %}
+		<form action="/fleets_orders" method="POST">
+		{% elif status.galsel == 2 %}
+		<form action="/galtwo/fleets_orders" method="POST">
+		{% endif %}
+		
+			{% csrf_token %}
+			Order after an attack
+			<select name="attack">
+			<option value="1" {% if status.post_attack_order == 1 %}selected{% endif %}>Station fleet on planet
+			<option value="2" {% if status.post_attack_order == 2 %}selected{% endif %}>Wait in system
+			<option value="5" {% if status.post_attack_order == 5 %}selected{% endif %}>Recall to main fleet
+			</select>
+			<br>Approximations of enemy forces to flee battles, 0 - 9999%
+			<table class="styled-table" cellpadding="20">
+			<tr class="spaceUnder"><td >Long-range attack</td>
+			<td><input type="text" pattern="[0-9]+" maxlength="4" size ="5"  name="f0" size="4" value={{status.long_range_attack_percent}}> %</td></tr>
+			<tr class="spaceUnder"><td  >Air vs air</td>
+			<td><input type="text" pattern="[0-9]+" maxlength="4" size ="5"  name="f1" size="4" value={{status.air_vs_air_percent}}> %</td></tr>
+			<tr class="spaceUnder"><td  >Ground vs air</td>
+			<td><input type="text" pattern="[0-9]+" maxlength="4" size ="5" name="f2" size="4" value={{status.ground_vs_air_percent}}> %</td></tr>
+			<tr class="spaceUnder"><td >Ground vs ground</td>
+			<td><input type="text" pattern="[0-9]+" maxlength="4" size ="5" name="f3" size="4" value={{status.ground_vs_ground_percent}}> %</td></tr>
+			</table>
+			<input type="submit" value="Change">
+		</form><br>
+
+	</div>
+
+
+
+	<div class="center_box">
+			<b class="spaceUnder">Traveling fleets</b><br>
+			<p>
+			{% if display_fleet %}
+			<table width="100%" align="center">
+			<tr>
+				<td>Units</td>
+				<td>Order</td>
+				<td>Status</td>
+				<td>Position</td>
+				<td></td>
+				</tr>
+			
+				{% for fleet_nr, fleet_units  in display_fleet.items %}
+					<tr class="spaceUnder">
+					<input type="hidden" id="fleet_nr" name="fleet_nr" value="{{fleet_nr.id}}">
+
+						<td>
+						{% for unit_name, unit_nr in fleet_units.items %}
+							{{unit_name}}: {{unit_nr}}<br>
+						{% endfor %}
+						</td>
+						<td>
+						{% if status.galsel == 1 %}
+						{% if fleet_nr.command_order == 0 %}
+							Attack planet <a href="#" onclick="window.parent.open('/planet{{fleet_nr.target_planet.id}}', '_self');return false;">{{fleet_nr.x}},{{fleet_nr.y}}:{{fleet_nr.i}}</a>
+							{% if fleet_nr.target_planet.owner != None %}
+							<br><a href="#" onclick="window.parent.open('/account{{fleet_nr.target_planet.owner.id}}', '_self');return false;">{{fleet_nr.target_planet.owner.userstatus.user_name}}</a>
+							of <a hhref="#" onclick="window.parent.open('/empire{{fleet_nr.target_planet.owner.userstatus.empire.id}}', '_self');return false;">{{fleet_nr.target_planet.owner.userstatus.empire.name_with_id}}</a>
+							{% endif %}
+						{% elif fleet_nr.command_order == 1 %}
+							Station on planet <a href="#" onclick="window.parent.open('/planet{{fleet_nr.target_planet.id}}', '_self');return false;">{{fleet_nr.x}},{{fleet_nr.y}}:{{fleet_nr.i}}</a>
+							{% if fleet_nr.target_planet.owner != None %}
+							<br><a href="#" onclick="window.parent.open('/account{{fleet_nr.target_planet.owner.id}}', '_self');return false;">{{fleet_nr.target_planet.owner.userstatus.user_name}}</a> 
+							of <a href="#" onclick="window.parent.open('/empire{{fleet_nr.target_planet.owner.userstatus.empire.id}}', '_self');return false;">{{fleet_nr.target_planet.owner.userstatus.empire.name_with_id}}</a>
+							{% endif %}
+						{% elif fleet_nr.command_order == 2 %}
+							Move to system {{fleet_nr.x}},{{fleet_nr.y}}
+						{% elif fleet_nr.command_order == 3 %}
+							Merge in system {{fleet_nr.x}},{{fleet_nr.y}}
+						{% elif fleet_nr.command_order == 4 %}
+							Auto merge in system {{fleet_nr.x}},{{fleet_nr.y}}
+						{% elif fleet_nr.command_order == 5 %}
+							Join main fleet at <a href="#" onclick="window.parent.open('/planet{{fleet_nr.target_planet.id}}', '_self');return false;">{{fleet_nr.x}},{{fleet_nr.y}}</a>
+						{% elif fleet_nr.command_order == 8 %}
+							Stationed on planet  <a href="#" onclick="window.parent.open('/planet{{fleet_nr.target_planet.id}}', '_self');return false;">{{fleet_nr.x}},{{fleet_nr.y}}:{{fleet_nr.i}}</a>
+							{% if fleet_nr.target_planet.owner != None %}
+							<br><a href="#" onclick="window.parent.open('/account{{fleet_nr.target_planet.owner.id}}', '_self');return false;">{{fleet_nr.target_planet.owner.userstatus.user_name}}</a> 
+							of <a href="#" onclick="window.parent.open('/empire{{fleet_nr.target_planet.owner.userstatus.empire.id}}', '_self');return false;">{{fleet_nr.target_planet.owner.userstatus.empire.name_with_id}}</a>
+							{% endif %}
+						{% endif %}
+						{% elif status.galsel == 2 %}
+						{% if fleet_nr.command_order == 0 %}
+							Attack planet <a href="/galtwo/planet{{fleet_nr.target_planet.id}}">{{fleet_nr.x}},{{fleet_nr.y}}:{{fleet_nr.i}}</a>
+							{% if fleet_nr.target_planet.owner != None %}
+							<br><a href="/galtwo/account{{fleet_nr.target_planet.owner.id}}">{{fleet_nr.target_planet.owner.galtwouser.user_name}}</a> of <a href="/galtwo/empire{{fleet_nr.target_planet.owner.galtwouser.empire.id}}">{{fleet_nr.target_planet.owner.galtwouser.empire.name_with_id}}</a>
+							{% endif %}
+						{% elif fleet_nr.command_order == 1 %}
+							Station on planet <a href="/galtwo/planet{{fleet_nr.target_planet.id}}">{{fleet_nr.x}},{{fleet_nr.y}}:{{fleet_nr.i}}</a>
+							{% if fleet_nr.target_planet.owner != None %}
+							<br><a href="/galtwo/account{{fleet_nr.target_planet.owner.id}}">{{fleet_nr.target_planet.owner.galtwouser.user_name}}</a> of <a href="/galtwo/empire{{fleet_nr.target_planet.owner.galtwouser.empire.id}}">{{fleet_nr.target_planet.owner.galtwouser.empire.name_with_id}}</a>
+							{% endif %}
+						{% elif fleet_nr.command_order == 2 %}
+							Move to system {{fleet_nr.x}},{{fleet_nr.y}}
+						{% elif fleet_nr.command_order == 3 %}
+							Merge in system {{fleet_nr.x}},{{fleet_nr.y}}
+						{% elif fleet_nr.command_order == 4 %}
+							Auto merge in system {{fleet_nr.x}},{{fleet_nr.y}}
+						{% elif fleet_nr.command_order == 5 %}
+							Join main fleet at <a href="/galtwo/planet{{fleet_nr.target_planet.id}}">{{fleet_nr.x}},{{fleet_nr.y}}</a>
+						{% elif fleet_nr.command_order == 8 %}
+							Stationed on planet  <a href="/galtwo/planet{{fleet_nr.target_planet.id}}">{{fleet_nr.x}},{{fleet_nr.y}}:{{fleet_nr.i}}</a>
+							{% if fleet_nr.target_planet.owner != None %}
+							<br><a href="/galtwo/account{{fleet_nr.target_planet.owner.id}}">{{fleet_nr.target_planet.owner.galtwouser.user_name}}</a> of <a href="/galtwo/empire{{fleet_nr.target_planet.owner.galtwouser.empire.id}}">{{fleet_nr.target_planet.owner.galtwouser.empire.name_with_id}}</a>
+							{% endif %}
+						{% endif %}
+						{% endif %}
+						
+
+						</td>
+						<td>
+						{% if fleet_nr.ticks_remaining > 0 %}
+							Moving, {{fleet_nr.ticks_remaining}} week(s)
+						{% elif fleet_nr.command_order == 3 or fleet_nr.command_order == 4 %}
+							Fleet merged
+						{% elif fleet_nr.command_order == 2 %}
+							Fleet hoovering at position
+						{% elif fleet_nr.command_order == 8 %}
+							Stationed
+						{% elif fleet_nr.command_order == 0 %}
+						{% if status.galsel == 1 %}
+						<a href = "/batt{{fleet_nr.id}}">Attack planet!</a>
+						{% elif status.galsel == 2 %}
+						<a href = "/galtwo/batt{{fleet_nr.id}}">Attack planet!</a>
+						{% endif %}
+							
+						{% endif %}
+						</td>
+						<td>{{fleet_nr.current_position_x | floatformat}}, {{fleet_nr.current_position_y | floatformat}}</td>
+
+						<td>
+						<input type="button" onclick="document.getElementById({{fleet_nr.id}}).style.display='table-cell';" value="Orders" name="fleet_select"/>
+						</td>
+
+					</tr>
+					
+					<td align="center" colspan="100" id="{{fleet_nr.id}}" style="display:none;">
+			{% if status.galsel == 1 %}
+			<form action="/fleet_orders_process" method="POST">
+			{% elif status.galsel == 2 %}
+			<form action="/galtwo/fleet_orders_process" method="POST">
+			{% endif %}
+			{% csrf_token %}
+			
+			<select name="order" id="{{fleet_nr.id}}order" class="spaceUnder" style="width: 110px;" onchange="show_orders{{fleet_nr.id}}()">
+			<option value="0" selected>Attack the planet
+			<option value="1">Station on planet
+			<option value="2">Move to system
+			<option value="3">Merge in system (choose system yourself)
+			<option value="4">Merge in system (auto/optimal)
+			<option value="5">Join main fleet
+			<option value="6">Split fleets
+			</select>
+
+
+			<input type="hidden" name="fleet_select_hidden" value="{{fleet_nr.id}}" />
+
+			<div id="{{fleet_nr.id}}coord_X_Y" style="display:inline">
+			<label for="fleet_select_X"> X:</label><input class="spaceUnder" id="fleet_select_X" value="{{fleet_nr.x}}" pattern="[0-9]+" type="text" name="X" size="4">
+			<label for="fleet_select_Y"> Y:</label><input class="spaceUnder" id="fleet_select_Y" value="{{fleet_nr.y}}" pattern="[0-9]+" type="text" name="Y" size="4"> 
+			</div>
+			
+			<div id="{{fleet_nr.id}}coord_I" style="display:inline">
+			<label for="fleet_select_I"> Planet:</label><input class="spaceUnder" id="fleet_select_I" value="{{fleet_nr.i}}" pattern="[0-9]+" type="text" name="I" size="4">
+			</div>
+			
+			<div id="{{fleet_nr.id}}split_fleet" style="display:none">
+			Fleet split:<input class="spaceUnder" id="split_pct" min = "0" max = "100" type="number" name="split_pct" size="4"> %
+			</div>
+			
+			<input type="submit" value="Send">
+			</form>
+			</td>
+					
+				{% endfor %}
+				
+			</table>
+			
+			
+			{% else %}
+				None
+			{% endif %}
+			</p>
+	</div>
+
+	<div  id="attack_send" class="center_box">
+		<div class="center_box">
+			<b class="spaceUnder">Dispatch a new fleet</b><br>
+			{% if attack_cost and owner_of_attacked_pl.user_name != status.user_name %}
+			It will cost {{attack_cost}}% to attack the planet and take {{travel_time}} weeks, owned by {{owner_of_attacked_pl.user_name}}!<br>
+			{% endif %}
+			<form action="fleetssend" method="POST">
+			{% csrf_token %}
+			{% if owner_of_attacked_pl.user_name == status.user_name %}
+			<select name="order" class="spaceUnder">
+			<option value="0">Attack the planet
+			<option value="1" selected>Station on planet
+			<option value="2">Move to system
+			</select>
+			{% else %}
+			<select name="order" class="spaceUnder">
+			<option value="0" selected>Attack the planet
+			<option value="1">Station on planet
+			<option value="2">Move to system
+			</select>
+			{% endif %}
+			<table class="spaceUnder" cellspacing="8" align="center">
+			<tr class="spaceUnder">
+			<td colspan="3" align="center"><input id="u_per" type="number" name="u_per" style="width: 5em" value="100" onkeyup="if(this.value > 100) this.value = 100;">% of units</td>
+			<td align="right"><div class="href" onclick="toggleForm();maxunits();"><font size="1">Toggle</font></div></font></td>
+			</tr>
+			{% for unit in send_fleet_list %}
+			<tr class="spaceUnder">
+				<td align="left">{{unit.value}}&nbsp;&nbsp;</td>
+				<td align="left">{{unit.name}}&nbsp;&nbsp;</td>
+				<td><input id="{{unit.i}}" type="text" name="u{{unit.i}}" size="10" value="0">&nbsp;&nbsp;</td>
+				<td><input type="checkbox" id="u{{unit.i}}" onclick="maxunits()"></td>
+			</tr>
+			{% endfor %}
+			</table>
+			X:<input class="spaceUnder" pattern="[0-9]+" type="text" name="X" size="4" value ="{{planet_to_template_attack.x}}">
+			Y:<input class="spaceUnder" pattern="[0-9]+" type="text" name="Y" size="4" value ="{{planet_to_template_attack.y}}">
+			Planet:<input class="spaceUnder" pattern="[0-9]+" type="text" name="I" size="4" value ="{{planet_to_template_attack.i}}">
+			<br>
+			<input type="submit" value="Send">
+			</form>
+		</div>
+	</div>
+
+
+	<div class="center_box">
+			<b class="spaceUnder">Exploration teams</b><br>
+			<p>
+			{% if display_fleet_exploration %}
+			<table width="100%" align="center">
+			<tr>
+				<td>Units</td>
+				<td>Order</td>
+				<td>Status</td>
+				<td>Position</td>
+				<td></td>
+				</tr>
+
+				{% for fleet_nr in display_fleet_exploration %}
+
+					<tr class="spaceUnder">
+					<input type="hidden" id="fleet_nr" name="fleet_nr" value="{{fleet_nr.id}}">
+
+						<td>
+						Exploration ships: {{fleet_nr.exploration}}
+						</td>
+						<td>
+						
+							{% if fleet_nr.command_order == 10 %}
+							Explore planet {{fleet_nr.x}},{{fleet_nr.y}}:{{fleet_nr.i}}
+						{% elif fleet_nr.command_order == 2 or fleet_nr.command_order == 11 %}
+							Hoover at {{fleet_nr.x}},{{fleet_nr.y}}
+						{% elif fleet_nr.command_order == 5  %}
+							Join main fleet at {{fleet_nr.x}},{{fleet_nr.y}}:{{fleet_nr.i}}
+						{% endif %}
+							
+						</td>
+						<td>
+						{% if fleet_nr.ticks_remaining > 0 %}
+							Moving, {{fleet_nr.ticks_remaining}} week(s)
+						{% else %}
+							Reached position
+						{% endif %}
+						</td>
+						<td>{{fleet_nr.current_position_x | floatformat}}, {{fleet_nr.current_position_y | floatformat}}</td>
+
+						<td>
+						<input type="button" onclick="document.getElementById({{fleet_nr.id}}).style.display='table-cell';" value="Orders" name="fleet_select"/>
+						</td>
+
+					</tr>
+
+				
+
+				<td align="center" colspan="100" id="{{fleet_nr.id}}" style="display:none;">
+			{% if status.galsel == 1 %}
+			<form action="/fleet_orders_process" method="POST">
+			{% elif status.galsel == 2 %}
+			<form action="/galtwo/fleet_orders_process" method="POST">
+			{% endif %}
+			{% csrf_token %}
+			
+			<select name="order" id="{{fleet_nr.id}}eorder" class="spaceUnder" onchange="expo_orders{{fleet_nr.id}}()">
+			<option value="10" selected>Explore planet
+			<option value="2">Move to system
+			<option value="5">Join main fleet
+			</select>
+
+			<input type="hidden" name="fleet_select_hidden" value="{{fleet_nr.id}}" />
+			
+			<div id="{{fleet_nr.id}}ecoord_X_Y" style="display:inline">
+			X:<input class="spaceUnder" id="fleet_select_X" value="{{fleet_nr.x}}" pattern="[0-9]+" type="text" name="X" size="4">
+			Y:<input class="spaceUnder" id="fleet_select_Y" value="{{fleet_nr.y}}" pattern="[0-9]+" type="text" name="Y" size="4"> 
+			</div>
+			
+			<div id="{{fleet_nr.id}}ecoord_I" style="display:inline">
+			I:<input class="spaceUnder" id="fleet_select_I" value="{{fleet_nr.i}}" pattern="[0-9]+" type="text" name="I" size="4">
+			</div>
+			
+			<input type="submit" value="Send">
+			</form>
+			</td>
+				
+			
+			{% endfor %}
+			</table>
+			{% else %}
+				None
+			{% endif %}
+			</p>
+	</div>
+
+
+
+
+	<div class="center_box" id="exploration_send" >
+			<b class="spaceUnder">Dispatch a new exploration ship</b><br>
+			{% if exploration_cost %}
+			It will cost {{exploration_cost}}% to explore the planet and take {{travel_time}} weeks.<br>
+			{% endif %}
+			{{explo_ships}} ships availible<br>
+			<form action="fleetssend" method="POST">
+			{% csrf_token %}
+			<select name="order" class="spaceUnder">
+			<option value="10" selected>Explore the planet
+			<option value="11">Move to system
+			</select>
+			<br>
+			X:<input class="spaceUnder" pattern="[0-9]+" type="text" name="X" size="4" value ="{{planet_to_template_explore.x}}">
+			Y:<input class="spaceUnder" pattern="[0-9]+" type="text" name="Y" size="4" value ="{{planet_to_template_explore.y}}">
+			Planet:<input class="spaceUnder" pattern="[0-9]+" type="text" name="I" size="4" value ="{{planet_to_template_explore.i}}">
+			<input type="hidden" name="exploration" value='1'>
+			<br>
+			<input type="submit" value="Send">
+			</form>
+	</div>
+
+
+</div>
+
+
+
+{% endblock %}

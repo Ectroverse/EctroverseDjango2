@@ -24,7 +24,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             news_message = "System " + str(system.x) + "," + str(system.y) + " has been scouted by the Flying Dutchman!"
             for p in planets:
                 try:
-                    scouting = Scouting.objects.get(user=user.user, planet=p)
+                    scouting = Scouting.objects.get(empire=user.empire, planet=p)
                     scouting.scout += 1.0
                     scouting.save()
                 except:

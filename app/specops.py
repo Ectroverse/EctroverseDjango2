@@ -9,134 +9,31 @@ import secrets
 import math
 from app.calculations import *
 
-
-all_spells = ["Irradiate Ectrolium",
-              "Dark Web",
-              "Incandescence",
-              "Black Mist",
-              "War Illusions",
-              "Psychic Assault",
-              "Phantoms",
-              "Enlightenment",
-              "Grow Planet's Size"]
-
-
-# tech, readiness, difficulty, self-spell
-psychicop_specs = {
-    "Irradiate Ectrolium": [0, 12, 1.5, False, 'IE',
-                            "Your psychics will attempt to irradiate the target's ectrolium reserves, making it unusable.", ],
-    "Incandescence": [0, 30, 2.5, True, 'IN',
-                      "Your psychics will convert crystal into vast amounts of energy."],
-    "Dark Web": [10, 18, 2.4, True, 'DW',
-                 "Creating a thick dark web spreading in space around your planets will make them much harder to locate and attack."],
-    "Black Mist": [50, 24, 3.0, False, 'BM',
-                   "Creating a dense black mist around the target's planets will greatly reduce the effectiveness of solar collectors."],
-    "War Illusions": [70, 30, 4.0, True, 'WI',
-                      "These illusions will help keeping enemy fire away from friendly units."],
-    "Psychic Assault": [90, 35, 1.7, False, 'PA',
-                        "Your psychics will engage the targeted faction's psychics, to cause large casualities."],
-    "Phantoms": [110, 40, 5.0, True, 'PM',
-                 "Your psychics will create etheral creatures to join your fleets in battle."],
-    "Grow Planet's Size": [110, 30, 2.5, True, 'GP',
-                           "Your psychics will try to create new land on one of the planets of your empire. The more planets and psychic power you have, the better are the chances."],
-    "Enlightenment": [120, 35, 1.0, True, 'EN',
-                      "Philosophers and scientists will try to bring a golden Age of Enlightenment upon your empire."],
-}
-
-
-
-    
-all_operations = ["Spy Target",
-                "Observe Planet",
-                "Network Infiltration",
-                "Infiltration",
-                "Diplomatic Espionage",
-                "Bio Infection",
-                "Hack mainframe",
-                "Military Sabotage",
-                "Planetary Beacon",
-                "Bribe officials",
-                "Nuke Planet",
-                "Maps theft",
-                "High Infiltration",
-                "Spoil Resources",
-                ]
-
-# tech, readiness, difficulty, stealth
-agentop_specs = {
-    "Spy Target": [0, 12, 1.5, True, 'ST',
-                            "Spy target will reveal information regarding an faction resources and readiness.", ],
-    "Observe Planet": [0, 5, 1.0, True, 'OP',
-                      "Your agents will observe the planet and provide you with all information regarding it, habited or not."],
-    "Network Infiltration": [25, 22, 4.5, False, 'NW',
-                 "Your agents will try to infiltrate research network in order to steal new technologies."],
-    "Infiltration": [40, 18, 2.5, True, 'IF',
-                   "Infiltrating the target network will provide you with information regarding its resources, research and buildings."],
-    "Diplomatic Espionage": [40, 15, 1.5, True, 'DE',
-                             "Your diplomats will try to gather information regarding operations and spells, currently affecting the target faction."],
-    "Bio Infection": [60, 25, 3.0, False, 'BI',
-                      "Your agents will attempt to spread a dangerous infection which will kill most of the population and spread in nearby planets."],
-    "Hack mainframe": [80, 22, 4.5, False, 'HM',
-                        "Your agents will infiltrate the enemy energy storage facilities and temporarily divert income to your empire."],
-    "Military Sabotage": [100, 30, 4.0, False, 'MS',
-                 "Your agents will attempt to reach the enemy fleet and destroy military units."],
-    "Planetary Beacon": [100, 7, 1.0, False, 'PB',
-                         "Your agents will attempt to place a beacon on target planet, if successful it will remove any dark webs present."],
-    "Nuke Planet": [120, 30, 2.5, False, 'NP',
-                           "Your agents will place powerful nuclear devices on the surface of the planet, destroying all buildings and units, leaving in uninhabited."],
-    "Bribe officials": [140, 60, 3.5, False, 'BO',
-                        "Your spies will try to bribe officials of target faction causing great inneficiencies!"],
-    "Maps theft": [140, 40, 4.5, False, 'MT',
-                   "Your agents will try to steal the maps of the enemie's territory!"],
-    "High Infiltration": [140, 40, 5.0, False, 'HI',
-                      "Performing this operation will provide you with detailled information about an faction for several weeks."],
-    "Spoil Resources": [60, 28, 3.0, True, 'SR',
-                      "Your Agents will attempt to spoil storage facilities, causing resources to decay!"],
-}
-
-all_incantations = ["Survey System", "Sense Artefact", "Planetary Shielding", "Portal Force Field", "Mind Control", "Call to Arms", "Energy Surge"]
-
-inca_specs= {"Survey System": [40, 20, 1, True, 'SS', "Your Ghost Ships will try and reveal information of all the planets in the system!"], 
-    "Sense Artefact": [20, 20, 1, False, 'FA', "Your Ghost Ships will attempt to reveal the location of nearby Artefacts!"], 
-    "Call to Arms": [30, 30, 1, False, 'CA', "Your Ghost Ships will recruit population into your forces!"],
-    "Planetary Shielding": [60, 30, 2, True, 'PS', "Your Ghost Ships will attempt to create a shield around the planet!"], 
-    "Portal Force Field": [80, 30, 1.5, False, 'PF', "Your Ghost Ships will attempt to create a Force Field, drastically reducing the Portals capability!"], 
-    "Vortex Portal": [100, 60, 1, True, 'VP', "Your Ghost Ships will attempt to create a temporary portal!"], 
-    "Mind Control": [120, 40, 5, True, 'MC', "Your Ghost Ships will attempt to take control of the planet!"], 
-    "Energy Surge": [140, 80, 6, False, 'ES', "Your Ghost Ships will attempt a surge throughout the enemies empire, destroying infrastructure, reserves and research!"], 
-    
-}
-
 def specopReadiness(specop, type, user1, *args):
     user2 = None
     if args:
         user2 = args[0]
-
-
-
+    
+    robo = Artefacts.objects.get(name="Advanced Robotics")
+    if robo.empire_holding == user1.empire:
+        o_tech = specop[0]/2
+    else:
+        o_tech = specop[0]
     if type == "Spell":
-        arte = Artefacts.objects.get(name="Advanced Robotics")
-        if arte.empire_holding == user1.empire:
-            penalty = get_op_penalty(user1.research_percent_culture, (specop[0]/2))
-        else:
-            penalty = get_op_penalty(user1.research_percent_culture, specop[0])
-            print("penalty %s" % penalty)
+        penalty = get_op_penalty(user1.research_percent_culture, o_tech)
+        print("penalty %s" % penalty)
         if user2 == None and specop[3] == False:
             return -1
         if specop[3]: #if self op
             fr = int((1.0 + 0.01 * penalty) * specop[1])
-            arte = Artefacts.objects.get(name="Magus Cloak")
-            if arte.empire_holding == user1.empire:
-                fr = round(fr*0.75)
+            cloak = Artefacts.objects.get(name="Magus Cloak")
+            if cloak.empire_holding == user1.empire:
+                fr = round(fr*(1-(cloak.effect1/100)))
             return fr
     elif type == 'Incantation':
-        penalty = get_op_penalty(user1.research_percent_culture, specop[0])
+        penalty = get_op_penalty(user1.research_percent_culture, o_tech)
     else:
-        arte = Artefacts.objects.get(name="Advanced Robotics")
-        if arte.empire_holding == user1.empire:
-            penalty = get_op_penalty(user1.research_percent_operations, (specop[0]/2))
-        else:
-            penalty = get_op_penalty(user1.research_percent_operations, specop[0])
+        penalty = get_op_penalty(user1.research_percent_operations, o_tech)
 
 
     if penalty == -1:
@@ -286,6 +183,27 @@ def perform_spell(spell, psychics, status, *args):
             news_message += str(cry_converted) + " crystals were converted into " + str(energy) + " energy!"
             message += "Your " + str(cry_converted) + " crystals were converted into " + str(energy) + " energy!"
             prloss = specopReadiness(psychicop_specs[spell],"Spell", status)
+        
+        if spell == "Alchemist":
+            nrg_converted = attack * 5
+            if nrg_converted > status.energy:
+                nrg_converted = status.energy
+            nrg_converted = int(nrg_converted)
+            status.energy -= nrg_converted
+            res = int((nrg_converted / 8.0) * (1.0 + 0.01 * status.research_percent_culture))
+            element = ['Mineral', 'Crystal', 'Ectrolium']
+            chosen = secrets.choice(element)
+            if chosen == "Crystal":
+                status.crystals += res
+            if chosen == "Ectrolium":
+                status.ectrolium += res
+            if chosen == "Mineral":
+                status.minerals += res
+            status.save()
+            news_message += str(nrg_converted) + " energy were converted into " + str(res) + " " + str(chosen) + "!"
+            message += "Your " + str(nrg_converted) + " energy were converted into " + str(res) + " " + str(chosen) + "!"
+            prloss = specopReadiness(psychicop_specs[spell],"Spell", status)        
+        
         if spell == "Irradiate Ectrolium":
             destroyed_ectro = 0
             if success >= 1:
@@ -390,7 +308,14 @@ def perform_spell(spell, psychics, status, *args):
             prloss = specopReadiness(psychicop_specs[spell],"Spell", status)
         
         if spell =="Grow Planet's Size":
-            planet = random.choice(Planet.objects.filter(owner=status.user))
+            plant = list(Planet.objects.filter(owner=status.user).order_by('size').reverse().values_list('id', flat=True))
+            weight = []
+            count = 1
+            for _ in range(len(plant)):
+                weight.append(count)
+                count += 1
+            plan = random.choices(plant,weight)
+            planet = Planet.objects.get(id=str(*plan))
             grow = (attack * 1.3)
             growth = np.clip(round(200 * grow / status.networth / 2 * (status.num_planets/10)),0,300)
             planet.size += growth
@@ -735,27 +660,34 @@ def perform_operation(agent_fleet):
                 news_message2 += "All dark web effects were removed from the planet, however the planet defenders gained +10% military bonus!"
 
         
-        if operation == "Spoil Resources":
-            lost_resource_pct = 0
-            if success > 1.0:
-                lost_resource_pct = 1
-                time = 32
+        if operation == "Steal Resources":
+            if target_planet.owner is not None:
+                if success >= 1.0:
+                    element = ['Mineral', 'Crystal', 'Ectrolium']
+                    chosen = secrets.choice(element)
+                    res = ""
+                    if chosen == "Crystal":
+                        res = int(user2.crystals * (success/20))
+                        user1.crystals += res
+                        user2.crystals -= res
+                    if chosen == "Ectrolium":
+                        res = int(user2.ectrolium * (success/20))
+                        user1.ectrolium += res
+                        user2.ectrolium -= res
+                    if chosen == "Mineral":
+                        res = int(user2.minerals * (success/20))
+                        user1.minerals += res
+                        user2.minerals -= res
+                    user1.save()
+                    user2.save()
+                    news_message += "\nOur Agents managed to steal " + str(res) + " " + str(chosen) + "!"
+                    news_message2 += "\nTheir Agents managed to steal " + str(res) + " " + str(chosen) + "!"
+
+                else:
+                    news_message += "\nNo resources were stolen!"
+                    news_message2 += "\nNo resources were stolen!"
             else:
-                lost_resource_pct = min(1, round((1.0 / 0.6) * (success -0.4), 2))
-                time = min(32, int(pow(7, success)))
-            if lost_resource_pct > 0:
-                news_message += "\n" + str(lost_resource_pct) + "% decay rate among resources for " + str(time) + " weeks!" 
-                news_message2 += "\nWe are currently losing " + str(lost_resource_pct) + "% of our resources for " + str(time) + " weeks!"
-                Specops.objects.create(user_to=user2.user,
-                                       user_from=user1.user,
-                                       specop_type='O',
-                                       stealth=stealth,
-                                       specop_strength=lost_resource_pct,
-                                       name="Spoil Resources",
-                                       ticks_left=time)
-            else:
-                news_message += "\nNo resources were damaged"
-                news_message2 += "\nNo resources were damaged"
+                news_message += "\nPlanet uninhabited"
         
         if operation == "Hack mainframe":
             if success >= 1.0:
@@ -829,7 +761,7 @@ def perform_operation(agent_fleet):
             if success >= 0.8:
                 news_message += "\nCulture Research: " + str(user2.research_percent_culture) + "%"
             if success >= 1.0:
-                news_message += "\nTOperations Research: " + str(user2.research_percent_operations) + "%"
+                news_message += "\nOperations Research: " + str(user2.research_percent_operations) + "%"
             if success >= 1.0:
                 news_message += "\nPortals Research: " + str(user2.research_percent_portals) + "%"
 
@@ -925,7 +857,7 @@ def perform_operation(agent_fleet):
                 else:
                     news_message += "Your agents didn't succeed!"
                     news_message2 += "Your agents managed to defend!"
-
+                
 
         if operation == "Bio Infection":
             if success >= 1.0:
@@ -1199,7 +1131,7 @@ def perform_incantation(ghost_fleet):
             arti = Planet.objects.all().exclude(artefact=None)
             news_message = "No Artefact was felt in the area!"
             system = System.objects.all()
-            area = round(min(5, success))   
+            area = round(min(4, success))   
             for arte in arti:
                 dist = max(abs(target_planet.x-arte.x), abs(target_planet.y-arte.y))
                 if dist < area:
@@ -1220,7 +1152,12 @@ def perform_incantation(ghost_fleet):
                 for s in system:
                     dist = max(abs(target_planet.x-s.x), abs(target_planet.y-s.y))
                     if dist <= area:
-                        sens = Sensing.objects.create(empire=user1.empire, system=s, scout=success)
+                        try:
+                            sens = Sensing.objects.get(empire=user1.empire, system=s)
+                            sens.scout = 3.0
+                            sens.save()
+                        except:
+                            sens = Sensing.objects.create(empire=user1.empire, system=s, scout=success)
 
         if incantation == "Planetary Shielding":
             stealth = False
@@ -1279,7 +1216,7 @@ def perform_incantation(ghost_fleet):
                 target_planet.owner = user
                 target_planet.portal = False
                 target_planet.protection = 0
-                target_planet.current_population = target_planet.size
+                target_planet.current_population = target_planet.size * 20
                 target_planet.solar_collectors = 0
                 target_planet.fission_reactors = 0
                 target_planet.mineral_plants = 0
@@ -1310,7 +1247,6 @@ def perform_incantation(ghost_fleet):
                     scouting.save             
                 news_message += "Your Ghost Ships took control of the planet!"
                 news_message2 += "Your planet was lost!"
-                
             else:
                 news_message += "Your Ghost Ships failed to take control of the planet!"
                 news_message2 += "Your Psychics saved the planet!"
