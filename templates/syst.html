@@ -13,7 +13,7 @@
 <tr>
 <form action="" method="POST"><td align="right" width="35%">{% csrf_token %}<input type="submit" name="explore_all" value="Explore"></td></form>
 Distance from nearest Portal: {{travel_time}} weeks
-<form action="" method="POST"><td align="right" width="35%">{% csrf_token %}Agents to send to each planet: <td valign="top"><input type="number" max="999999" style="width: 5em" value = 100 name="obsagents"></td>
+<form action="" method="POST"><td align="right" width="35%">{% csrf_token %}Agents to send to each planet: <td valign="top"><input type="number" style="width: 5em" value = 100 name="obsagents"></td>
 <td align="left" width="30%"><input type="submit" name="observe_all" value="Observe"></td></form>
 </tr>
 </table>
@@ -92,8 +92,8 @@ Travelling Fleets
   const svg = d3.select("#mapdiv")
     .append("div")
     .append("svg")
-    .style("height", '60vh')
-    .style("width", '100vw')
+    .style("height", '80vh')
+    .style("width", '80vw')
     .attr("preserveAspectRatio", "xMidYmin meet")
     .attr("viewBox", [-10, -1, width+10, height+1])
 
@@ -296,9 +296,9 @@ Travelling Fleets
 		.style("fill", "black")
 		.style("opacity", 0)
 		{% if status.galsel == 1 %}
-		.on("click", function(){window.parent.document.getElementById("clplant").style.display="block"; window.parent.document.getElementById('plant').setAttribute('src', '/plant{{o.id}}');} );
+		.on("click", function(){window.parent.document.getElementById("clsyst").style.display="block"; window.parent.document.getElementById('syst').setAttribute('src', '/plant{{o.id}}');} );
 		{% elif status.galsel == 2 %}
-		.on("click", function(){window.parent.document.getElementById("clplant").style.display="block"; window.parent.document.getElementById('plant').setAttribute('src', '/galtwo/plant{{o.id}}');} );
+		.on("click", function(){window.parent.document.getElementById("clsyst").style.display="block"; window.parent.document.getElementById('syst').setAttribute('src', '/galtwo/plant{{o.id}}');} );
 		{% endif %}
 	g.append("text")	                                
 		.attr("x", {{o.x}})
@@ -395,8 +395,8 @@ Travelling Fleets
 {% elif status.galsel == 2 %}
 <a id="system" href="#" onclick="window.parent.open('/galtwo/systmap{{system.id}}', '_self');return false;">View System on Map</a>
 {% endif %}</td>
-{% if status.race == 'FH' or status.race == 'SB' or status.race == 'WK' or status.race == 'JK' %}
-<form action="" method="POST"><td align="right" width="35%">{% csrf_token %}Ghost Ships to send: <td valign="top"><input type="number" max="999999" style="width: 5em" value = 100 name="survghosts"></td>
+{% if status.race == 'FH' or status.race == 'SB' or status.race == 'WK' or status.race == 'JK' or status.race == 'FT' %}
+<form action="" method="POST"><td align="right" width="35%">{% csrf_token %}Ghost Ships to send: <td valign="top"><input type="number" style="width: 5em" value = 100 name="survghosts"></td>
 <td align="left" width="30%"><input type="submit" name="survey_syst" value="Survey System"></td></form>
 {% else %}
 <td align="right" width="65%"></td>

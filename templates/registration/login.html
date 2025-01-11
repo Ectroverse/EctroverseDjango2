@@ -4,29 +4,13 @@
 
 {% block content %}
 
-  {% if form.errors %}
-    <p>Your username and password didn't match. Please try again.</p>
-  {% endif %}
-  
-  {% if next %}
-    {% if user.is_authenticated %}
-      <p>Your account doesn't have access to this page. To proceed,
-      please login with an account that has access.</p>
-    {% else %}
-		
-    {% endif %}
-  {% endif %}
-  
-  {% if errors %}
-  
-  <p align="center">{{errors}}</p>
-  {% endif %}
-
 <style>
 td {
   font-size: 1em;
   padding-bottom: 0.5em;
 }
+
+p {text-align: center;font-size: 14px;}
 </style>
   
 <div style="width:100%; float:left ">
@@ -34,6 +18,24 @@ td {
 
 	<div class="display_box_wrapper front_login" style =" margin: 10px auto;">
 		{% include "box_top.html" with heading="Login" width="220px" textalign="left" %}
+	
+	{% if form.errors %}
+		<p>Your username and password didn't match. Please try again.</p>
+	  {% endif %}
+	  
+	  {% if next %}
+		{% if user.is_authenticated %}
+		  <p>Your account doesn't have access to this page. To proceed,
+		  please login with an account that has access.</p>
+		{% else %}
+			
+		{% endif %}
+	  {% endif %}
+	  
+	  {% if errors %}
+	  
+	  <p>{{errors}}</p>
+	  {% endif %}
 	
 		<form method="post" action="/login" style =" margin: 0 5px;">
 		  {% csrf_token %}
@@ -51,10 +53,10 @@ td {
 
 		  <input type="submit" value="Login" style="margin-top: 10px">
 		  <input type="hidden" name="next" value="{{ next }}" />
-		</form> 
+		</form><br>
 		{# Assumes you setup the password_reset view in your URLconf #}
-		<p><a href="{% url 'password_reset' %}" style ="margin: 0 5px;">Lost password?</a></p>
-		<br>Players Online: {{online_now}}
+		<a href="{% url 'password_reset' %}" style ="margin: 0 5px;">Lost password?</a>
+		<br><br>Players Online: {{online_now}}
 		{% include "box_bottom.html" %}
 	</div>
 
@@ -78,7 +80,7 @@ td {
 	</td>
 	{% elif time_tick.is_running == False and time_tick.round_start != None %}
 	<td colspan="4" align="center">
-	Round  starts at 14:00 GMT on {{time_tick.round_start}}
+	Round starts {{time_tick.round_start|date:'dS M Y H:i'}} UTC
 	</td>
 	<td align="center"><p id="roundstart"></p></td>
 	{% else %}
@@ -146,6 +148,7 @@ td {
   document.getElementById('Time1').innerHTML = m_left + ":" + s_left;
   {% endif %}
   {% if time_tick2.is_running == True %}
+  s_left = {{round2.tick_time}} - 1 - (s % {{round2.tick_time}});
   document.getElementById('Time2').innerHTML = s_left;
   {% endif %}
   var t = setTimeout(startTime, 600);
@@ -161,7 +164,7 @@ function fixTimeDigits(s_left) {
 <br>
 <table style="width:100%;">
 <tr>
-    <th colspan="100%" align="center">Fast Tick</th>
+    <th colspan="100%" align="center">Fast Tick: {{round2.tick_time}} seconds</th>
 </tr>
 <tr>
     {% if time_tick2.is_running == False and time_tick2.tick_number > 0 %}
@@ -173,7 +176,7 @@ function fixTimeDigits(s_left) {
 	{% if time_tick2.round_start != None %}
 	<p id="roundstart2"></p>
 	{% else %}
-	Round starts when the Regular Round ends!
+	Round starts {{time_tick2.round_start|date:'dS M Y H:i'}} UTC
 	{% endif %}
 	</td>
 	{% else %}

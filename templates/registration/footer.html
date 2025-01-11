@@ -4,7 +4,7 @@
 	<div class="footer" style="padding: 0 0 0 12px">
 		
 		<input type="image" src="{% static 'upIcon2.png' %}" onclick="topFunction()" id="goUpBtn" title="Go to top" style= "display: none;"/>
-
+		<p id="round" align="Center">{% if status.galsel == 1 %}Regular Tick{% else %}Fast Tick{% endif %}</p>
 	<div>
 	
 
@@ -12,6 +12,7 @@
 	<script>
 //Get the button
 var mybutton = document.getElementById("goUpBtn");
+var myround = document.getElementById("round");
 
 // When the user scrolls down 20px from the top of the document, show the button
 window.onscroll = function() {scrollFunction()};
@@ -19,8 +20,10 @@ window.onscroll = function() {scrollFunction()};
 function scrollFunction() {
   if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
     mybutton.style.display = "block";
+	myround.style.display = "none";
   } else {
     mybutton.style.display = "none";
+	myround.style.display = "block";
   }
 }
 

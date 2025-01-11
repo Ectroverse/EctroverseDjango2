@@ -22,6 +22,7 @@ declare
 	_artefacts_table varchar(255);
 	_specops_table varchar(255);
 	_empire_table varchar(255);
+	_relations_table varchar(255);
 	
 	_roundstatus varchar(255);
 	_sql varchar;
@@ -42,6 +43,7 @@ BEGIN
 		_artefacts_table := 'app_artefacts';
 		_specops_table := 'app_specops';
 		_empire_table := 'app_empire';
+		_relations_table := 'app_relations';
 		
 	else 
 		_planets_table := '"PLANETS"';
@@ -56,6 +58,7 @@ BEGIN
 		_artefacts_table := 'galtwo_artefacts';
 		_specops_table := 'galtwo_specops';
 		_empire_table := 'galtwo_empire';
+		_relations_table := 'galtwo_relations';
 	end if;
 
 	EXECUTE format('select max(round_number) from  %s ;', _roundstatus)
@@ -164,25 +167,22 @@ set construction_flag = 1
 from (select user_id from news_buildings group by user_id) c 
 where u.id = c.user_id;
  
- with update_buildings as 
-(select planet_id
-	  from '|| _construction_table||'
-	  where ticks_remaining = 0
-	  group by planet_id)
+  delete from '|| _construction_table||'
+ where ticks_remaining = 0;
+ 
  
  update '|| _planets_table ||' p
  set total_buildings = solar_collectors + fission_reactors + mineral_plants + crystal_labs + refinement_stations + 
  cities + research_centers + defense_sats + shield_networks + case when portal = true then 1 else 0 end,
- buildings_under_construction = coalesce((select sum(n) from '|| _construction_table||' where planet_id = p.id and ticks_remaining > 0),0),
- overbuilt = case when p.total_buildings <= p.size then 1 else
+ buildings_under_construction = coalesce((select sum(n) from '|| _construction_table||' where planet_id = p.id),0),
+ overbuilt = case when p.total_buildings + p.buildings_under_construction <= p.size then 1 else
  (power((((p.total_buildings + p.buildings_under_construction) - 
  (p.defense_sats + p.shield_networks + case when p.portal = true then 1 else 0 end)*1.0)/(p.size*1.0)),2)) end,
- overbuilt_percent = ((p.overbuilt - 1) * 100.0)
- from update_buildings c 
- where p.id = c.planet_id;
- 
- delete from '|| _construction_table||'
- where ticks_remaining = 0;
+ overbuilt_percent = ((case when p.total_buildings + p.buildings_under_construction <= p.size then 1 else
+ (power((((p.total_buildings + p.buildings_under_construction) - 
+ (p.defense_sats + p.shield_networks + case when p.portal = true then 1 else 0 end)*1.0)/(p.size*1.0)),2)) end -1) * 100.0)
+ where p.owner_id is not null;
+
  
   -- portal coverage
  
@@ -192,7 +192,7 @@ where u.id = c.user_id;
  (select p1.id, 
   LEAST(100, 100 *  sum(GREATEST(0, 1.0 - sqrt(
 											sqrt(power(p1.x-p2.x,2) + power(p1.y-p2.y,2))
-											/ (7 + (1.0 + 0.01 * u.research_percent_portals))
+											/ (7.0 * (1.0 + 0.01 * u.research_percent_portals))
 											)
 								)
 						)
@@ -266,7 +266,7 @@ case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100) e
  + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
 research_bonus_population * 
 coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1)
-* coalesce((select (2) from '|| _artefacts_table ||' f where name = ''Rabbit Theorum'' and f.empire_holding_id = u.empire_id),1)
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Rabbit Theorum'' and f.empire_holding_id = u.empire_id),1)
 * (u.alloc_research_population/100.0),
 
 
@@ -294,7 +294,7 @@ case when b.extra_effect = ''Research'' then ( 1 + b.Enlightenment_effect/100.0)
  + case when race_special_pop_research != 0 then cur_pop / race_special_pop_research else 0 end) * -- foohon bonus
 research_bonus_portals 
 * coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1)
-* coalesce((select (1.5) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),1)
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),1)
 * (u.alloc_research_portals/100.0),
 
 
@@ -311,7 +311,7 @@ r.race_energy_production* (1 + u.research_percent_energy/100.0)*
 energy_decay = greatest(0, u.energy * (select num_val from constants c where c.name = ''energy_decay_factor'')), 
 energy_interest = case when r.race_special_resource_interest = 1 then 0 else least(u.energy_production, u.energy * r.race_special_resource_interest) end, 
 
-energy_specop_effect = u.energy_production * coalesce((select (1.0 + specop_strength/100.0) from '|| _specops_table ||' f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Energy''),0)+
+energy_specop_effect = u.energy_production * coalesce((select (specop_strength/100.0) from '|| _specops_table ||' f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Energy''),0)+
 coalesce((select (((select energy_production from '|| _userstatus_table ||' 
 where id = (select user_to_id from '|| _specops_table ||' f where name = ''Hack mainframe'' and f.user_from_id = u.id group by user_to_id)) * 
 ((sum(specop_strength)/100))*(sum(specop_strength2)/100))/count(*)) from '|| _specops_table ||' f where name = ''Hack mainframe'' and f.user_from_id = u.id group by user_from_id),0) -
@@ -320,22 +320,25 @@ u.energy_production * coalesce((select(sum(specop_strength)/100) from '|| _speco
 mineral_production = (select sum(mineral_plants* (1 + bonus_mineral/100.0)) from '|| _planets_table ||' 
 	where owner_id = u.id) * r.race_mineral_production * 
 	coalesce((select (1.0 + specop_strength/100.0) from '|| _specops_table ||' f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Mineral''),1)
-* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Mirny Mine'' and f.empire_holding_id = u.empire_id),1), 
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Mirny Mine'' and f.empire_holding_id = u.empire_id),1)
+* coalesce((select (1 + effect2/500.0) from '|| _artefacts_table ||' f where name = ''Resource Tree'' and f.empire_holding_id = u.empire_id),1), 
 mineral_decay = 0, 
 mineral_interest = case when r.race_special_resource_interest = 1 then 0 else least(u.mineral_production, u.minerals * r.race_special_resource_interest) end, 
 
 crystal_production = (select sum(crystal_labs* (1 + bonus_crystal/100.0)) from '|| _planets_table ||' 
 	where owner_id = u.id) * r.race_crystal_production * 
 	coalesce((select (1.0 + specop_strength/100.0) from '|| _specops_table ||' f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Crystal''),1)
-* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Crystal Synthesis'' and f.empire_holding_id = u.empire_id),1),  
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Crystal Synthesis'' and f.empire_holding_id = u.empire_id),1)
+* coalesce((select (1 + effect2/500.0) from '|| _artefacts_table ||' f where name = ''Resource Tree'' and f.empire_holding_id = u.empire_id),1),  
 crystal_decay = greatest(0, u.crystals * (select num_val from constants c  where c.name = ''crystal_decay_factor'')) 
-* coalesce((select (0.25) from '|| _artefacts_table ||' f where name = ''Crystal Recharger'' and f.empire_holding_id = u.empire_id),1), 
+* coalesce((select (effect1/100.0) from '|| _artefacts_table ||' f where name = ''Crystal Recharger'' and f.empire_holding_id = u.empire_id),1), 
 crystal_interest =  case when r.race_special_resource_interest = 1 then 0 else least(u.crystal_production, u.crystals * r.race_special_resource_interest) end, 
  
 ectrolium_production = (select sum(refinement_stations* (1 + bonus_ectrolium/100.0)) from '|| _planets_table ||' 
 	where owner_id = u.id) * r.race_ectrolium_production  * 
 	coalesce((select (1.0 + specop_strength/100.0) from '|| _specops_table ||' f where name = ''Enlightenment'' and f.user_to_id = u.id and extra_effect = ''Ectrolium''),1)
-* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Foohon Technology'' and f.empire_holding_id = u.empire_id),1),
+* coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Foohon Technology'' and f.empire_holding_id = u.empire_id),1)
+* coalesce((select (1 + effect2/500.0) from '|| _artefacts_table ||' f where name = ''Resource Tree'' and f.empire_holding_id = u.empire_id),1),
 ectrolium_decay = 0, 
 ectrolium_interest = case when r.race_special_resource_interest = 1 then 0 else least(u.ectrolium_production, u.ectrolium * r.race_special_resource_interest) end,
 
@@ -348,7 +351,9 @@ buildings_upkeep = (u.total_fission_reactors * (select num_val from constants wh
  + u.total_defense_sats * (select num_val from constants where name = ''upkeep_defense_sats'')
  + u.total_shield_networks * (select num_val from constants where name = ''upkeep_shield_networks'')) * 
  case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Engineer'' ) = u.empire_id then
- (case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Engineers Son'' ) = u.empire_id then 0.8 else 0.9 end)
+ (case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Engineers Son'' ) = u.empire_id then 
+ (select (1-(effect2/100.0)) from '|| _artefacts_table ||' where name = ''Engineer'' ) else
+(select (1-(effect1/100.0)) from '|| _artefacts_table ||' where name = ''Engineer'' ) end)
  else 1 end,
 
 portals_upkeep = pow(greatest(0, u.total_portals - 1), 1.2736) * '
@@ -379,7 +384,9 @@ units_upkeep = (select
 	join unit_stats u1 on u1.class_name = ''unit upkeep costs''
 	where a1.owner_id = u.id) 
 	* case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Military Might'' ) = u.empire_id then
-	 (case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''The General'' ) = u.empire_id then 0.8 else 0.9 end)
+	 (case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''The General'' ) = u.empire_id then
+	(select (1-(effect2/100.0)) from '|| _artefacts_table ||' where name = ''Military Might'' ) else
+	(select (1-(effect1/100.0)) from '|| _artefacts_table ||' where name = ''Military Might'' )	end)
 	 else 1 end
 
 -- select  SC, r.solar_bonus, a.dark_mist_effect
@@ -575,9 +582,9 @@ ins_news_success as (
     insert into '|| _news_table||' ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, extra_info)
     select nf.user_id, u.empire_id, ''UB'', current_timestamp, true, false, false, (select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'),
         ''These units constructions were finished: '' || chr(10) ||
-			case when unit_type = ''wizard'' then n || ''psychics'' 
-			when unit_type = ''ghost'' then n || ''ghost ships''   
-			when unit_type = ''exploration'' then n || ''exploration  ships''
+			case when unit_type = ''wizard'' then n || '' psychics'' 
+			when unit_type = ''ghost'' then n || '' ghost ships''   
+			when unit_type = ''exploration'' then n || '' exploration  ships''
 			else n || '' ''|| unit_type || ''s''  END 
     from news_fleets nf
     join '|| _userstatus_table ||' u on u.id = nf.user_id
@@ -649,13 +656,17 @@ ectrolium = greatest(0, ectrolium + ectrolium_income);
 update '|| _userstatus_table ||' u
 set fleet_readiness = case when (select empire_holding_id from '|| _artefacts_table ||' where name = ''Churchills Brandy'' ) = u.empire_id and
 (select (tick_number%2) from '|| _roundstatus||' where round_number = '|| _round_number||') = 0 
-then greatest(-100, least(u.fleet_readiness_max ,u.fleet_readiness + case when u.energy = 0 and 
+then greatest(case when u.energy = 0 and (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep + abs(least(u.energy_specop_effect,0))) > 
+u.population_upkeep_reduction then -100 else -200 end, least(u.fleet_readiness_max ,u.fleet_readiness + case when u.energy = 0 and 
 (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep + abs(least(u.energy_specop_effect,0))) > u.population_upkeep_reduction then -3 else 3 end)) 
-else greatest(-100, least(u.fleet_readiness_max ,u.fleet_readiness + case when u.energy = 0 and  
+else greatest(case when u.energy = 0 and (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep + abs(least(u.energy_specop_effect,0))) > 
+u.population_upkeep_reduction then -100 else -200 end, least(u.fleet_readiness_max ,u.fleet_readiness + case when u.energy = 0 and  
 (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep + abs(least(u.energy_specop_effect,0))) > u.population_upkeep_reduction then -3 else 2 end))end,
-psychic_readiness = greatest(-100, least(u.psychic_readiness_max ,u.psychic_readiness + case when u.energy = 0 and  
+psychic_readiness = greatest(case when u.energy = 0 and (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep + abs(least(u.energy_specop_effect,0))) > 
+u.population_upkeep_reduction then -100 else -200 end, least(u.psychic_readiness_max ,u.psychic_readiness + case when u.energy = 0 and  
 (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep + abs(least(u.energy_specop_effect,0))) > u.population_upkeep_reduction then -3 else 2 end)),
-agent_readiness = greatest(-100, least(u.agent_readiness_max ,u.agent_readiness + case when u.energy = 0 and  
+agent_readiness = greatest(case when u.energy = 0 and (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep + abs(least(u.energy_specop_effect,0))) > 
+u.population_upkeep_reduction then -100 else -200 end, least(u.agent_readiness_max ,u.agent_readiness + case when u.energy = 0 and  
 (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep + abs(least(u.energy_specop_effect,0))) > u.population_upkeep_reduction then -3 else 2 end));
 
 -- fleet decay
@@ -676,6 +687,14 @@ exploration  = greatest(0,exploration - greatest(1,0.02 * exploration))
 from '|| _userstatus_table ||' u
 where u.id = a.owner_id
 and u.energy = 0 and (u.buildings_upkeep + u.units_upkeep + u.portals_upkeep + abs(least(u.energy_specop_effect,0))) > u.population_upkeep_reduction;
+
+-- phantom decay
+
+update '|| _fleet_table ||' a
+set phantom = case when (a.phantom / (select wizard from '|| _fleet_table ||' where main_fleet = true and owner_id = a.owner_id)) < 0.05
+then phantom - greatest(1, phantom * 0.01) else phantom - greatest(1, phantom * least(0.20, (0.01 * power(((1.0/0.05) * 
+(a.phantom / (select wizard from '|| _fleet_table ||' where main_fleet = true and owner_id = a.owner_id))), 2.4)))) end
+where a.phantom > 0;
 
 -- research percentages update after nw and research points calucaltion
 
@@ -783,18 +802,18 @@ research_percent_portals = u.research_percent_portals + case when u.research_per
 	case when research_max_portals < 200 
 	then least(research_max_portals, floor(200 * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
 	else least(
- coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+ coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
  research_max_portals, floor(
- coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+ coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
  research_max_portals * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_portals > (
 	case when research_max_portals < 200 
-	then least(coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+	then least(coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
 	research_max_portals, floor(200 * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
-	else least(coalesce((select (100) from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+	else least(coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
 	research_max_portals, floor(research_max_portals * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
@@ -862,7 +881,7 @@ update '|| _fleet_table ||' a
 	y = s.y,
 	ticks_remaining = case when a.x = s.x and a.y = s.y then ticks_remaining 
 					  else floor((sqrt(pow((a.current_position_x - s.x),2) + pow((a.current_position_y - s.y),2))/
-					  c.num_val) * coalesce((select 1.6 from '|| _artefacts_table ||' where name = ''Blackhole'' and
+					  c.num_val) * coalesce((select (1+(effect1/100)) from '|| _artefacts_table ||' where name = ''Blackhole'' and
 					  empire_holding_id = s.owner_id),1)--num_val is speed 
 					  ) end
 from 
@@ -943,25 +962,25 @@ a1.owner_id = b.owner_id
 ins_news_success as (
 	insert into '|| _news_table||' ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, extra_info)
 	select e.owner_id, u.empire_id, ''FJ'', current_timestamp, true, true, false, (select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'),
-        ''Theese fleets have returned: '' ||
-       	 case when bomber = 0 then '''' when bomber = 1 then bomber || ''bomber'' || chr(10) else bomber || ''bombers'' || chr(10) END ||
-         case when fighter = 0 then '''' when fighter = 1 then fighter ||  ''fighter'' || chr(10) else fighter ||  ''fighters'' ||chr(10) END ||
-         case when transport = 0 then '''' when transport = 1 then transport || ''transport'' || chr(10) else transport || ''transports'' ||chr(10) END ||
-         case when cruiser = 0 then '''' when cruiser = 1 then cruiser || ''cruiser'' || chr(10) else cruiser || ''cruisers'' ||chr(10) END  ||
-         case when carrier = 0 then '''' when carrier = 1 then carrier || ''carrier'' || chr(10) else carrier || ''carriers'' ||chr(10) END ||
-         case when soldier = 0 then '''' when soldier = 1 then soldier || ''soldier'' || chr(10) else soldier || ''soldiers'' ||chr(10) END ||
-         case when droid = 0 then '''' when droid = 1 then droid || ''droid'' || chr(10) else droid || ''droids'' ||chr(10) END  ||
-         case when goliath = 0 then '''' when goliath = 1 then goliath ||  ''goliath'' || chr(10) else goliath || ''goliaths'' ||chr(10) END  ||
-         case when phantom = 0 then '''' when phantom = 1 then phantom || ''phantom'' || chr(10)  else phantom || ''phantoms'' ||chr(10) END ||
-         case when agent = 0 then '''' when agent = 1 then agent || ''agent'' || chr(10) else agent || ''agents'' ||chr(10)END  ||
-         case when ghost = 0 then '''' when ghost = 1 then ghost || ''ghost'' || chr(10) else ghost || ''ghosts'' ||chr(10)END  ||
-         case when exploration = 0 then '''' when exploration = 1 then exploration || ''exploration ship'' || chr(10) else exploration || ''exploration ships'' ||chr(10) END as extra_info
+        ''These fleets have returned: '' ||
+       	 case when bomber = 0 then '''' when bomber = 1 then bomber || '' bomber'' || chr(10) else bomber || '' bombers'' || chr(10) END ||
+         case when fighter = 0 then '''' when fighter = 1 then fighter ||  '' fighter'' || chr(10) else fighter ||  '' fighters'' ||chr(10) END ||
+         case when transport = 0 then '''' when transport = 1 then transport || '' transport'' || chr(10) else transport || '' transports'' ||chr(10) END ||
+         case when cruiser = 0 then '''' when cruiser = 1 then cruiser || '' cruiser'' || chr(10) else cruiser || '' cruisers'' ||chr(10) END  ||
+         case when carrier = 0 then '''' when carrier = 1 then carrier || '' carrier'' || chr(10) else carrier || '' carriers'' ||chr(10) END ||
+         case when soldier = 0 then '''' when soldier = 1 then soldier || '' soldier'' || chr(10) else soldier || '' soldiers'' ||chr(10) END ||
+         case when droid = 0 then '''' when droid = 1 then droid || '' droid'' || chr(10) else droid || '' droids'' ||chr(10) END  ||
+         case when goliath = 0 then '''' when goliath = 1 then goliath ||  '' goliath'' || chr(10) else goliath || '' goliaths'' ||chr(10) END  ||
+         case when phantom = 0 then '''' when phantom = 1 then phantom || '' phantom'' || chr(10)  else phantom || '' phantoms'' ||chr(10) END ||
+         case when agent = 0 then '''' when agent = 1 then agent || '' agent'' || chr(10) else agent || '' agents'' ||chr(10)END  ||
+         case when ghost = 0 then '''' when ghost = 1 then ghost || '' ghost ship'' || chr(10) else ghost || '' ghost ships'' ||chr(10)END  ||
+         case when exploration = 0 then '''' when exploration = 1 then exploration || '' exploration ship'' || chr(10) else exploration || '' exploration ships'' ||chr(10) END as extra_info
 	from recalled_fleets e
     join '|| _userstatus_table ||' u on u.id = e.owner_id
 )
 
 update '|| _userstatus_table ||' u
-set military_flag = case when military_flag != 1 then 2 else 1 end
+set military_flag = case when military_flag != 1 then 3 else 1 end
 from (select owner_id from recalled_fleets group by owner_id) c 
 where u.id = c.owner_id;
 
@@ -1017,7 +1036,7 @@ and a1.id = b.id
 ins_news_success as (
 	insert into '|| _news_table||' ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, extra_info)
 	select e.owner_id, u.empire_id, ''FM'', current_timestamp, true, true, false, (select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'),
-        ''Theese fleets have merged: '' ||
+        ''These fleets have merged: '' ||
        	 case when bomber = 0 then '''' when bomber = 1 then bomber || ''bomber'' || chr(10) else bomber || ''bombers'' || chr(10) END ||
          case when fighter = 0 then '''' when fighter = 1 then fighter ||  ''fighter'' || chr(10) else fighter ||  ''fighters'' ||chr(10) END ||
          case when transport = 0 then '''' when transport = 1 then transport || ''transport'' || chr(10) else transport || ''transports'' ||chr(10) END ||
@@ -1085,6 +1104,7 @@ upd_Arti as (
 	from explored_planets e
 	where r.on_planet_id = e.p_id 
 ),
+
 del_scout as (
 	delete from '|| _scouting_table||' a
 	using explored_planets e
@@ -1141,7 +1161,32 @@ update '|| _artefacts_table||'
 set ticks_left = ticks_left -1 where ticks_left > 0 and empire_holding_id is not null;
 
 update '|| _planets_table||'
-set size = size +1 where id = (select on_planet_id from '|| _artefacts_table||' where name = ''You Grow, Girl!'');
+set size = size + ' || 
+    case when gal_nr = 'slow' then 
+        1
+    else 
+       case when (select (tick_number%10) from galtwo_roundstatus) = 1 then 1 
+	   else 0 end
+    end 
+
+|| '
+where id = (select on_planet_id from '|| _artefacts_table||' where name = ''You Grow, Girl!'');
+
+-- tree arti
+update '|| _artefacts_table||' a
+set effect1  = effect1 + (((1.2 * ((select sum(total_research_centers) from '|| _userstatus_table ||' where empire_id = a.empire_holding_id)*6)) +
+COALESCE((select (sum(population)/6000) from '|| _userstatus_table ||' where empire_id = a.empire_holding_id and race = ''FH''),0) +
+COALESCE((select (sum(population)/10000) from '|| _userstatus_table ||' where empire_id = a.empire_holding_id and race = ''JK''),0)) *
+coalesce((select (1 + (sum(specop_strength)/100.0)) from '|| _specops_table ||' e where name = ''Enlightenment'' and e.user_to_id 
+in (select id from '|| _userstatus_table ||' where empire_id = a.empire_holding_id) and extra_effect = ''Research''),1)/10) * 
+coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
+effect2 = effect2 + case 
+when effect2 < least(200, floor(200 * (1 - exp((effect1+0.0)/(-10 * 
+(select sum(networth) from '|| _userstatus_table ||' where empire_id = a.empire_holding_id)+0.0))))) then 1 
+when effect2 > least(200, floor(200 * (1 - exp((effect1+0.0)/(-10 * 
+(select sum(networth) from '|| _userstatus_table ||' where empire_id = a.empire_holding_id)+0.0))))) then -1 
+else 0 end 
+ where a.name = ''Resource Tree'' and empire_holding_id is not null;
 
 -- delete empty fleets
 delete from '|| _fleet_table ||' a 
@@ -1166,40 +1211,29 @@ SET artedelay =
 (CASE WHEN (SELECT COUNT (*) FROM '|| _artefacts_table||' art WHERE art.on_planet_id is not null) != 
 (SELECT MAX(emparts) as max_emp FROM (SELECT COUNT(art.empire_holding_id) AS emparts 
 FROM '|| _artefacts_table||' art WHERE art.empire_holding_id is not null GROUP BY art.empire_holding_id ) as emp_max)
-AND rs.artetimer < 
-' || 
-    case when gal_nr = 'slow' then 
-       144 
-    else 
-       (select (((60/tick_time) * 60)* 24) from galtwo_roundstatus)
-    end 
-
-|| '
-THEN artedelay - 1
-WHEN artedelay <= 0 THEN 
-' || 
-    case when gal_nr = 'slow' then 
-       5 
-    else 
-       (select (((60/tick_time) * 60)- 1) from galtwo_roundstatus)
-    end 
-
-|| '
- ELSE artedelay END),
-artetimer = (CASE WHEN rs.artedelay = 0 THEN
-' || 
-    case when gal_nr = 'slow' then 
-       144 
-    else 
-       (select (((60/tick_time) * 60)* 24) from galtwo_roundstatus)
-    end 
-
-|| '
+AND rs.artetimer < (select (((60.0/tick_time) * 60.0)- 1.0) from '|| _roundstatus||') THEN artedelay - 1
+ELSE (select (((60.0/tick_time) * 60.0)- 1.0) from '|| _roundstatus||') END) ,
+artetimer = (CASE WHEN rs.artedelay = 0 THEN (select (((60.0/tick_time) * 60.0)*24) from '|| _roundstatus||')
 WHEN (SELECT COUNT (*) FROM '|| _artefacts_table||' art WHERE art.on_planet_id is not null) = 
 (SELECT MAX(emparts) as max_emp FROM (SELECT COUNT(art.empire_holding_id) AS emparts 
 FROM '|| _artefacts_table||' art WHERE art.empire_holding_id is not null GROUP BY art.empire_holding_id ) as emp_max)
-THEN artetimer - 1 ELSE artetimer END),
-is_running = case when rs.artetimer = 1 then false else is_running end;
+THEN artetimer - 1 ELSE (select (((60.0/tick_time) * 60.0)*24) from '|| _roundstatus||') END),
+is_running = case when rs.artetimer = 1 then false else is_running end,
+emphold_id = case when (SELECT COUNT (*) FROM '|| _artefacts_table||' art WHERE art.on_planet_id is not null) = 
+(SELECT MAX(emparts) as max_emp FROM (SELECT COUNT(art.empire_holding_id) AS emparts 
+FROM '|| _artefacts_table||' art WHERE art.empire_holding_id is not null GROUP BY art.empire_holding_id ) as emp_max) then
+(select empire_holding_id from '|| _artefacts_table||' where name = ''Ether Gardens'') else Null end;
+
+--udpate rel timer
+UPDATE '|| _relations_table||' SET relation_remaining_time = relation_remaining_time - 1 WHERE relation_type in (''W'', ''NC'', ''C'');
+DELETE FROM '|| _relations_table||' WHERE relation_remaining_time = 0;
+
+DELETE FROM '|| _news_table ||' WHERE is_personal_news = false AND 
+(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||') - tick_number > 
+(select (((60.0/tick_time) * 60.0)*24) from '|| _roundstatus||');
+DELETE FROM '|| _news_table ||' WHERE is_personal_news = true AND is_read = true AND 
+(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||') - tick_number > 
+(select (((60.0/tick_time) * 60.0)*24) from '|| _roundstatus||') ;
 
 ';
 

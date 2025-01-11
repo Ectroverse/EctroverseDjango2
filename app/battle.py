@@ -1,7 +1,7 @@
 from django.db.models import Q, Sum
 from .models import *
 from app.constants import *
-from .helper_functions import generate_fleet_order, find_nearest_portal, join_main_fleet
+from .helper_functions import generate_fleet_order, find_nearest_portal, join_main_fleet, travel_speed, actobelisk
 import numpy as np
 from .models import *
 from .calculations import *
@@ -62,13 +62,14 @@ def battleReadinessLoss(user1, user2, planet):
     if empire1.id == empire2.id or ally or war:
         fa /= 3
 
-    if Specops.objects.filter(name="Planetary Beacon", planet=planet).exists():
+    if Specops.objects.filter(name="Planetary Beacon", planet=planet).exists() or user1.race == 'SM':
         fa = fa
     else:
-        if empire1.id != empire2.id:
-            spec_ops = Specops.objects.filter(user_to=user2.user, name="Dark Web")
-            for specop in spec_ops:
-                fa *= 1 + specop.specop_strength / 100
+        spec_ops = Specops.objects.filter(user_to=user2.user, name="Dark Web")
+        for specop in spec_ops:
+            fa *= 1 + specop.specop_strength / 100
+        if user2.race == 'FT':
+            fa *= (1 + (user2.research_percent_culture / 100))
 
     if Specops.objects.filter(user_to=user2.user, name="Enlightenment", extra_effect="BadFR").exists():
         en = Specops.objects.get(user_to=user2.user, name="Enlightenment", extra_effect="BadFR")
@@ -76,7 +77,13 @@ def battleReadinessLoss(user1, user2, planet):
     
     tyr = Artefacts.objects.get(name="Tyrs Justice")
     if empire1 == tyr.empire_holding and tyr.ticks_left > 0:
-        fa = round(fa*0.66)
+        fa *= 0.66
+    
+    if user1.race == 'SM':
+        fa *= 0.8
+        
+    if user2.race == 'FT':
+        fa *= (1 + (user2.research_percent_culture / 100))
     
     if nap == True:
         if fa < 50:
@@ -395,7 +402,7 @@ def generate_news(battle_report, attacker, defender, attacked_planet, main_defen
             if losses > 0:
                 defender_fleet_msg += str(unit) + ": " + str(losses) + " "
                 if necro.empire_holding == defender.empire and unit != "Necromancers":
-                    necro.effect1 += losses
+                    necro.effect1 += losses/10
                     necro.save()
         if battle_report["p1"]["def_flee"]:
             defender_fleet_msg += "Defending forces preferred not to directly engage in stage 1!"
@@ -406,7 +413,7 @@ def generate_news(battle_report, attacker, defender, attacked_planet, main_defen
             if losses > 0:
                 defender_fleet_msg += str(unit) + ": " + str(losses) + " "
                 if necro.empire_holding == defender.empire and unit != "Necromancers":
-                    necro.effect1 += losses
+                    necro.effect1 += losses/10
                     necro.save()
         if battle_report["p2"]["def_flee"]:
             defender_fleet_msg += "Defending forces preferred not to directly engage in stage 2!"
@@ -418,7 +425,7 @@ def generate_news(battle_report, attacker, defender, attacked_planet, main_defen
                 defender_fleet_msg += str(unit) + ": " + str(losses) + " "
                 if necro.empire_holding == defender.empire and unit != "Necromancers":
                     if unit != "Planet population":
-                        necro.effect1 += losses
+                        necro.effect1 += losses/10
                         necro.save()
         if battle_report["p3"]["def_flee"]:
             defender_fleet_msg += "Defending forces preferred not to directly engage in stage 3!"
@@ -430,7 +437,7 @@ def generate_news(battle_report, attacker, defender, attacked_planet, main_defen
                 defender_fleet_msg += str(unit) + ": " + str(losses) + " "
                 if necro.empire_holding == defender.empire and unit != "Necromancers":
                     if unit != "Planet population":
-                        necro.effect1 += losses
+                        necro.effect1 += losses/10
                         necro.save()
             if ironside.empire_holding == attacker.empire:
                 if losses > 0 and unit in resources:
@@ -715,7 +722,7 @@ def attack_planet(attacking_fleet):
             if not portal_planets:
                 request.session['error'] = "You need at least one portal for fleet to return to main fleet!"
                 return fleets(request)
-            speed = race_info_list[attacker.get_race_display()]["travel_speed"]
+            speed = travel_speed(status)
             portal = find_nearest_portal(attacking_fleet.current_position_x, attacking_fleet.current_position_y, portal_planets. attacker)
             generate_fleet_order(attacking_fleet, portal.x, portal.y, speed, attacker.post_attack_order, portal.i)
                 # do instant join of fleets allready present in systems with portals
@@ -801,7 +808,7 @@ def attack_planet(attacking_fleet):
             if not portal_planets:
                 request.session['error'] = "You need at least one portal for fleet to return to main fleet!"
                 return fleets(request)
-            speed = race_info_list[attacker.get_race_display()]["travel_speed"]
+            speed = travel_speed(attacker)
             portal = find_nearest_portal(attacking_fleet.current_position_x, attacking_fleet.current_position_y, portal_planets, attacker)
             generate_fleet_order(attacking_fleet, portal.x, portal.y, speed, attacker.post_attack_order, portal.i)
                 # do instant join of fleets allready present in systems with portals
@@ -833,14 +840,14 @@ def phase1(attacking_fleet,
     
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        attdam += necro.effect1 * 30
+        attdam += necro.effect1 * 3
     
     defdam = defending_fleets["cruiser"] * defstats["Cruisers"][0] + \
              defending_fleets["phantom"] * defstats["Phantoms"][0] + \
              sats_attack * attacked_planet.defense_sats 
     
     if necro.empire_holding == defender.empire:
-        defdam += necro.effect1 * 30
+        defdam += necro.effect1 * 3
     
     if Specops.objects.filter(user_to=attacker.user, name="War Illusions").exists():
         spec_ops = Specops.objects.filter(user_to=attacker.user, name="War Illusions")
@@ -887,7 +894,7 @@ def phase1(attacking_fleet,
     hpnecro = 0
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        hpnecro = necro.effect1 * 100
+        hpnecro = necro.effect1 * 10
     
     hptotal = hpcarrier + hpcruiser + hpphantom + hpnecro
     
@@ -952,7 +959,7 @@ def phase1(attacking_fleet,
     
     hpnecro = 0
     if necro.empire_holding == defender.empire:
-        hpnecro = necro.effect1 * 100
+        hpnecro = necro.effect1 * 10
     
     hptotal = hpcruiser + hpphantom + hpsats + hpnecro
     
@@ -1036,7 +1043,7 @@ def phase2(attacking_fleet,
     
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        attdam += necro.effect1 * 30
+        attdam += necro.effect1 * 3
     
     defdam = defending_fleets["cruiser"] * defstats["Cruisers"][0] + \
              defending_fleets["phantom"] * defstats["Phantoms"][0] + \
@@ -1044,7 +1051,7 @@ def phase2(attacking_fleet,
              sats_attack * attacked_planet.defense_sats
 
     if necro.empire_holding == defender.empire:
-        defdam += necro.effect1 * 30
+        defdam += necro.effect1 * 3
 
     attdam = attdam * attfactor * ((1.0 + 0.005 * attacker.research_percent_military) / \
                                    (1.0 + 0.005 * defender.research_percent_military))
@@ -1082,7 +1089,7 @@ def phase2(attacking_fleet,
     hpnecro = 0
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        hpnecro = necro.effect1 * 100
+        hpnecro = necro.effect1 * 10
     
     hptotal = hptransport + hpcruiser + hpbomber + hpfighter + hpphantom + hpnecro
 
@@ -1174,7 +1181,7 @@ def phase2(attacking_fleet,
 
     hpnecro = 0
     if necro.empire_holding == defender.empire:
-        hpnecro = necro.effect1 * 100 
+        hpnecro = necro.effect1 * 10 
 
     hptotal = hpcruiser + hpphantom + hpsats + hpfighter + hpnecro
     damcruiser = 0
@@ -1264,7 +1271,7 @@ def phase3(attacking_fleet,
 
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        attdam += necro.effect1 * 30
+        attdam += necro.effect1 * 3
 
     defdam = defending_fleets["goliath"] * defstats["Goliaths"][0] + \
              defending_fleets["phantom"] * defstats["Phantoms"][2]
@@ -1274,7 +1281,7 @@ def phase3(attacking_fleet,
         defdam += viruspop
         
     if necro.empire_holding == defender.empire:
-        defdam += necro.effect1 * 30    
+        defdam += necro.effect1 * 3    
         
     if defdam > 0:
         if virus.empire_holding == defender.empire:
@@ -1322,7 +1329,7 @@ def phase3(attacking_fleet,
     hpnecro = 0
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        hpnecro = necro.effect1 * 100
+        hpnecro = necro.effect1 * 10
     
     hptotal = hptransport + hpcruiser + hpbomber + hpphantom + hpnecro
 
@@ -1406,7 +1413,7 @@ def phase3(attacking_fleet,
     
     hpnecro = 0
     if necro.empire_holding == defender.empire:
-        hpnecro = necro.effect1 * 100 
+        hpnecro = necro.effect1 * 10
     
     hptotal = hpcruiser + hpphantom + hppop + hpnecro
 
@@ -1500,7 +1507,7 @@ def phase4(attacking_fleet,
     
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == attacker.empire:
-        attdam += necro.effect1 * 30
+        attdam += necro.effect1 * 3
     
     defdam = defending_fleets["soldier"] * defstats["Soldiers"][2] + \
              defending_fleets["droid"] * defstats["Droids"][2] + \
@@ -1515,7 +1522,7 @@ def phase4(attacking_fleet,
     defdam += viruspop
 
     if necro.empire_holding == defender.empire:
-        defdam += necro.effect1 * 30
+        defdam += necro.effect1 * 3
 
     bomber_modifier = attacking_fleet.bomber * defstats["Bombers"][2] + \
                       attacking_fleet.cruiser *  defstats["Cruisers"][2]
@@ -1575,7 +1582,7 @@ def phase4(attacking_fleet,
     hpnecro = 0
     
     if necro.empire_holding == attacker.empire:
-        hpnecro = necro.effect1 * 100
+        hpnecro = necro.effect1 * 10
     
     hptotal = hpsoldier + hpdroid + hpgoliath + hpphantom
     
@@ -1655,7 +1662,7 @@ def phase4(attacking_fleet,
     hpnecro = 0
     necro = Artefacts.objects.get(name="Scroll of the Necromancer")
     if necro.empire_holding == defender.empire:
-        hpnecro = necro.effect1 * 100  
+        hpnecro = necro.effect1 * 10 
     
     hptotal = hpsoldier + hpdroid + hpgoliath + hpphantom + hppop + hpnecro
 
@@ -1753,7 +1760,7 @@ def phase4(attacking_fleet,
              defending_fleets["droid"] * defstats["Droids"][2] + \
              defending_fleets["goliath"] * defstats["Goliaths"][2] + \
              defending_fleets["phantom"] * defstats["Phantoms"][2] + \
-             necro.effect1 * 30
+             necro.effect1 * 3
     virus = Artefacts.objects.get(name="t-Veronica")
     if virus.empire_holding == defender.empire:
         viruspop = attacked_planet.current_population * defstats["Goliaths"][2] / 100

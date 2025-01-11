@@ -55,7 +55,6 @@ width: 50%;
 margin:0 auto;
 float:left; 
 text-align:left;
-padding-left: 15%;
 }
 
 .ops_box2{
@@ -64,7 +63,6 @@ width: 50%;
 margin:0 auto;
 float:right; 
 text-align:left;
-padding-right: 15%;
 
 }
 
@@ -80,8 +78,6 @@ display: none;
 .remove-all-styles {
     all: revert;
   }
-  
-
 
 }
 </style>
@@ -126,31 +122,14 @@ function agentsCheck() {
 	{% endfor %}
 }
 function ghostsCheck() {
-	{% if maryc.empire_holding == status.empire %}
-	{% for name, values in maryc_inca.items  %}
-		if (document.getElementById('{{values.4}}').checked) {
-			document.getElementById('ops_{{values.4}}').style.display = 'inline';
-			
-			/*if (document.getElementById('{{values.4}}').value == "Call to Arms" ) {
-				document.getElementById('target_planet_gs').style.visibility = 'hidden';
-			}
-			else document.getElementById('target_planet_gs').style.visibility = 'visible';*/
-		}
-		else document.getElementById('ops_{{values.4}}').style.display = 'none';
-	{% endfor %}
-	{% else %}
 	{% for name, values in incantations.items  %}
 		if (document.getElementById('{{values.4}}').checked) {
 			document.getElementById('ops_{{values.4}}').style.display = 'inline';
 			
-			/*if (document.getElementById('{{values.4}}').value == "Call to Arms" ) {
-				document.getElementById('target_planet_gs').style.visibility = 'hidden';
-			}
-			else document.getElementById('target_planet_gs').style.visibility = 'visible';*/
+			document.getElementById('target_planet_gs').style.visibility = 'visible';
 		}
 		else document.getElementById('ops_{{values.4}}').style.display = 'none';
 	{% endfor %}
-	{% endif %}
 }
 
 </script>
@@ -186,10 +165,10 @@ function ghostsCheck() {
 			units to send:
 			<input class="spaceUnder" type="number"  min="0" max="{{main_fleet.agent}}" name="unit_ammount" size="12" value="{{main_fleet.agent}}" />
 			<div class="spaceUnder" id="target_planet">
-				Target coordinates:
-				X:<input class="spaceUnder" pattern="[0-9]+" type="text" name="X" size="4" value ="{{planet_to_template_specop.x}}">
-				Y:<input class="spaceUnder" pattern="[0-9]+" type="text" name="Y" size="4" value ="{{planet_to_template_specop.y}}">
-				Planet:<input class="spaceUnder" pattern="[0-9]+" type="text" name="I" size="4" value ="{{planet_to_template_specop.i}}">
+				Target coordinates:<br>
+				<label>X:</label><input class="spaceUnder" pattern="[0-9]+" type="text" name="X" size="4" value ="{{planet_to_template_specop.x}}">
+				<label>Y:</label><input class="spaceUnder" pattern="[0-9]+" type="text" name="Y" size="4" value ="{{planet_to_template_specop.y}}">
+				<label>Planet:</label><input class="spaceUnder" pattern="[0-9]+" type="text" name="I" size="4" value ="{{planet_to_template_specop.i}}">
 			</div>
 			<input type="submit" value="Perform">
 		</form> 
@@ -473,54 +452,25 @@ function ghostsCheck() {
 		<form action="specops" method="POST" style="margin-bottom: 25px">
 		{% endif %}
 		{% csrf_token %}
-			{% if maryc.empire_holding == status.empire %}
-			{% for name, values in maryc_inca.items %}
-			<input class="spaceUnder" type="radio" id="{{ values.4 }}" name="incantation" value="{{ name }}" onclick="ghostsCheck()">
-			<input class="spaceUnder" type="hidden" id="hidden_values{{ values.4 }}" value="{{ values.3 }}">
-			<label class="remove-all-styles " >{{ name }}</label>
-			<br>
-			{% endfor %}
-			{% else %}
 			{% for name, values in incantations.items %}
 			<input class="spaceUnder" type="radio" id="{{ values.4 }}" name="incantation" value="{{ name }}" onclick="ghostsCheck()">
 			<input class="spaceUnder" type="hidden" id="hidden_values{{ values.4 }}" value="{{ values.3 }}">
 			<label class="remove-all-styles " >{{ name }}</label>
 			<br>
 			{% endfor %}
-			{% endif %}
 			<div class = "spaceUnder"></div>
 			units to send:
 			<input class="spaceUnder" type="number"  min="0" max="{{main_fleet.ghost}}" name="unit_ammount" size="12" value="{{main_fleet.ghost}}" />
 			<div class="spaceUnder" id="target_planet_gs">
-				Target coordinates:
-				X:<input class="spaceUnder" pattern="[0-9]+" type="text" id="X" name="X" size="4" value ="{{planet_to_template_specop.x}}">
-				Y:<input class="spaceUnder" pattern="[0-9]+" type="text" id="Y" name="Y" size="4" value ="{{planet_to_template_specop.y}}">
-				Planet:<input class="spaceUnder" pattern="[0-9]+" type="text" id="I" name="I" size="4" value ="{{planet_to_template_specop.i}}">
+				Target coordinates:<br>
+				<label>X:</label><input class="spaceUnder" pattern="[0-9]+" type="text" id="X" name="X" size="4" value ="{{planet_to_template_specop.x}}">
+				<label>Y:</label><input class="spaceUnder" pattern="[0-9]+" type="text" id="Y" name="Y" size="4" value ="{{planet_to_template_specop.y}}">
+				<label>Planet:</label><input class="spaceUnder" pattern="[0-9]+" type="text" id="I" name="I" size="4" value ="{{planet_to_template_specop.i}}">
 			</div>
 			<input type="submit" value="Perform">
 		</form> 
 	</div>
 	<div class="ops_box2">
-		{% if maryc.empire_holding == status.empire %}
-		{% for name, values in maryc_inca.items  %}
-				<div id="ops_{{values.4}}" class="hidden" > 
-				Covert operation name: {{name}}<br>
-				Technology required: {{values.0}}<br>
-				{% if values.7 == -1 %}
-				<span style="color:red">Technological penalty too high! Incantation unavailible!</span><br>
-				{% elif values.7 > 0 %}
-				<span style="color:red">Technological penalty: {{values.7}}</span><br>
-				{% endif %}
-				Base psychic readiness cost: {{values.1}}<br>
-				{%if values.6 > 0 %}
-				<span style="color:green">Current cost: {{values.6}}</span><br>
-				{% endif %}
-				Difficulty: {{values.2}}<br>
-				Stealth: {{values.3}}<br>
-				Description: {{values.5}}
-				</div>
-			{% endfor %}
-		{% else %}
 		{% for name, values in incantations.items  %}
 				<div id="ops_{{values.4}}" class="hidden" > 
 				Covert operation name: {{name}}<br>
@@ -539,7 +489,6 @@ function ghostsCheck() {
 				Description: {{values.5}}
 				</div>
 			{% endfor %}
-		{% endif %}
 	</div>
 {% if ghost_fleets %}
 	<div style="width:100%; float:left;">

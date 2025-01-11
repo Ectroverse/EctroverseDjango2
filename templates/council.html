@@ -2,14 +2,18 @@
 {% load humanize %}
 {% block content %}
 {% load static %}
-
+<style>
+table {
+    margin: 0 auto;
+  }
+</style>
 
 {{msg}}<br>
 
 
 <div style="width:100%; float:left; ">
 	<div class ="left_box" >
-		<div style="width: 50%; margin:0 auto; text-align: left;">
+		<div style="margin:0 auto; text-align: left;">
 			<table>
 			<tr><td><b>Energy</b></td><td>&nbsp;</td></tr>
 			<tr><td>Production</td><td align="right" id="energyproduction">+{{status.energy_production|intcomma}}</td></tr>
@@ -38,7 +42,7 @@
 
 	</div>
 	<div class ="right_box" >
-		<div style="width: 50%; margin:0 auto; text-align: left;">
+		<div style="margin:0 auto; text-align: left;">
 			<table>
 				<tr><td><b>Resources</b></td><td>&nbsp;</td></tr>
 				{% if status.mineral_decay > 0 or status.mineral_interest > 0 %}
@@ -73,10 +77,11 @@
 </div>	
 <div style="width:100%; float:left; ">
 	<div class ="left_box" >
-		<div style="width: 50%; margin:0 auto; text-align: left;">
-			<b>Buildings</b>
+		<div style="margin:0 auto; text-align: left;">
+			
 			<br>
 			<table>
+			<tr><td><b>Buildings</b></td><tr>
 			<tr><td>Solar Collectors</td><td>&nbsp;&nbsp;</td><td align="right">{{status.total_solar_collectors|intcomma}}</td></tr>
 			<tr><td>Fission Reactors</td><td>&nbsp;&nbsp;</td><td align="right">{{status.total_fission_reactors|intcomma}}</td></tr>
 			<tr><td>Mineral Plants</td><td>&nbsp;&nbsp;</td><td align="right">{{status.total_mineral_plants|intcomma}}</td></tr>
@@ -90,10 +95,11 @@
 			<tr><td>Total</td><td>&nbsp;&nbsp;</td><td align="right">{{status.total_buildings|intcomma}}</td></tr>
 			</table><br><br>
 
-
-			<b>Buildings under construction</b><br><span id="council_build_que">
+			{% if construction_sum %}
+			<span id="council_build_que">
 			{% if status.galsel == 1 %}
 			<form name="cancel_build" id="cancel_build" action="/council"  method="POST"><table>
+			<tr><td><b>Buildings under construction</b></td><tr>
 			{% csrf_token %}
 			{% for construction in constructions %}
 			    <tr><td>
@@ -112,6 +118,7 @@
 			</tr></table></form>
 			{% elif status.galsel == 2 %}
 			<form name="cancel_build" id="cancel_build" action="/galtwo/council"  method="POST"><table>
+			<tr><td><b>Buildings under construction</b></td><tr>
 			{% csrf_token %}
 			{% for construction in constructions %}
 			    <tr><td>
@@ -127,63 +134,68 @@
 			<tr>
 			    <td></td>
 			    <td><input type="submit" value="Cancel"></td>
-			</tr></table></form>{% endif %}
+			</tr></table></form>{% endif %}{% endif %}
 
-			<br><i>Summary</i><br>
 
+			<table>
+			<tr><td><br><i>Summary</i></td></tr>
 			{% if not construction_sum %}
-			No buildings under construction
+			<tr><td>No buildings under construction</td></tr>
 			{% else %}
 				{% for building, num in construction_sum.items %}
-					{{building}} - {{num|intcomma}}<br>
+					<tr><td>{{building}} - {{num|intcomma}}</td></tr>
 				{% endfor %}
 			{% endif %}
-			</span></td>
+			</span></table>
 		</div>
 
 	</div>
 	<div class ="right_box" >
-		<div style="width: 50%; margin:0 auto; text-align: left;">
+		<div style="margin:0 auto; text-align: left;">
 			<td align="center" valign="top">
-			<b>Units</b><br><table>
+			<table>
+			<tr><td><b>Units</b></td></tr>
 			{% for unit in main_fleet %}
 			    <tr><td>
 			    {{unit.name}} </td>
 				<td>{{unit.value|intcomma}}</td>
 				</tr>
 			{% endfor %}
-
-			<tr><td><b>Total</b></td><td id="untnum">{{unit_total|intcomma}}</td></tr></table><br><br>
-			<b>Units under construction</b><br><span id="council_unit_que">
+			<tr><td></td></tr>
+			<tr><td><b>Total</b></td><td id="untnum">{{unit_total|intcomma}}</td></tr>
+			
+			{% if fleets_sum %}
+			<tr><td colspan=2></td></tr>
+			<tr><td colspan=2></td></tr>
+			<tr><td colspan=2><b>Units under construction</b></td></tr><span id="council_unit_que">
 			{% if status.galsel == 1 %}
 			<form name="cancel_units" id="cancel_units" action="/council" method="POST">
 			{% elif status.galsel == 2 %}
 			<form name="cancel_units" id="cancel_units" action="/galtwo/council" method="POST">
-			{% endif %}<table>
+			{% endif %}
 			{% csrf_token %}
 			{% for unit in built_fleet %}
 			    <tr>
-				<td>{{unit.n|intcomma}}</td>
-			    <td>{{unit.get_unit_type_display}}</td>
-				<td>in {{unit.ticks_remaining}} weeks</td>
-				</td><td><input type="checkbox" name="cancel_unit" value="{{unit.id}}"></td></tr>
+				<td colspan=2 >{{unit.n|intcomma}} {{unit.get_unit_type_display}}
+				in {{unit.ticks_remaining}} weeks <input type="checkbox" name="cancel_unit" value="{{unit.id}}"></td></tr>
 				</tr>
 			{% endfor %}
 
 
-			<tr><td></td><td><div class="href" onclick="toggleForm('cancel_units');">Toggle</font></div></td></tr>
-			<tr><td></td><td><input type="submit" value="Cancel"></td></tr></table></form>
+			<tr><td colspan=2 align="right"><div class="href" onclick="toggleForm('cancel_units');">Toggle</font></div></td></tr>
+			<tr><td colspan=2  align="right"><input type="submit" value="Cancel"></td></tr></form>{% endif %}
+			<tr><td></td></tr>
+			<tr><td></td></tr>
 
-
-			<br><i>Summary</i><br>
+			<tr><td><i>Summary</i></td></tr>
 			{% if not fleets_sum %}
-			No units under construction
+			<tr><td>No units under construction</td></tr>
 			{% else %}
 				{% for unit, num in fleets_sum.items %}
-					{{unit}} - {{num|intcomma}}<br>
+					<tr><td>{{unit}} - {{num|intcomma}}</td></tr>
 				{% endfor %}
 			{% endif %}
-
+			</table>
 </span></td></tr></table>
 </div>
 </div>

@@ -24,7 +24,7 @@ def artifacts():
 
     arti_planets = random.sample(list(planets), len(arti_list))
 
-    excluded = ["Scroll of the Necromancer", "You Grow, Girl!"]
+    excluded = []
 
     for i, (key, val) in enumerate(arti_list.items()):        
         if key in excluded:
@@ -53,6 +53,8 @@ def artifacts():
             arti_planets[i].artefact = arti
             if key == "You Grow, Girl!":
                 arti_planets[i].size = 1
+                arti.description = "This Planet grows by 1 every 10 weeks!"
+                arti.save()
             arti_planets[i].save()
                                        
     print(arti_planets)
@@ -107,13 +109,7 @@ def settings():
             u.tag = "Veteran"                
         else:
             u.tag = "Player"
-        u.save()     
-    for p in Planets.objects.all():
-        if Planets.objects.filter(x=p.x, y=p.y, i=p.i).count() > 1:
-            print(str(p.id))
-            if p.home_planet == False:
-                p.delete()
-               
+        u.save()                    
             
                                             
     print("Generating settings took " + str(time.time() - start_t) + "seconds")

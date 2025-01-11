@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import requests
 from discord import Webhook, RequestsWebhookAdapter
 import time
+from django.db.transaction import get_connection
 
 class Command(BaseCommand): # must be called command, use file name to name the functionality
     @transaction.atomic # Makes it so all object saves get aggregated, otherwise process_tick would take a minute
@@ -89,73 +90,47 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                 else:
                     art_tab[a.empire_holding] += 1
                 max_artis = max(art_tab[a.empire_holding], max_artis)
-        
-        
-        growart = Artefacts.objects.get(name="You Grow, Girl!")
-        if growart.on_planet != None:
-            growplant = growart.on_planet.id
-            growplant = Planet.objects.get(id=growplant)
-            growplant.size += 1
-            growplant.save()
-        
-        if max_artis == arti_count:
-            emp_holding = Artefacts.objects.get(name="Ether Gardens")
-            holding = emp_holding.empire_holding.name_with_id
-            if arte_timer.artedelay < 5:
-                msg = "Artefact/s recaptured! Timer resumed! Round will end in " + str(arte_timer.artetimer) + " weeks!"
-                arte_timer.artetimer -= 1
-                arte_timer.artedelay = "5"
-                arte_timer.save()
-            elif int(arte_timer.artetimer) >= 1:
-                arte_timer.artetimer -= 1
-                arte_timer.save()
-                if fast.is_running == False:
-                    time_left = arte_timer.artetimer * 10
-                    now = datetime.now()
-                    now_plus_10 = now + timedelta(minutes = time_left)
-                    fast.round_start = now_plus_10
-                    fast.save()
-                if arte_timer.artetimer == 143:
-                    msg = "All Artefacts held by " + str(holding) + "! Round will end in " + str(arte_timer.artetimer) + " weeks!"
-        else:
-            if arte_timer.artedelay > 0 and arte_timer.artetimer < 144:
-                arte_timer.artedelay -= 1
-                arte_timer.save()
-                if fast.is_running == False:
-                    time_left = (arte_timer.artetimer + arte_timer.artedelay) * 10
-                    now = datetime.now()
-                    now_plus_10 = now + timedelta(minutes = time_left)
-                    fast.round_start = now_plus_10
-                    fast.save()
-                if arte_timer.artedelay == 4:
-                    msg = "Artefact/s lost! Timer will reset in 5 weeks!"
+            
+            # process_artis
+            if a.name == "Obelisk":
+                actobelisk()
                 
-            else:
-                if arte_timer.artedelay == 0:
-                    msg = "Artefact/s lost! Timer reset!"
-                    arte_timer.artetimer = "144"
-                    arte_timer.artedelay = "5"
-                    arte_timer.save()
-                    fast.round_start = None
-                    fast.save()
+            if a.name == "Terraformer":
+                if a.ticks_left == 0 and a.empire_holding != None:
+                    terraformer()
                 
+            if a.name == "Flying Dutchman":
+                if a.ticks_left == 0 and a.empire_holding != None:
+                    dutchman()            
         
-        if arte_timer.artetimer == 0:
-            emp_holding = Artefacts.objects.get(name="Ether Gardens")
-            holding = emp_holding.empire_holding.name_with_id
-            arte_timer.is_running = False
-            arte_timer.round_start = None
+        holding = ""
+        game_round = RoundStatus.objects.filter().first()
+        tick_hour = (60/game_round.tick_time) * 60
+        
+        if arte_timer.tick_number == 1008:
+            msg += "Peace has ended and a new Agent Operation has entered the galaxy, allowing all races to Steal Resources!"
+            
+        
+        if game_round.emphold != None:
+            holding = game_round.emphold.name_with_id
+        if arte_timer.artedelay < (tick_hour - 1) and max_artis == arti_count:
+            msg += "Artefact/s recaptured! Timer resumed! Round will end in " + str(arte_timer.artetimer) + " weeks!"
+            arte_timer.artedelay = tick_hour - 1
             arte_timer.save()
-            msg = "Congratulations " + str(holding) + "! New Regular Round will be announced soon! "
-            if fast.is_running == False:
-                fast.is_running = True
-                fast.save()
-                msg += "Fast galaxy has now started, Good Luck!"
+        if arte_timer.artetimer == (tick_hour*24) - 1:
+            msg += "All Artefacts held by " + str(holding) + "! Round will end in " + str(arte_timer.artetimer) + " weeks!"
+        if arte_timer.artedelay == tick_hour - 2:
+            msg += "Artefact/s lost! Timer will reset in " + str(int(tick_hour-1)) + " weeks!"
+        if arte_timer.artedelay < 0:
+            msg += "Artefact/s lost! Timer reset!"
+                
+        if arte_timer.artetimer == 0:
+            msg += "Congratulations " + str(holding) + "!"
             
         if msg != '':
             NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
             webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
-            webhook.send(msg)
+            #webhook.send(msg) 
             
         print("Process ops took: " +  str(time.time() - start_t) )
         

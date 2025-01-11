@@ -28,13 +28,15 @@
 <p align="left">Portals allow your units to travel to different areas of the map, allow the defence of planets as well as shortening the time required
  to reach planets, to explore, attack or use special operations.</p>
 <p align="left">Like all buildings, Portals are each 8 Networth, however their upkeep is very different, the formula to calculate upkeep is; </p>
-<p align="left">Upkeep = (((Portals-1)^1.2736)*10000) / (1.0 + Culture Research Percent/100.0)</p>
-<p align="left">Portals is your current Portal count, followed by minus 1. This means your first Portal on your Home Planet is free, however your next Portal will cost 10000 per week to upkeep, with the cost for each Portal increasing with each added Portal. Portals research helps to lower the cost, so if your Portals research is 100% and you have 2 Portals we get: 10000 / 2 = 5000 upkeep per week.
+<p align="left">Upkeep = (((Portals-1)^1.2736)*10000) / (1.0 + Culture Research Percent/100.0), for fast tick, you will need to *100000 rather than 10000.</p>
+<p align="left">Portals is your current Portal count, followed by minus 1. This means your first Portal on your Home Planet is free, however your next Portal will cost 10000 per week to upkeep, or 100000 in fast tick, with the cost for each Portal increasing with each added Portal. Portals research helps to lower the cost, so if your Portals research is 100% and you have 2 Portals we get: 10000 / 2 = 5000 upkeep per week.
 <p align="left">This calculator will tell you the upkeep required, depending on Portal count and Research.
-
+</tr>
+<tr><td width="50%">
+<p align="left">Regular</p>
 <form name="Upkeep">
-          <p align="left">Portals<input type="text" name="Por" size="4"><br>
-          <p align="left">Portals Research<input type="text" name="Prc" size="4">%<br>
+          <p align="left">Portals<input type="text" name="Por" {% if status != "None" %}value="{{status.total_portals}}"{% else %}value="0"{%endif%} size="4"><br>
+          <p align="left">Portals Research<input type="text" {% if status != "None" %}value="{{status.research_percent_portals}}"{% else %}value="0"{%endif%} name="Prc" size="4">%<br>
           <br>
           <input type="submit" value="Calculate" onclick="
 var PorNum=document.Upkeep.Por.value;
@@ -50,7 +52,28 @@ return false" /><br>
           Upkeep:<input type="text" name="Cost" size="13" style="background-color: #0b1119; color: white; border-style: solid; border-color: #0b1119;" />
         </form></p>
 
-    </tr>
+</td>  
+<td width="50%">
+<p align="left">Fast tick</p>
+<form name="Upkeep2">
+          <p align="left">Portals<input type="text" name="Por2" {% if status != "None" %}value="{{status.total_portals}}"{% else %}value="0"{%endif%} size="4"><br>
+          <p align="left">Portals Research<input type="text" {% if status != "None" %}value="{{status.research_percent_portals}}"{% else %}value="0"{%endif%} name="Prc2" size="4">%<br>
+          <br>
+          <input type="submit" value="Calculate" onclick="
+var PorNum2=document.Upkeep2.Por2.value;
+var PorRc2=document.Upkeep2.Prc2.value;
+var Cost6=PorNum2-1;
+var Cost7=Math.pow(Cost6,1.2736);
+var Cost8=Cost7*100000;
+var Cost9=Math.round(Cost8);
+var Cost9=1 + PorRc2/100;
+var Cost10=Math.round(Cost8/Cost9);
+document.Upkeep2.Costf.value=Cost10;        
+return false" /><br>
+          Upkeep:<input type="text" name="Costf" size="13" style="background-color: #0b1119; color: white; border-style: solid; border-color: #0b1119;" />
+        </form></p>
+
+</td>   </tr>
 <tr>
 <p align="center"><b><font size="5">Portal Coverage</font></b></p>
 <p align="left">Portals cover a certain area on the Map, offering protection to defending Planets. Starting at 100%, a system containing a Portal will have the maximum coverage, while the further away
@@ -60,7 +83,7 @@ you get, the cover decreases. Use the Map below, along with Portal Research Perc
 
 <form action="/guide/portal" method="POST" >
 {% csrf_token %}
-<p align="center">Portals Research Percent <input type="text" required="required" pattern="[0-9]+" maxlength="4" name="weeks" value="{{wks}}" size="4">% <input type="submit" name="por_calc_form" value="Go" ></p>
+<p align="center">Portals Research Percent <input type="text" required="required" pattern="[0-9]+" maxlength="4" name="weeks" {% if status != "None" %}value="{{status.research_percent_portals}}"{% else %}value="{{wks}}"{%endif%} size="4">% <input type="submit" name="por_calc_form" value="Go" ></p>
 <table width="100%">
 <tr>
 <td colspan="2">Portal 1</td><td colspan="2">Portal 2</td>

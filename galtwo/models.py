@@ -139,6 +139,10 @@ class News(models.Model): # a single type of building under construction
         RCD = 'RCD', _('Ceasefire Declared')
         DU = 'DU', _('Flying Dutchman')
         TE = 'TE', _('Terraformer')
+<<<<<<< HEAD
+=======
+        SK = 'SK', _('Skrull')
+>>>>>>> 70b5168199b17da14ec1956ae32f86decf0c937a
 
     news_type = models.CharField(max_length=3, choices=NewsType.choices, default=NewsType.N)
     tick_number = models.IntegerField(default=0)
@@ -195,6 +199,8 @@ class UserStatus(models.Model):
         WK = 'WK', _('Wookiees')
         #JK = 'JK', _('Jackos')
         #SO = 'SO', _('Shootout')
+        FT = 'FT', _('Furtifons')
+        SM = 'SM', _('Samsonites')
     race = models.CharField(max_length=2, choices=Races.choices, blank=True, default=None, null=True)
 
     # Resources
@@ -414,6 +420,10 @@ class RoundStatus(models.Model):
     round_start = models.DateTimeField(blank=True, null=True, default=None)
     artedelay = models.IntegerField(default=59)
     tick_time = models.IntegerField(default=30)
+<<<<<<< HEAD
+=======
+    emphold = models.ForeignKey(Empire, on_delete=models.SET_NULL, blank=True, null=True, default=None)
+>>>>>>> 70b5168199b17da14ec1956ae32f86decf0c937a
 
 class Bot(models.Model):
     year = models.IntegerField(default=52)

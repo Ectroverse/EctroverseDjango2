@@ -25,7 +25,9 @@ values
 ('SB', current_timestamp),
 ('DW', current_timestamp),
 ('WK', current_timestamp),
-('JK', current_timestamp);
+('JK', current_timestamp),
+('FT', current_timestamp),
+('SM', current_timestamp);
 
 
 select * from classes;
@@ -132,7 +134,7 @@ values
 ((select id from classes where name = 'MT'),'crystal_production', 1.0,current_timestamp),
 ((select id from classes where name = 'MT'),'ectrolium_production', 1.0,current_timestamp),
 ((select id from classes where name = 'MT'),'race_special_solar_15', 1.15,current_timestamp),
-((select id from classes where name = 'MT'),'research_max_military', (1.0*2.0),current_timestamp),
+((select id from classes where name = 'MT'),'travel_speed', (1.0*2.0),current_timestamp),
 
 ((select id from classes where name = 'FH'),'pop_growth', (0.8*0.02),current_timestamp),
 ((select id from classes where name = 'FH'),'research_bonus_military', 1.5,current_timestamp),
@@ -217,8 +219,47 @@ values
 ((select id from classes where name = 'JK'),'travel_speed', (1.0*2.0),current_timestamp),
 ((select id from classes where name = 'JK'),'research_max_culture', 250.0,current_timestamp),
 ((select id from classes where name = 'JK'),'research_max_operations', 250.0,current_timestamp),
-((select id from classes where name = 'JK'),'race_special_solar_15', 1.1,current_timestamp);
+((select id from classes where name = 'JK'),'race_special_solar_15', 1.1,current_timestamp),
+((select id from classes where name = 'JK'),'race_special_pop_research', 10000 ,current_timestamp);
 
+((select id from classes where name = 'FT'),'pop_growth', (0.9*0.02),current_timestamp),
+((select id from classes where name = 'FT'),'research_bonus_military', 0.9,current_timestamp),
+((select id from classes where name = 'FT'),'research_bonus_construction', 0.9,current_timestamp),
+((select id from classes where name = 'FT'),'research_bonus_tech', 0.9,current_timestamp),
+((select id from classes where name = 'FT'),'research_bonus_energy', 0.9,current_timestamp),
+((select id from classes where name = 'FT'),'research_bonus_population', 0.9,current_timestamp),
+((select id from classes where name = 'FT'),'research_bonus_culture', 0.9,current_timestamp),
+((select id from classes where name = 'FT'),'research_bonus_operations', 1.8,current_timestamp),
+((select id from classes where name = 'FT'),'research_bonus_portals', 0.9,current_timestamp),
+((select id from classes where name = 'FT'),'energy_production', 1.0,current_timestamp),
+((select id from classes where name = 'FT'),'mineral_production', 1.0,current_timestamp),
+((select id from classes where name = 'FT'),'crystal_production', 1.0,current_timestamp),
+((select id from classes where name = 'FT'),'ectrolium_production', 1.0,current_timestamp),
+((select id from classes where name = 'FT'),'travel_speed', (1.6*2.0),current_timestamp),
+((select id from classes where name = 'FT'),'research_max_construction', 250.0,current_timestamp);
+
+((select id from classes where name = 'SM'),'pop_growth', (1.0*0.02),current_timestamp),
+((select id from classes where name = 'SM'),'research_bonus_military', 1.1,current_timestamp),
+((select id from classes where name = 'SM'),'research_bonus_construction', 1.1,current_timestamp),
+((select id from classes where name = 'SM'),'research_bonus_tech', 1.1,current_timestamp),
+((select id from classes where name = 'SM'),'research_bonus_energy', 1.1,current_timestamp),
+((select id from classes where name = 'SM'),'research_bonus_population', 1.1,current_timestamp),
+((select id from classes where name = 'SM'),'research_bonus_culture', 1.1,current_timestamp),
+((select id from classes where name = 'SM'),'research_bonus_operations', 1.1,current_timestamp),
+((select id from classes where name = 'SM'),'research_bonus_portals', 1.1,current_timestamp),
+((select id from classes where name = 'SM'),'energy_production', 1.1,current_timestamp),
+((select id from classes where name = 'SM'),'mineral_production', 1.0,current_timestamp),
+((select id from classes where name = 'SM'),'crystal_production', 1.0,current_timestamp),
+((select id from classes where name = 'SM'),'ectrolium_production', 1.0,current_timestamp),
+((select id from classes where name = 'SM'),'travel_speed', (1.6*2.0),current_timestamp),
+((select id from classes where name = 'SM'),'research_max_military', 185.0,current_timestamp),
+((select id from classes where name = 'SM'),'research_max_construction', 185.0,current_timestamp),
+((select id from classes where name = 'SM'),'research_max_tech', 185.0,current_timestamp),
+((select id from classes where name = 'SM'),'research_max_energy', 185.0,current_timestamp),
+((select id from classes where name = 'SM'),'research_max_population', 185.0,current_timestamp),
+((select id from classes where name = 'SM'),'research_max_culture', 185.0,current_timestamp),
+((select id from classes where name = 'SM'),'research_max_operations', 185.0,current_timestamp),
+((select id from classes where name = 'SM'),'research_max_portals', 185.0,current_timestamp),;
 
 drop table if exists unit_stats;
 

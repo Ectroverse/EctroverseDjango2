@@ -55,6 +55,8 @@ $(document).on('change', '.div-toggle', function() {
   var oneInterest = parseInt(-1);
   var oneMineral = parseInt(-1);
   var oneCruisers = parseInt(-1);
+  var oneCultureResearch = parseInt(-1);
+  var oneAttacking = parseInt(-1);
   
   var twPopulationGrowth = parseInt(-1);
   var twAttack = parseInt(-1);
@@ -74,6 +76,8 @@ $(document).on('change', '.div-toggle', function() {
   var twInterest = parseInt(-1);
   var twMineral = parseInt(-1);
   var twCruisers = parseInt(-1);
+  var twCultureResearch = parseInt(-1);
+  var twAttacking = parseInt(-1);
 
   var oneMilitaryRC = parseInt(-1);
   var oneConstructionRC = parseInt(-1);
@@ -83,12 +87,14 @@ $(document).on('change', '.div-toggle', function() {
   var oneCultureRC = parseInt(-1);
   var oneOperationsRC = parseInt(-1);
   var onePortalsRC = parseInt(-1);
-  var oneMilitaryMaxRC = parseInt(-1);
-  var oneConstructionMaxRC = parseInt(-1);
-  var oneEnergyMaxRC = parseInt(-1);
-  var onePopulationMaxRC = parseInt(-1);
-  var oneCultureMaxRC = parseInt(-1);
-  var oneOperationsMaxRC = parseInt(-1);
+  var oneMilitaryMaxRC = parseInt(200);
+  var oneConstructionMaxRC = parseInt(200);
+  var oneTechnologyMaxRC = parseInt(200);
+  var oneEnergyMaxRC = parseInt(200);
+  var onePopulationMaxRC = parseInt(200);
+  var oneCultureMaxRC = parseInt(200);
+  var oneOperationsMaxRC = parseInt(200);
+  var onePortalsMaxRC = parseInt(200);
   
   var twMilitaryRC = parseInt(-1);
   var twConstructionRC = parseInt(-1);
@@ -98,12 +104,14 @@ $(document).on('change', '.div-toggle', function() {
   var twCultureRC = parseInt(-1);
   var twOperationsRC = parseInt(-1);
   var twPortalsRC = parseInt(-1);
-  var twMilitaryMaxRC = parseInt(-1);
-  var twConstructionMaxRC = parseInt(-1);
-  var twEnergyMaxRC = parseInt(-1);
-  var twPopulationMaxRC = parseInt(-1);
-  var twCultureMaxRC = parseInt(-1);
-  var twOperationsMaxRC = parseInt(-1);
+  var twMilitaryMaxRC = parseInt(200);
+  var twConstructionMaxRC = parseInt(200);
+  var twTechnologyMaxRC = parseInt(200);
+  var twEnergyMaxRC = parseInt(200);
+  var twPopulationMaxRC = parseInt(200);
+  var twCultureMaxRC = parseInt(200);
+  var twOperationsMaxRC = parseInt(200);
+  var twPortalsMaxRC = parseInt(200);
   
   var oneSpyTarget = "n"
   var oneObservePlanet = "n"
@@ -308,6 +316,50 @@ $(document).on('change', '.div-toggle', function() {
         {% endif %}
         {% endfor %} }
     
+	else if (tsel == "furts2")
+        { {% for_longest c,d in furts_research.items; a,b in furts_bonus.items; e in furts_ops; f in furts_spells; g in furts_incas %}
+            {% if a != None %}
+				if ('{{a|cut:" "}}' == "CultureResearch"){
+				tw{{a|cut:" "}} = 1;}
+				else {
+                tw{{a|cut:" "}} = "{{b|cut:" "}}";}
+        {% endif %}
+        {% if c != None %}
+                tw{{c|cut:" "}}RC = {{d}};
+        {% endif %}
+        {% if e != "" %}
+                tw{{e|cut:" "}} = "{{e|cut:" "}}"
+        {% endif %}
+        {% if f != "" %}
+                tw{{f|cut:" "|cut:"'"}} = "{{f|cut:" "}}"
+        {% endif %}
+        {% if g != "" %}
+                tw{{g|cut:" "}} = "{{g|cut:" "}}"
+        {% endif %}
+        {% endfor %} }
+	
+	else if (tsel == "samts2")
+        { {% for_longest c,d in samts_research.items; a,b in samts_bonus.items; e in samts_ops; f in samts_spells; g in samts_incas %}
+            {% if a != None %}
+				if ('{{a|cut:" "}}' == "Attacking"){
+				tw{{a|cut:" "}} = 1;}
+				else {
+                tw{{a|cut:" "}} = "{{b|cut:" "}}";}
+        {% endif %}
+        {% if c != None %}
+                tw{{c|cut:" "}}RC = {{d}};
+        {% endif %}
+        {% if e != "" %}
+                tw{{e|cut:" "}} = "{{e|cut:" "}}"
+        {% endif %}
+        {% if f != "" %}
+                tw{{f|cut:" "|cut:"'"}} = "{{f|cut:" "}}"
+        {% endif %}
+        {% if g != "" %}
+                tw{{g|cut:" "}} = "{{g|cut:" "}}"
+        {% endif %}
+        {% endfor %} }
+	
     if (osel == "hark")
         { {% for_longest c,d in hark_research.items; a,b in hark_bonus.items; e in hark_ops; f in hark_spells; g in hark_incas %}
             {% if a != None %}
@@ -338,6 +390,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(oele).style.color = 'green';}
                         else if (one{{a|cut:" "}} < 0) {
                             document.getElementById(oele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -358,6 +412,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(orcele).style.color = 'green';}
                         else if (one{{c|cut:" "}}RC < 0) {
                             document.getElementById(orcele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
                     }
         {% endif %}
         {% if e != "" %}
@@ -416,6 +472,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(oele).style.color = 'green';}
                         else if (one{{a|cut:" "}} < 0) {
                             document.getElementById(oele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -436,6 +494,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(orcele).style.color = 'green';}
                         else if (one{{c|cut:" "}}RC < 0) {
                             document.getElementById(orcele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
                     }
         {% endif %}
         {% if e != "" %}
@@ -494,6 +554,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(oele).style.color = 'green';}
                         else if (one{{a|cut:" "}} < 0) {
                             document.getElementById(oele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -514,6 +576,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(orcele).style.color = 'green';}
                         else if (one{{c|cut:" "}}RC < 0) {
                             document.getElementById(orcele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
                     }
         {% endif %}
         {% if e != "" %}
@@ -572,6 +636,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(oele).style.color = 'green';}
                         else if (one{{a|cut:" "}} < 0) {
                             document.getElementById(oele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -592,6 +658,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(orcele).style.color = 'green';}
                         else if (one{{c|cut:" "}}RC < 0) {
                             document.getElementById(orcele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
                     }
         {% endif %}
         {% if e != "" %}
@@ -650,6 +718,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(oele).style.color = 'green';}
                         else if (one{{a|cut:" "}} < 0) {
                             document.getElementById(oele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -673,6 +743,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(orcele).style.color = 'green';}
                         else if (one{{c|cut:" "}}RC < 0) {
                             document.getElementById(orcele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
                     }
 				{% endif %}
         {% endif %}
@@ -810,6 +882,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(oele).style.color = 'green';}
                         else if (one{{a|cut:" "}} < 0) {
                             document.getElementById(oele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -830,6 +904,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(orcele).style.color = 'green';}
                         else if (one{{c|cut:" "}}RC < 0) {
                             document.getElementById(orcele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
                     }
         {% endif %}
         {% if e != "" %}
@@ -858,8 +934,178 @@ $(document).on('change', '.div-toggle', function() {
         {% endif %}
         {% endfor %} }
     
+    else if (osel == "furts")
+        { {% for_longest c,d in furts_research.items; a,b in furts_bonus.items; e in furts_ops; f in furts_spells; g in furts_incas %}
+            {% if a != None %}
+				if ('{{a|cut:" "}}' == "CultureResearch"){
+				one{{a|cut:" "}} = 1;}
+				else {
+                one{{a|cut:" "}} = "{{b|cut:" "}}";}
+                oele = osel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}}
+                    else {
+                        document.getElementById(oele).style.color = 'green';}
+                }
+				
+                else {
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}}){
+                            document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}
+                        else {
+                            document.getElementById(oele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{a|cut:" "}} > 0){
+                            document.getElementById(oele).style.color = 'green';}
+                        else if (one{{a|cut:" "}} < 0) {
+                            document.getElementById(oele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                one{{c|cut:" "}}RC = {{d}};
+                orcele = osel + "{{c|cut:" "}}RC";
+                if (tw{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC){
+                            document.getElementById(orcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC)
+                            {document.getElementById(orcele).style.color = 'green';}
+                        else {
+                            document.getElementById(orcele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{c|cut:" "}}RC > 0){
+                            document.getElementById(orcele).style.color = 'green';}
+                        else if (one{{c|cut:" "}}RC < 0) {
+                            document.getElementById(orcele).style.color = 'red';}
+						else {
+                            document.getElementById(oroele).style.color = 'white';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                one{{e|cut:" "}} = "{{e|cut:" "}}"
+                oopele = osel + "{{e|cut:" "}}"
+                if (tw{{e|cut:" "}} == "n"){
+                    document.getElementById(oopele).style.color = 'green';}
+                else {
+                    document.getElementById(oopele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                one{{f|cut:" "}} = "{{f|cut:" "}}"
+                ospele = osel + "{{f|cut:" "|cut:"'"}}"
+                if (tw{{f|cut:" "}} == "n"){
+                    document.getElementById(ospele).style.color = 'green';}
+                else {
+                    document.getElementById(ospele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                one{{g|cut:" "}} = "{{g|cut:" "}}"
+                oinele = osel + "{{g|cut:" "}}"
+                if (tw{{g|cut:" "}} == "n"){
+                    document.getElementById(oinele).style.color = 'green';}
+                else {
+                    document.getElementById(oinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
     
-    
+	else if (osel == "samts")
+        { {% for_longest c,d in samts_research.items; a,b in samts_bonus.items; e in samts_ops; f in samts_spells; g in samts_incas %}
+            {% if a != None %}
+                if ('{{a|cut:" "}}' == "Attacking"){
+				one{{a|cut:" "}} = 1;}
+				else {
+                one{{a|cut:" "}} = "{{b|cut:" "}}";}
+                oele = osel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}}
+                    else {
+                        document.getElementById(oele).style.color = 'green';}
+                }
+				
+                else {
+                    if (tw{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}}){
+                            document.getElementById(oele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(oele).style.color = 'green';}
+                        else {
+                            document.getElementById(oele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{a|cut:" "}} > 0){
+                            document.getElementById(oele).style.color = 'green';}
+                        else if (one{{a|cut:" "}} < 0) {
+                            document.getElementById(oele).style.color = 'red';}
+						else {
+                            document.getElementById(oele).style.color = 'white';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                one{{c|cut:" "}}RC = {{d}};
+                orcele = osel + "{{c|cut:" "}}RC";
+                if (tw{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC){
+                            document.getElementById(orcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC)
+                            {document.getElementById(orcele).style.color = 'green';}
+                        else {
+                            document.getElementById(orcele).style.color = 'white';}
+                    }
+                    else {
+                        if (one{{c|cut:" "}}RC > 0){
+                            document.getElementById(orcele).style.color = 'green';}
+                        else if (one{{c|cut:" "}}RC < 0) {
+                            document.getElementById(orcele).style.color = 'red';}
+						else {
+                            document.getElementById(orcele).style.color = 'white';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                one{{e|cut:" "}} = "{{e|cut:" "}}"
+                oopele = osel + "{{e|cut:" "}}"
+                if (tw{{e|cut:" "}} == "n"){
+                    document.getElementById(oopele).style.color = 'green';}
+                else {
+                    document.getElementById(oopele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                one{{f|cut:" "}} = "{{f|cut:" "}}"
+                ospele = osel + "{{f|cut:" "|cut:"'"}}"
+                if (tw{{f|cut:" "}} == "n"){
+                    document.getElementById(ospele).style.color = 'green';}
+                else {
+                    document.getElementById(ospele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                one{{g|cut:" "}} = "{{g|cut:" "}}"
+                oinele = osel + "{{g|cut:" "}}"
+                if (tw{{g|cut:" "}} == "n"){
+                    document.getElementById(oinele).style.color = 'green';}
+                else {
+                    document.getElementById(oinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+	
     if (tsel == "hark2")
         { {% for_longest c,d in hark_research.items; a,b in hark_bonus.items; e in hark_ops; f in hark_spells; g in hark_incas %}
             {% if a != None %}
@@ -888,6 +1134,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(tele).style.color = 'green';}
                         else if (tw{{a|cut:" "}} < 0) {
                             document.getElementById(tele).style.color = 'red';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -907,6 +1155,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(trcele).style.color = 'green';}
                         else if (tw{{c|cut:" "}}RC < 0) {
                             document.getElementById(trcele).style.color = 'red';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
                     }
         {% endif %}
         {% if e != "" %}
@@ -961,6 +1211,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(tele).style.color = 'green';}
                         else if (tw{{a|cut:" "}} < 0) {
                             document.getElementById(tele).style.color = 'red';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -980,6 +1232,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(trcele).style.color = 'green';}
                         else if (tw{{c|cut:" "}}RC < 0) {
                             document.getElementById(trcele).style.color = 'red';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
                     }
         {% endif %}
         {% if e != "" %}
@@ -1034,6 +1288,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(tele).style.color = 'green';}
                         else if (tw{{a|cut:" "}} < 0) {
                             document.getElementById(tele).style.color = 'red';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -1053,6 +1309,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(trcele).style.color = 'green';}
                         else if (tw{{c|cut:" "}}RC < 0) {
                             document.getElementById(trcele).style.color = 'red';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
                     }
         {% endif %}
         {% if e != "" %}
@@ -1107,6 +1365,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(tele).style.color = 'green';}
                         else if (tw{{a|cut:" "}} < 0) {
                             document.getElementById(tele).style.color = 'red';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -1126,6 +1386,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(trcele).style.color = 'green';}
                         else if (tw{{c|cut:" "}}RC < 0) {
                             document.getElementById(trcele).style.color = 'red';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
                     }
         {% endif %}
         {% if e != "" %}
@@ -1180,6 +1442,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(tele).style.color = 'green';}
                         else if (tw{{a|cut:" "}} < 0) {
                             document.getElementById(tele).style.color = 'red';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -1202,6 +1466,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(trcele).style.color = 'green';}
                         else if (tw{{c|cut:" "}}RC < 0) {
                             document.getElementById(trcele).style.color = 'red';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
                     }
         {% endif %}{% endif %}
         {% if e != "" %}
@@ -1256,6 +1522,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(tele).style.color = 'green';}
                         else if (tw{{a|cut:" "}} < 0) {
                             document.getElementById(tele).style.color = 'red';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -1275,6 +1543,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(trcele).style.color = 'green';}
                         else if (tw{{c|cut:" "}}RC < 0) {
                             document.getElementById(trcele).style.color = 'red';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
                     }
         {% endif %}
         {% if e != "" %}
@@ -1329,6 +1599,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(tele).style.color = 'green';}
                         else if (tw{{a|cut:" "}} < 0) {
                             document.getElementById(tele).style.color = 'red';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}
                     }
                 }
             {% endif %}
@@ -1348,6 +1620,8 @@ $(document).on('change', '.div-toggle', function() {
                             document.getElementById(trcele).style.color = 'green';}
                         else if (tw{{c|cut:" "}}RC < 0) {
                             document.getElementById(trcele).style.color = 'red';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
                     }
         {% endif %}
         {% if e != "" %}
@@ -1373,7 +1647,166 @@ $(document).on('change', '.div-toggle', function() {
         {% endif %}
         {% endfor %} }
             
-  
+	else if (tsel == "furts2")
+        { {% for_longest c,d in furts_research.items; a,b in furts_bonus.items; e in furts_ops; f in furts_spells; g in furts_incas %}
+            {% if a != None %}
+                tele = tsel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'green';}}
+                    else {
+                        document.getElementById(tele).style.color = 'green';}
+                }
+				else if ('{{a|cut:" "}}' == "CultureResearch"){
+                    if (one{{a|cut:" "}} != "-1"){
+                        document.getElementById(tele).style.color = 'white';}
+                    else {
+                        document.getElementById(tele).style.color = 'green';}
+                }
+                else {
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+
+                            {document.getElementById(tele).style.color = 'green';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}}
+                    else {
+                        if (tw{{a|cut:" "}} > 0){
+                            document.getElementById(tele).style.color = 'green';}
+                        else if (tw{{a|cut:" "}} < 0) {
+                            document.getElementById(tele).style.color = 'red';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                trcele = tsel + "{{c|cut:" "}}RC";
+                if (one{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC){
+                            document.getElementById(trcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC)
+                            {document.getElementById(trcele).style.color = 'green';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
+                    }
+                    else {
+                        if (tw{{c|cut:" "}}RC > 0){
+                            document.getElementById(trcele).style.color = 'green';}
+                        else if (tw{{c|cut:" "}}RC < 0) {
+                            document.getElementById(trcele).style.color = 'red';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                topele = tsel + "{{e|cut:" "}}"
+                if (one{{e|cut:" "}} == "n"){
+                    document.getElementById(topele).style.color = 'green';}
+                else {
+                    document.getElementById(topele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                tspele = tsel + "{{f|cut:" "|cut:"'"}}"
+                if (one{{f|cut:" "}} == "n"){
+                    document.getElementById(tspele).style.color = 'green';}
+                else {
+                    document.getElementById(tspele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                tinele = tsel + "{{g|cut:" "}}"
+                if (one{{g|cut:" "}} == "n"){
+                    document.getElementById(tinele).style.color = 'green';}
+                else {
+                    document.getElementById(tinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+	
+	else if (tsel == "samts2")
+        { {% for_longest c,d in samts_research.items; a,b in samts_bonus.items; e in samts_ops; f in samts_spells; g in samts_incas %}
+            {% if a != None %}
+                tele = tsel + "{{a|cut:" "}}";
+                if ('{{a|cut:" "}}' == "PopResearch"){
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'green';}}
+                    else {
+                        document.getElementById(tele).style.color = 'green';}
+                }
+                else {
+                    if (one{{a|cut:" "}} != "-1"){
+                        if (one{{a|cut:" "}} > tw{{a|cut:" "}})
+                            {document.getElementById(tele).style.color = 'red';
+                            }
+                        else if (one{{a|cut:" "}} < tw{{a|cut:" "}})
+
+                            {document.getElementById(tele).style.color = 'green';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}}
+                    else {
+                        if (tw{{a|cut:" "}} > 0){
+                            document.getElementById(tele).style.color = 'green';}
+                        else if (tw{{a|cut:" "}} < 0) {
+                            document.getElementById(tele).style.color = 'red';}
+                        else {
+                            document.getElementById(tele).style.color = 'white';}
+                    }
+                }
+            {% endif %}
+            {% if c != None %}
+                trcele = tsel + "{{c|cut:" "}}RC";
+                if (one{{c|cut:" "}}RC != "-1"){
+                        if (one{{c|cut:" "}}RC > tw{{c|cut:" "}}RC){
+                            document.getElementById(trcele).style.color = 'red';
+                            }
+                        else if (one{{c|cut:" "}}RC < tw{{c|cut:" "}}RC)
+                            {document.getElementById(trcele).style.color = 'green';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
+                    }
+                    else {
+                        if (tw{{c|cut:" "}}RC > 0){
+                            document.getElementById(trcele).style.color = 'green';}
+                        else if (tw{{c|cut:" "}}RC < 0) {
+                            document.getElementById(trcele).style.color = 'red';}
+                        else {
+                            document.getElementById(trcele).style.color = 'white';}
+                    }
+        {% endif %}
+        {% if e != "" %}
+                topele = tsel + "{{e|cut:" "}}"
+                if (one{{e|cut:" "}} == "n"){
+                    document.getElementById(topele).style.color = 'green';}
+                else {
+                    document.getElementById(topele).style.color = 'white';}
+        {% endif %}
+        {% if f != "" %}
+                tspele = tsel + "{{f|cut:" "|cut:"'"}}"
+                if (one{{f|cut:" "}} == "n"){
+                    document.getElementById(tspele).style.color = 'green';}
+                else {
+                    document.getElementById(tspele).style.color = 'white';}
+        {% endif %}
+        {% if g != "" %}
+                tinele = tsel + "{{g|cut:" "}}"
+                if (one{{g|cut:" "}} == "n"){
+                    document.getElementById(tinele).style.color = 'green';}
+                else {
+                    document.getElementById(tinele).style.color = 'white';}
+        {% endif %}
+        {% endfor %} }
+	
 });
 $(document).ready(function(){
     $('.div-toggle').trigger('change');
@@ -1407,6 +1840,8 @@ $(document).ready(function(){
   <option value="space" data-show=".space">Spacebornes</option>
   <option value="dweav" data-show=".dweav">Dreamweavers</option>
   <option value="wkees" data-show=".wkees">Wookies</option>
+  <option value="furts" data-show=".furts">Furtifons</option>
+  <option value="samts" data-show=".samts">Samsonites</option>
   <option value="jacks" data-show=".jacks">Jackos</option>
 </select>
 </td>
@@ -1501,7 +1936,7 @@ $(document).ready(function(){
 
 <table align="center">
 <tr>
-<td colspan="100%">Fast Tick only</td></tr>
+<td colspan="100%">Available Sometimes</td></tr>
 <tr>
 <td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
 </tr>
@@ -1512,7 +1947,39 @@ $(document).ready(function(){
 {% endfor %}
 </table><br>
 
-</div></div>
+</div>
+
+<div class="furts hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in furts_research.items; a,b in furts_bonus.items; e in furts_ops; f in furts_spells; g in furts_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="furts{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Culture Research"%}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="furts{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="furts{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="furts{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="furts{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+
+<div class="samts hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in samts_research.items; a,b in samts_bonus.items; e in samts_ops; f in samts_spells; g in samts_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="samts{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Attacking"%}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="samts{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="samts{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="samts{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="samts{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+
+</div>
 
 </div>
 
@@ -1528,6 +1995,8 @@ $(document).ready(function(){
   <option value="space2" data-show=".space2">Spacebornes</option>
   <option value="dweav2" data-show=".dweav2">Dreamweavers</option>
   <option value="wkees2" data-show=".wkees2">Wookies</option>
+  <option value="furts2" data-show=".furts2">Furtifons</option>
+  <option value="samts2" data-show=".samts2">Samsonites</option>
   <option value="jacks2" data-show=".jacks2">Jackos</option>
 </select>
 </td>
@@ -1622,7 +2091,7 @@ $(document).ready(function(){
 
 <table align="center">
 <tr>
-<td colspan="100%">Fast Tick only</td></tr>
+<td colspan="100%">Available Sometimes</td></tr>
 <tr>
 <td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
 </tr>
@@ -1633,7 +2102,39 @@ $(document).ready(function(){
 {% endfor %}
 </table><br>
 
-</div></div>
+</div>
+
+<div class="furts2 hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in furts_research.items; a,b in furts_bonus.items; e in furts_ops; f in furts_spells; g in furts_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="furts2{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Culture Research"%}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="furts2{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="furts2{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="furts2{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="furts2{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+
+<div class="samts2 hide">
+
+<table align="center">
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in samts_research.items; a,b in samts_bonus.items; e in samts_ops; f in samts_spells; g in samts_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td id="samts2{{a|cut:' '}}" style="color:white;">{{b}}{% if b != None %}{% if a != "Attacking"%}%{% endif %}{% endif %}</td><td>{{c}}</td><td id="samts2{{c|cut:' '}}RC" style="color:white;">{{d}}{% if d != None %}%{% endif %}</td><td id="samts2{{e|cut:' '}}" style="color:white;">{{e}}</td><td id="samts2{{f|cut:' '}}" style="color:white;">{{f}}</td><td id="samts2{{g|cut:' '}}" style="color:white;">{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+</div>
+
+</div>
 </div>
 	</div></div>
 
@@ -1714,11 +2215,34 @@ $(document).ready(function(){
 {% endfor %}
 </table><br>
 
+<table align="center">
+<th colspan="100%">Furtifons</th>
+<tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in furts_research.items; a,b in furts_bonus.items; e in furts_ops; f in furts_spells; g in furts_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td>{{b}}{% if b != None %}{% if a != "Culture Research"%}%{% endif %}{% endif %}</td><td>{{c}}</td><td>{{d}}{% if d != None %}%{% endif %}</td><td>{{e}}</td><td>{{f}}</td><td>{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
 
 <table align="center">
-Jackos
+<th colspan="100%">Samsonites</th>
 <tr>
-<td colspan="100%">Fast Tick only</td></tr>
+<td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
+</tr>
+{% for_longest c,d in samts_research.items; a,b in samts_bonus.items; e in samts_ops; f in samts_spells; g in samts_incas %}
+<tr class="{% cycle 'row2' 'row1' %}">
+<td>{{a}}</td><td>{{b}}{% if b != None %}{% if a != "Attacking"%}%{% endif %}{% endif %}</td><td>{{c}}</td><td>{{d}}{% if d != None %}%{% endif %}</td><td>{{e}}</td><td>{{f}}</td><td>{{g}}</td>
+</tr>
+{% endfor %}
+</table><br>
+
+<table align="center">
+<th colspan="100%">Jackos</th>
+<tr>
+<td colspan="100%">Available sometimes</td></tr>
 <tr>
 <td colspan="2">Bonuses</td><td colspan="2">Research</td><td>Operations</td><td>Spells</td><td>Incantations</td>
 </tr>
@@ -1728,6 +2252,7 @@ Jackos
 </tr>
 {% endfor %}
 </table><br>
+
 </div>
 </div>
 <br><br><b>Note:</b> Pop research grants you 1 research point per noted population per week.<br><br>

@@ -11,6 +11,7 @@ from django.db import models
 admin.site.register(UnitConstruction)
 admin.site.register(RoundStatus)
 #admin.site.register(Empire)
+#admin.site.register(Ticks_log)
 admin.site.register(Relations)
 #admin.site.register(Messages)
 #admin.site.register(News)
@@ -32,6 +33,10 @@ admin.site.register(News, NewsAdmin)
 class ConstructionAdmin(admin.ModelAdmin):
     list_display = ["user"]
 admin.site.register(Construction, ConstructionAdmin)
+
+class TicksLogAdmin(admin.ModelAdmin):
+    list_display = ["calc_time_ms", "error"]
+admin.site.register(Ticks_log, TicksLogAdmin)
 
 class FleetAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Fleet._meta.get_fields()]

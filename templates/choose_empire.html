@@ -22,7 +22,7 @@ function showEmpirePass2() {
 {% if error %}
 	<p align = "center" > {{error}} </p>
 {% endif %}
-			<b><u>Register for the 30 Second Galaxy</u></b>	<br><br>
+			<b><u>Register for the {{round2.tick_time}} Second Galaxy</u></b>	<br><br>
 			<form method="post" name="empire_race_choice" action="{% url 'choose_empire' %}" style =" margin: 0 5px;">
 			  {% csrf_token %}
 			  

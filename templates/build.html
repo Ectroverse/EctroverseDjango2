@@ -33,17 +33,26 @@ function costbuild() {
 		{% for cost in costs %}
 		{% if cost.penalty != None %}
 			{% if cost.name == "Portal" %}
-				if (document.getElementById('b_portal').checked) {
+				var element =  document.getElementById('b_portal');
+				if (typeof(element) != 'undefined' && element != null)
+					{
+					if (document.getElementById('b_portal').checked) {
 					var gx = +1
 					var x = +gx;
 					var z = +x;
 					q = 1
-					}
+					}}
 			{% else %}
 			var gx = +document.getElementById('{{forloop.counter0}}').value
 			var x = +gx;
 			var z = +x;
 			
+			{% if cost.name == "Defense Satellites" or cost.name == "Shield Network" %}
+			
+			q = x
+			z = 1
+			
+			{% else %}
 			
 			ob = Math.min(Math.max(0, planet_size - planet_buildings), x)
 			built = x - ob
@@ -54,6 +63,7 @@ function costbuild() {
 			ob += (o - p) / Math.pow(planet_size,2)	
 			
 			q = ob/x
+			{% endif %}
 			{% endif %}
 			
 			

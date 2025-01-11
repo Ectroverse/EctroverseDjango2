@@ -1,1 +1,24 @@
 Process ops took: 0.02949357032775879
+Process ops took: 0.028163671493530273 fleets processed 0
+Process ops took: 0.034767866134643555 fleets processed 0
+Process ops took: 0.03591442108154297 fleets processed 0
+Process ops took: 0.036957502365112305 fleets processed 0
+Process ops took: 0.03254532814025879 fleets processed 0
+Process ops took: 0.03557896614074707 fleets processed 0
+Process ops took: 0.0324704647064209 fleets processed 0
+Process ops took: 0.034683942794799805 fleets processed 0
+Process ops took: 0.03307223320007324 fleets processed 0
+Process ops took: 0.03639817237854004 fleets processed 0
+Process ops took: 0.03663158416748047 fleets processed 0
+Process ops took: 0.0323481559753418 fleets processed 0
+Process ops took: 0.03372645378112793 fleets processed 0
+Process ops took: 0.0338742733001709 fleets processed 0
+Process ops took: 0.059893131256103516 fleets processed 1
+Process ops took: 0.6174745559692383 fleets processed 0
+Process ops took: 0.03390073776245117 fleets processed 0
+Process ops took: 0.029252052307128906 fleets processed 0
+Process ops took: 0.03545355796813965 fleets processed 0
+Process ops took: 0.03860139846801758 fleets processed 0
+Process ops took: 0.19073867797851562 fleets processed 0
+Process ops took: 0.18201160430908203 fleets processed 0
+Process ops took: 0.1927506923675537 fleets processed 0

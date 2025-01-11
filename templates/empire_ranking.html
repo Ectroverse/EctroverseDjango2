@@ -20,18 +20,6 @@ background-color: rgb(25,38,51);
 </style>
 
 <table style="width:100%;">
-{% if empartis == round_arti_nr %}	
-{% if round.artetimer == 0 %}
-<b style="color: red" size="14">Round has finished, congratulations {{artis.empire_holding.name_with_id}}! New round registration will begin soon.</b>
-<br>
-<br>
-<br>
-{% else %}
-<b style="color: red" size="14">Artefacts held by {{artis.empire_holding.name_with_id}}. Round will end in {{round.artetimer}} Weeks!</b>
-<br>
-<br>
-{% endif %}
-{% endif %}
 <tr>
 
 <td style="width:2%"><u></u></td>
@@ -72,7 +60,7 @@ background-color: rgb(25,38,51);
 </table>
 
 <br>
-Artefacts found: <a href="/guide/arti"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a><br>
+Artefacts found:&nbsp;{{arte_found}}/{{tot_arte}}&nbsp;&nbsp;&nbsp; <a href="/guide/arti"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a><br>
 {% for arti in artefacts_found %}
 <img src="{{arti.image}}" alt="{{arti.name}}" title="{{arti.name}}" width="16" height="16"></td> 
 {{arti.name}} -  {{ arti.description }}<br>
@@ -92,20 +80,6 @@ background-color: rgb(25,38,51);
 }
 
 </style>
-
-{% if empartis == round_arti_nr %}	
-{% if round.artetimer == 0 %}
-<b style="color: red" size="14">Round has finished, congratulations {{artis.empire_holding.name_with_id}}! New round registration will begin soon.</b>
-<br>
-<br>
-<br>
-{% else %}
-<b style="color: red" size="14">Artefacts held by {{artis.empire_holding.name_with_id}}. Round will end in {{round.artetimer}} Weeks!</b>
-<br>
-<br>
-{% endif %}
-{% endif %}
-
 <table style="width:100%;">
 <tr>
 
@@ -131,7 +105,7 @@ background-color: rgb(25,38,51);
 
 {% for a in all_artis %}
 
-{% if status.id == 1 and a.empire_holding.name_with_id == empire %}
+{% if status.id == 1 and a.empire_holding.name_with_id == empire or a.empire_holding.name_with_id == empire and arte_found == tot_arte %}
 <img src="{{a.image}}" title="{{a.name}}" width="16" height="16">
 
 {% endif %}
@@ -164,7 +138,7 @@ background-color: rgb(25,38,51);
 </table>
 
 <br>
-Artefacts found: <a href="/guide/arti"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a><br>
+Artefacts found: &nbsp;{{arte_found}}/{{tot_arte}}&nbsp;&nbsp;&nbsp;<a href="/guide/arti"><img src="{% static 'about.png' %}" alt="Info" title="Info" width="16px" height="16px"></a><br>
 {% for arti in artefacts_found %}
 <img src="{{arti.image}}" alt="{{arti.name}}" title="{{arti.name}}" width="16" height="16"></td> 
 {{arti.name}} -  {{ arti.description }}<br>

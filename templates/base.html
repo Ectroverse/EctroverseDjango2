@@ -72,9 +72,17 @@ body
 	left: 180px;
 	right: 0px;
 	}
+	
+	.left_box, .right_box {
+		width: 50%;
+		}
+	
 	.show_only_on_mobile{
 		display: none;
 	}
+	.ops_box{padding-left: 15%;}
+	.ops_box2{padding-right: 15%;}
+	label {display: inline;}
 }
 
 @media all and (min-width: 661px) and (max-width: 837px) {
@@ -181,18 +189,13 @@ window.onload = setInterval(function() {
     //document.getElementById("roundstart").innerHTML = "Round Started!";
   //}
 }, 1000);
-
-// prevent form send on refresh
-   if ( window.history.replaceState ) {
-        window.history.replaceState( null, null, window.location.href );
-    }
 </script>
 
 {% if status.galsel == 1 %}
 <script>
 
  function startTime() {
- /* var today = new Date();
+  var today = new Date();
   var m = today.getMinutes();
   var s = today.getSeconds();
   
@@ -201,20 +204,16 @@ window.onload = setInterval(function() {
   s_left = fixTimeDigits(s_left);
   document.getElementById('headerTime1').innerHTML = m_left + ":" + s_left;
   document.getElementById('headerTime2').innerHTML = m_left + ":" + s_left;
-  
-  s_left = 29 - (s % 30);
-  s_left = fixTimeDigits(s_left);
-  document.getElementById('headerTime1').innerHTML = "0:" + s_left;
-  document.getElementById('headerTime2').innerHTML = "0:" + s_left;
   m_left + ":" + s_left;
-  setTimeout(startTime, 100*/
+  setTimeout(startTime, 100);
+  /*
     var today = new Date();
   var s = today.getSeconds();
   s_left = 1 - (s % 2);
   //s_left = fixTimeDigits(s_left);
   document.getElementById('headerTime1').innerHTML = s_left;
   document.getElementById('headerTime2').innerHTML = s_left;
-  var t = setTimeout(startTime, 60);
+  var t = setTimeout(startTime, 60);*/
 
   
 
@@ -251,8 +250,7 @@ function changeslider(newValue,field) {
  function startTime() {
   var today = new Date();
   var s = today.getSeconds();
-  s_left = 14 - (s % 15);
-  //s_left = fixTimeDigits(s_left);
+  s_left = {{round.tick_time}} - 1 - (s % {{round.tick_time}});
   document.getElementById('headerTime1').innerHTML = s_left;
   document.getElementById('headerTime2').innerHTML = s_left;
   var t = setTimeout(startTime, 60);
@@ -393,6 +391,21 @@ onload="startTime();">
 {% endif %}
 	<!-- Main area content -->
 	{% include "box_top.html" with heading=page_title minwidth="300px" textalign="center"  %}
+		{% if round.artetimer == 0 %}
+	<b style="color: green" size="14">Round has finished, congratulations {{round.emphold.name_with_id}}! New round registration will begin soon.</b>
+	<br><br>
+	{% else %}
+	{% if round.artedelay < 60|div:round.tick_time|mul:60|sub:1 %}
+	<b style="color: red" size="14">Artefacts Lost! Timer will reset in {{round.artedelay}} Weeks!</b><br><br>
+	{% else %}
+	{% if round.emphold != None %}
+	<b style="color: red" size="14">Artefacts held by {{round.emphold.name_with_id}}. Round will end in {{round.artetimer}} Weeks!</b>
+	{% if t_left %}<br>{{t_left}} remaining!{% endif %}<br><br>
+	{% endif %}{% endif %}
+	{% endif %}
+	{% if status.galsel == 1 and round.tick_number < 1008 %}
+	<b style="color: green">Peace for {{1008|sub:round.tick_number}} weeks!</b><br><br>
+	{% endif %}
 		{% block content %}
 		{% endblock %}
 	{% include "box_bottom.html" %}
