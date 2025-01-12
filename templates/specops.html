@@ -81,23 +81,8 @@ display: none;
 
 }
 </style>
-
 <script>
 function psychicCheck() {
-	{% if cloak.empire_holding == status.empire %}
-	{% for name, values in cloak_spells.items  %}
-	if (document.getElementById('{{values.4}}').checked) {
-			document.getElementById('spell_{{values.4}}').style.display = 'inline';
-			
-			if (document.getElementById('hidden_values{{ values.4 }}').value == "False" ) {
-				document.getElementById('target_user_psy').style.visibility = 'visible';
-			}
-			else document.getElementById('target_user_psy').style.visibility = 'hidden';
-			
-		}
-		else document.getElementById('spell_{{values.4}}').style.display = 'none';
-	{% endfor %}
-	{% else %}
 	{% for name, values in spells.items  %}
 	if (document.getElementById('{{values.4}}').checked) {
 			document.getElementById('spell_{{values.4}}').style.display = 'inline';
@@ -110,7 +95,6 @@ function psychicCheck() {
 		}
 		else document.getElementById('spell_{{values.4}}').style.display = 'none';
 	{% endfor %}
-	{% endif %}
 		
 }
 function agentsCheck() {
@@ -339,21 +323,12 @@ function ghostsCheck() {
 		{% endif %}
 		{% endif %}
 		{% csrf_token %}
-			{% if cloak.empire_holding == status.empire %}
-			{% for name, values in cloak_spells.items  %}
-			<input class="spaceUnder" type="radio" id="{{ values.4 }}" name="spell" value="{{ name }}" onclick="psychicCheck()">
-			<input class="spaceUnder" type="hidden" id="hidden_values{{ values.4 }}" value="{{ values.3 }}">
-			<label class="remove-all-styles " >{{ name }}</label>
-			<br>
-			{% endfor %}
-			{% else %}
 			{% for name, values in spells.items  %}
 			<input class="spaceUnder" type="radio" id="{{ values.4 }}" name="spell" value="{{ name }}" onclick="psychicCheck()">
 			<input class="spaceUnder" type="hidden" id="hidden_values{{ values.4 }}" value="{{ values.3 }}">
 			<label class="remove-all-styles " >{{ name }}</label>
 			<br>
 			{% endfor %}
-			{% endif %}
 			<div class = "spaceUnder"></div>
 			units to send:
 			<input class="spaceUnder" type="number"  min="0" max="{{main_fleet.wizard}}" name="unit_ammount" size="12" value="{{main_fleet.wizard}}" />
@@ -365,26 +340,6 @@ function ghostsCheck() {
 		</form> 
 	</div>
 	<div id="dvtext" class="ops_box2">
-			{% if cloak.empire_holding == status.empire %}
-			{% for name, values in cloak_spells.items  %}
-				<div id="spell_{{values.4}}" class="hidden" > 
-				Spell name: {{name}}<br>
-				Technology required: {{values.0}}<br>
-				{% if values.7 == -1 %}
-				<span style="color:red">Technological penalty too high! Spell unavailible!</span><br>
-				{% elif values.7 > 0 %}
-				<span style="color:red">Technological penalty: {{values.7}}</span><br>
-				{% endif %}
-				Base psychics readiness cost: {{values.1}}<br>
-				{%if values.6 > 0 %}
-				<span style="color:green">Current cost: {{values.6}}</span><br>
-				{% endif %}
-				Difficulty: {{values.2}}<br>
-				Self-spell: {{values.3}}<br>
-				Description: {{values.5}}
-				</div>
-			{% endfor %}
-			{% else %}
 			{% for name, values in spells.items  %}
 				<div id="spell_{{values.4}}" class="hidden" > 
 				Spell name: {{name}}<br>
@@ -403,7 +358,6 @@ function ghostsCheck() {
 				Description: {{values.5}}
 				</div>
 			{% endfor %}
-			{% endif %}
 	</div>
 	
 	<div style="width:100%; float:left;">

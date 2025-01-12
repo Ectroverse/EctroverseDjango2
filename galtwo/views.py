@@ -27,6 +27,7 @@ from .battle import *
 from app.views import NewsFeed as FeedNews
 from app.views import Portal
 from django.views.decorators.clickjacking import xframe_options_exempt
+from app.models import Ops
 
 import json
 import numpy as np
@@ -4261,126 +4262,84 @@ def specops(request, *args):
         if planet_to_template_specop.owner is not None:
             user_to_template_specop = (UserStatus.objects.get(id=planet_to_template_specop.owner.id))
 
-    ops = {}
-    for o in agentop_specs:
-        if o in race_ops:
-            specs = [None] * 8
-            for j in range(len(agentop_specs[o])):
-                specs[j] = agentop_specs[o][j]
-            if user_to_template_specop:
-                specs[6] = specopReadiness(agentop_specs[o], "Op", status, user_to_template_specop)
-            else:
-                specs[6] = None
-            arte = Artefacts.objects.get(name="Advanced Robotics")
-            if arte.empire_holding == status.empire:
-                specs[7] = get_op_penalty(status.research_percent_operations, (agentop_specs[o][0]/2))
-            else:
-                specs[7] = get_op_penalty(status.research_percent_operations, agentop_specs[o][0])
-            ops[o] = specs
-
-    spells = {}
+    # artis
+    robo = Artefacts.objects.get(name="Advanced Robotics")
     cloak = Artefacts.objects.get(name="Magus Cloak")
     alch = Artefacts.objects.get(name="Alchemist")
-    
-    for s in psychicop_specs:
-        if s == "Alchemist" and alch.empire_holding == status.empire:
-            specs = [None] * 8
-            for j in range(len(psychicop_specs[s])):
-                specs[j] = psychicop_specs[s][j]
-                if cloak.empire_holding == status.empire and j == 1:
-                    if psychicop_specs[s][3] == True:
-                        c_cost = int(psychicop_specs[s][1] * (1-(effect/100)))
-                        specs[1] = c_cost
-                        
-            if user_to_template_specop:
-                specs[6] = specopReadiness(psychicop_specs[s], "Spell", status, user_to_template_specop)
-            else:
-                specs[6] = None
-            arte = Artefacts.objects.get(name="Advanced Robotics")
-            if arte.empire_holding == status.empire:
-                specs[7] = get_op_penalty(status.research_percent_culture, (psychicop_specs[s][0]/2))
-            else:
-                specs[7] = get_op_penalty(status.research_percent_culture, psychicop_specs[s][0])
-            spells[s] = specs
-        else:
-            if s in race_spells and s != "Alchemist":
-                specs = [None] * 8
-                for j in range(len(psychicop_specs[s])):
-                    specs[j] = psychicop_specs[s][j]
-                    if cloak.empire_holding == status.empire and j == 1:
-                        if psychicop_specs[s][3] == True:
-                            c_cost = int(psychicop_specs[s][1] * (1-(effect/100)))
-                            specs[1] = c_cost
-                            
-                if user_to_template_specop:
-                    specs[6] = specopReadiness(psychicop_specs[s], "Spell", status, user_to_template_specop)
-                else:
-                    specs[6] = None
-                arte = Artefacts.objects.get(name="Advanced Robotics")
-                if arte.empire_holding == status.empire:
-                    specs[7] = get_op_penalty(status.research_percent_culture, (psychicop_specs[s][0]/2))
-                else:
-                    specs[7] = get_op_penalty(status.research_percent_culture, psychicop_specs[s][0])
-                spells[s] = specs
-            
-    cloak_spells = {}
-    self_spells = []
-    if cloak.empire_holding != None:
-        for s in psychicop_specs:
-            if cloak.empire_holding.id == status.empire.id:
-                if s not in race_spells and psychicop_specs[s][3] == True and s != "Alchemist":
-                    self_spells.append(s)
-                    
-        for s in self_spells:
-            cspecs = [None] * 8
-            for j in range(len(psychicop_specs[s])):
-                cspecs[j] = psychicop_specs[s][j]
-                if cloak.empire_holding == status.empire and j == 1:
-                    if psychicop_specs[s][3] == True:
-                        c_cost = int(psychicop_specs[s][1] * (1-(effect/100)))
-                        cspecs[1] = c_cost
-                        
-            if user_to_template_specop:
-                cspecs[6] = specopReadiness(psychicop_specs[s], "Spell", status, user_to_template_specop)
-            else:
-                cspecs[6] = None
-            arte = Artefacts.objects.get(name="Advanced Robotics")
-            if arte.empire_holding == status.empire:
-                cspecs[7] = get_op_penalty(status.research_percent_culture, (psychicop_specs[s][0]/2))
-            else:
-                cspecs[7] = get_op_penalty(status.research_percent_culture, psychicop_specs[s][0])
-            cloak_spells[s] = cspecs
-
-        cloak_spells = {**spells, **cloak_spells}
-
     maryc = Artefacts.objects.get(name="Mary Celeste")
+    
+    ops = {}
+    for o in Ops.objects.filter(specop_type="O"):
+        if o.name in race_ops:
+            if user_to_template_specop:
+                fr = specopReadiness(o.name, "Op", status, user_to_template_specop)
+            else:
+                fr = None
+            if robo.empire_holding == status.empire:
+                tech = get_op_penalty(status.research_percent_operations, (o.tech/2))
+            else:
+                tech = get_op_penalty(status.research_percent_operations, o.tech)
+            ops[o.name] = [o.tech,o.readiness,o.difficulty,o.stealth,o.ident,o.description,fr,tech]
+
+    spells = {}    
+    for s in Ops.objects.filter(specop_type="S"):
+        if s.name == "Alchemist" and alch.empire_holding == status.empire:
+            if cloak.empire_holding == status.empire:
+                b_cost = int(s.readiness * (1-(cloak.effect1/100)))
+            else:
+                b_cost = s.readiness
+            spells[s.name] = [s.tech,b_cost,s.difficulty,s.selfsp,s.ident,s.description,None,s.tech]
+        elif s.name != "Alchemist":
+            if s.name in race_spells:
+                if cloak.empire_holding == status.empire and s.selfsp == True:
+                    b_cost = int(s.readiness * (1-(cloak.effect1/100)))
+                else:
+                    b_cost = s.readiness  
+                if s.name == "Grow Planet's Size":
+                    b_cost = int(b_cost*1.5)
+                if user_to_template_specop:
+                    fr = specopReadiness(s.name, "Spell", status, user_to_template_specop)
+                else:
+                    fr = None
+                if robo.empire_holding == status.empire:
+                    tech = get_op_penalty(status.research_percent_culture, (s.tech/2))
+                else:
+                    tech = get_op_penalty(status.research_percent_culture, s.tech)
+                spells[s.name] = [s.tech,b_cost,s.difficulty,s.selfsp,s.ident,s.description,fr,tech]
+            elif cloak.empire_holding == status.empire and s.selfsp == True:
+                b_cost = int(s.readiness * (1-(cloak.effect1/100)))           
+                if user_to_template_specop:
+                    fr = specopReadiness(s.name, "Spell", status, user_to_template_specop)
+                else:
+                    fr = None
+                if robo.empire_holding == status.empire:
+                    tech = get_op_penalty(status.research_percent_culture, (s.tech/2))
+                else:
+                    tech = get_op_penalty(status.research_percent_culture, s.tech)
+                spells[s.name] = [s.tech,b_cost,s.difficulty,s.selfsp,s.ident,s.description,fr,tech]
+
     if maryc.empire_holding == status.empire:
         inca_ops = inca_specs
     else:
         inca_ops = race_inca
     inca = {}
-    for g in inca_specs:
-        if g in inca_ops:
-            if g == "Sense Artefact" and Artefacts.objects.filter(on_planet__isnull=False).count() == 0:
+    for g in Ops.objects.filter(specop_type="G"):
+        if g.name in inca_ops:
+            if g.name == "Sense Artefact" and Artefacts.objects.filter(on_planet__isnull=False).count() == 0:
                 continue
             else:
-                specs = [None] * 8
-                for j in range(len(inca_specs[g])):
-                    specs[j] = inca_specs[g][j]
                 if user_to_template_specop:
-                    ig_incs = ["Survey System", "Sense Artefact", "Vortex Portal"]
-                    if g in ig_incs:
-                        specs[6] = inca_specs[g][1]
-                    else:
-                        specs[6] = specopReadiness(inca_specs[g], "Inca", status, user_to_template_specop)
+                    fr = specopReadiness(g.name, "Inca", status, user_to_template_specop)
                 else:
-                    specs[6] = None
-                arte = Artefacts.objects.get(name="Advanced Robotics")
-                if arte.empire_holding == status.empire:
-                    specs[7] = get_op_penalty(status.research_percent_culture, (inca_specs[g][0]/2))
+                    fr = None
+                b_cost = g.readiness
+                if g.name == "Sense Artefact":
+                    b_cost = int(b_cost*2)
+                if robo.empire_holding == status.empire:
+                    tech = get_op_penalty(status.research_percent_operations, (g.tech/2))
                 else:
-                    specs[7] = get_op_penalty(status.research_percent_culture, inca_specs[g][0])
-                inca[g] = specs
+                    tech = get_op_penalty(status.research_percent_operations, g.tech)
+                inca[g.name] = [g.tech,b_cost,g.difficulty,g.stealth,g.ident,g.description,fr,tech]
     
     msg = ""
     main_fleet = Fleet.objects.get(owner=status.user.id, main_fleet=True)
@@ -4513,8 +4472,6 @@ def specops(request, *args):
                "bare": bare,
                "planet_to_template_specop": planet_to_template_specop,
                "user_to_template_specop": template_name,
-               "cloak_spells": cloak_spells,
-               "cloak": cloak,
                }
     
     return render(request, "specops.html", context)
