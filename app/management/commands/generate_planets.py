@@ -52,13 +52,13 @@ def fill_system(x,y):
             b = np.random.randint(1,3)
             if b == 1:
                 if bonus == ['SL']:
-                    bonus_sl = np.random.randint(10,201)
+                    bonus_sl = np.random.randint(10,101)
                 elif bonus == ['MN']:
-                    bonus_mn = np.random.randint(10,201)
+                    bonus_mn = np.random.randint(10,101)
                 elif bonus == ['CR']:
-                    bonus_cr = np.random.randint(10,201)
+                    bonus_cr = np.random.randint(10,101)
                 elif bonus == ['EC']:
-                    bonus_ec = np.random.randint(10,201)
+                    bonus_ec = np.random.randint(10,101)
             planet_buffer_fill.append(Planet(home_planet=False,
                                              x=x,
                                              y=y,
@@ -80,7 +80,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
     def handle(self, *args, **options):
         game_round = RoundStatus.objects.filter().first()
         # record data for hall of fame
-        '''for status in UserStatus.objects.all():
+        for status in UserStatus.objects.all():
             if status.empire is not None:
                 artis = Artefacts.objects.filter(empire_holding=status.empire).count()
                 HallOfFame.objects.create(round=game_round.round_number,
@@ -96,7 +96,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                 if artis == t_artis:
                     tags *= 3
                 status.tag_points += tags
-                status.save()'''
+                status.save()
 
         start_t = time.time()
         Planet.objects.all().delete() # remove all planets
@@ -327,24 +327,24 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             
             status.save()
 
-        #settings()
-        #artifacts()
-        #game_round.round_start = datetime(2024, 12, 30, 18, 00, 00)
-        #game_round.save()
+        settings()
+        artifacts()
+        game_round.round_start = datetime(2024, 12, 30, 18, 00, 00)
+        game_round.save()
         msg = "Regular Round has been reset, starting 30th December at 6PM UTC, ending 30th January at 6PM UTC. No artefacts, most planets wins."
-        #NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
+        NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
         dmsg = "<@&1201666532753547315> " + str(msg)
         webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
-        #webhook.send(dmsg)
+        webhook.send(dmsg)
         webhk = Webhook.from_url("https://discord.com/api/webhooks/1227218151629000744/MeckPYnnT6hoiznfBz5oxm6pjWdgCXxVLOmLf7kFa78cYpimyDNK1BxgBdQOyZgD9qgu", adapter=RequestsWebhookAdapter())
-        #webhk.send(dmsg)
+        webhk.send(dmsg)
         subject = "A new round is starting soon!"
         message = "Hello! \nCan you conquer the Galaxy? \n" + str(msg) + "\n\n https://ectroverse.org"
         recievers = []
         for user in User.objects.all():
             recievers.append(user.email)
 
-        #send_mail(subject, message, "admin@ectroverse.co.uk", recievers)
+        send_mail(subject, message, "admin@ectroverse.co.uk", recievers)
 
         print("Generating planets and resetting users took " + str(time.time() - start_t) + "seconds")
 

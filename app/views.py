@@ -30,7 +30,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from app.round_functions import arti_list
 
 from django.contrib.sites.shortcuts import get_current_site
-from django.utils.encoding import force_bytes, force_text
+from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.template.loader import render_to_string
 from .tokens import account_activation_token
@@ -219,7 +219,7 @@ def register(response):
 
 def activate(request, uidb64, token):
     try:
-        uid = force_text(urlsafe_base64_decode(uidb64))
+        uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except(TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
@@ -2540,10 +2540,10 @@ def build(request, planet_id):
                 tech = 140
             
         if building.building_index == 9:
-            cost_list, penalty = building.calc_costs(1, status.research_percent_portals, tech,
+            cost_list, penalty = building.calc_cost(1, status.research_percent_portals, tech,
                                                 status)
         else:
-            cost_list, penalty = building.calc_costs(1, status.research_percent_construction, tech,
+            cost_list, penalty = building.calc_cost(1, status.research_percent_construction, tech,
                                                 status)
         # Add resource names to the cost_list, for the sake of the for loop in the view
         if cost_list:  # Remember that cost_list will be None if the tech is too low
@@ -2809,10 +2809,10 @@ def mass_build(request):
                 tech = 140
             
         if building.building_index == 9:
-            cost_list, penalty = building.calc_costs(1, status.research_percent_portals, tech,
+            cost_list, penalty = building.calc_cost(1, status.research_percent_portals, tech,
                                                 status)
         else:
-            cost_list, penalty = building.calc_costs(1, status.research_percent_construction, tech,
+            cost_list, penalty = building.calc_cost(1, status.research_percent_construction, tech,
                                                 status)
         # Add resource names to the cost_list, for the sake of the for loop in the view
         if cost_list:  # Remember that cost_list will be None if the tech is too low
@@ -4439,7 +4439,6 @@ def research(request):
     race_info = race_info_list[status.get_race_display()]
     calcs = {"calc": 'None', "milpoints":'', "rpmil": '', "conpoints":'', "rpcon":'', "techpoints":'', "rptech":'', "nrgpoints":'', "rpnrg":'', "poppoints":'', "rppop":'', "culpoints":'', "rpcul":'', "opspoints":'', "rpops":'', "portpoints":'', "rpport":''}
     wks = 0
-    tree = Artefacts.objects.get(name="Resource Tree")
     print(request.POST)
     if request.method == 'POST':
         if 'fund_form' in request.POST:
@@ -4509,6 +4508,8 @@ def research(request):
             mil = (rc * (status.alloc_research_military / 100)) * race_info["research_bonus_military"] 
             if status.race == "FH":
                 mil += (status.population / 6000) * status.alloc_research_military / 100
+            if status.race == "JK":
+                mil += (status.population / 10000) * status.alloc_research_military / 100
             pwmil = mil
             mil *= wks
             mil += status.research_points_military 
@@ -4518,6 +4519,8 @@ def research(request):
             con = (rc * (status.alloc_research_construction / 100)) * race_info["research_bonus_construction"] 
             if status.race == "FH":
                 con += (status.population / 6000) * status.alloc_research_construction / 100
+            if status.race == "JK":
+                con += (status.population / 10000) * status.alloc_research_construction / 100
             pwcon = con 
             con *= wks
             con += status.research_points_construction 
@@ -4527,6 +4530,8 @@ def research(request):
             tech = (rc * (status.alloc_research_tech / 100)) * race_info["research_bonus_tech"] 
             if status.race == "FH":
                 tech += (status.population / 6000) * status.alloc_research_tech / 100
+            if status.race == "JK":
+                tech += (status.population / 10000) * status.alloc_research_tech / 100
             pwtech = tech
             tech *= wks
             tech += status.research_points_tech
@@ -4536,6 +4541,8 @@ def research(request):
             nrg = (rc * (status.alloc_research_energy / 100)) * race_info["research_bonus_energy"] 
             if status.race == "FH":
                 nrg += (status.population / 6000) * status.alloc_research_energy / 100
+            if status.race == "JK":
+                nrg += (status.population / 10000) * status.alloc_research_energy / 100
             pwnrg = nrg
             nrg *= wks
             nrg += status.research_points_energy
@@ -4545,6 +4552,8 @@ def research(request):
             pop = (rc * (status.alloc_research_population / 100)) * race_info["research_bonus_population"] 
             if status.race == "FH":
                 pop += (status.population / 6000) * status.alloc_research_population / 100
+            if status.race == "JK":
+                pop += (status.population / 10000) * status.alloc_research_population / 100
             rabbit = Artefacts.objects.get(name="Rabbit Theorum")
             if rabbit.empire_holding == status.empire:
                 pop *= 1 + (rabbit.effect1 /100)
@@ -4557,6 +4566,8 @@ def research(request):
             cul = (rc * (status.alloc_research_culture / 100)) * race_info["research_bonus_culture"] 
             if status.race == "FH":
                 cul += (status.population / 6000) * status.alloc_research_culture / 100
+            if status.race == "JK":
+                cul += (status.population / 10000) * status.alloc_research_culture / 100
             pwcul = cul 
             cul *= wks
             cul += status.research_points_culture
@@ -4566,6 +4577,8 @@ def research(request):
             ops = (rc * (status.alloc_research_operations / 100)) * race_info["research_bonus_operations"] 
             if status.race == "FH":
                 ops += (status.population / 6000) * status.alloc_research_operations / 100
+            if status.race == "JK":
+                ops += (status.population / 10000) * status.alloc_research_operations / 100
             pwops = ops
             ops *= wks
             ops += status.research_points_operations
@@ -4575,6 +4588,8 @@ def research(request):
             port = (rc * (status.alloc_research_portals / 100)) * race_info["research_bonus_portals"] 
             if status.race == "FH":
                 port += (status.population / 6000) * status.alloc_research_portals / 100
+            if status.race == "JK":
+                port += (status.population / 10000) * status.alloc_research_portals / 100
             quantum = Artefacts.objects.get(name="Playboy Quantum")
             if quantum.empire_holding == status.empire:
                 port *= 1 + (quantum.effect1/100)
@@ -4586,7 +4601,7 @@ def research(request):
                 port += (fpoints * (status.alloc_research_portals/ 100) * race_info["research_bonus_portals"] )
             
             netw = status.networth
-            netw += (rc+fpoints) * 0.001
+            netw += (rc+fpoints) * 0.002
             
             rpmil = int(race_info.get("research_max_military") * (1.0-np.exp(mil / (-10.0 * netw))))
             if status.race == "DW":
@@ -4611,7 +4626,6 @@ def research(request):
             rpops= int(race_info.get("research_max_operations") * (1.0-np.exp(ops / (-10.0 * netw))))
             if rpops - status.research_percent_operations > wks:
                 rpops = status.research_percent_operations + wks
-            rpport = int(race_info.get("research_max_portals") * (1.0-np.exp(port / (-10.0 * netw))))
             if quantum.empire_holding == status.empire:
                 rpport = int((race_info.get("research_max_portals") + quantum.effect2) * (1.0-np.exp(port / (-10.0 * netw))))
             else:
@@ -4650,7 +4664,6 @@ def research(request):
                "page_title": "Research",
                "calcs": calcs,
                "wks": wks,
-               "tree": tree,
                "message": message}
     return render(request, "research.html", context)
 
@@ -4659,9 +4672,9 @@ def research(request):
 @user_passes_test(race_check, login_url="/choose_empire_race")
 def specops(request, *args):
     status = get_object_or_404(UserStatus, user=request.user)
-    race_ops = race_info_list[status.get_race_display()]["op_list"]
-    race_spells = race_info_list[status.get_race_display()]["spell_list"]
-    race_inca = race_info_list[status.get_race_display()]["incantation_list"]
+    race_ops = race_display_list[status.get_race_display()]["op_list"]
+    race_spells = race_display_list[status.get_race_display()]["spell_list"]
+    race_inca = race_display_list[status.get_race_display()]["incantation_list"]
     
     user_to_template_specop = None
     planet_to_template_specop = None
@@ -4768,9 +4781,11 @@ def specops(request, *args):
                     else:
                         tech = get_op_penalty(status.research_percent_culture, s.tech)
                     spells[s.name] = [s.tech,b_cost,s.difficulty,s.selfsp,s.ident,s.description,fr,tech]
-
+    
+    inca_ops = {}
     if maryc.empire_holding == status.empire:
-        inca_ops = inca_specs
+        for g in Ops.objects.filter(specop_type="G"):
+            inca_ops[g.name] = [g.name]
     else:
         inca_ops = race_inca
     inca = {}
@@ -4796,12 +4811,13 @@ def specops(request, *args):
 
     if request.method == 'POST':
         if 'spell' in request.POST and 'unit_ammount' in request.POST:
+            sp = Ops.objects.get(name=request.POST['spell'])
             if status.psychic_readiness < 0:
                 msg = "You don't have enough psychic readiness to perform this operation!"
             elif int(request.POST['unit_ammount']) > main_fleet.wizard:
                 msg = "You don't have that many psychics!"
             else:
-                if psychicop_specs[request.POST['spell']][3] is False and request.POST['user_id2'] == "":
+                if sp.selfsp is False and request.POST['user_id2'] == "":
                     msg = "You must specify a target player for this spell!"
                 else:
                     if psychicop_specs[request.POST['spell']][3] is False:
@@ -4812,18 +4828,19 @@ def specops(request, *args):
                     if faction is None and psychicop_specs[request.POST['spell']][3] is False:
                         msg = err_msg
                     else:
-                        request.session['error'] = perform_spell(request.POST['spell'], int(request.POST['unit_ammount']), status, faction)
-                        if psychicop_specs[request.POST['spell']][3] is False:
+                        request.session['error'] = perform_spell(sp.name, int(request.POST['unit_ammount']), status, faction)
+                        if sp.selfsp is False:
                             request.session['specop_u_id'] = faction.id    
                         return redirect(request.META['HTTP_REFERER'])
 
         print(request.POST)
         if 'operation' in request.POST and 'unit_ammount' in request.POST:
+            op = Ops.objects.get(name=request.POST['operation'])
             if int(request.POST['unit_ammount']) > main_fleet.agent:
                 msg = "You don't have that many agents!"
             elif request.POST['X'] == "" or request.POST['Y'] == "" or request.POST['I'] == "":
                 msg = "You must specify a planet!"
-            elif get_op_penalty(status.research_percent_operations, agentop_specs[request.POST['operation']][0]) == -1:
+            elif get_op_penalty(status.research_percent_operations, op.tech) == -1:
                 msg = "You don't have enough operations research to perform this covert operation!"
             else:
                 planet = None
@@ -4854,11 +4871,12 @@ def specops(request, *args):
                 msg = "Agents returned"
         print(request.POST)        
         if 'incantation' in request.POST and 'unit_ammount' in request.POST:
+            op = Ops.objects.get(name=request.POST['incantation'])
             if int(request.POST['unit_ammount']) > main_fleet.ghost:
                 msg = "You don't have that many ghost ships!"
-            elif request.POST['incantation'] != "Call to Arms" and request.POST['X'] == "" or request.POST['incantation'] != "Call to Arms" and request.POST['Y'] == "" or request.POST['incantation'] != "Call to Arms" and request.POST['I'] == "":
+            elif request.POST['X'] == "" or request.POST['Y'] == "" and request.POST['I'] == "":
                 msg = "You must specify a planet!"
-            elif get_op_penalty(status.research_percent_culture, inca_specs[request.POST['incantation']][0]) == -1:
+            elif get_op_penalty(status.research_percent_culture, op.tech) == -1:
                 msg = "You don't have enough culture research to perform this incantation!"
             else:
                 planet = None
@@ -5911,3 +5929,6 @@ def gunits(request):
 
 def gupkeep(request):
     return render(request, "guide/upkeep.htm")
+    
+def discord(request):
+    return render(request, "discord.html")

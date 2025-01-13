@@ -390,9 +390,10 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     if fleet_time < 1:
         if ghost > 0:
             msg = perform_incantation(ghost_fleet)
-            main_fleet.ghost += ghost_fleet.ghost
-            main_fleet.save()
-            ghost_fleet.delete()
+            if specop != "Call to Arms" and planet.owner.id != status.id:
+                main_fleet.ghost += ghost_fleet.ghost
+                main_fleet.save()
+                ghost_fleet.delete()
 
     return msg
 
@@ -432,10 +433,10 @@ def build_on_planet(status, planet, building_list_dict):
                         tech = 140
                 
                 if building.building_index == 9:
-                    total_resource_cost, penalty = building.calc_costs(num, status.research_percent_portals, tech,
+                    total_resource_cost, penalty = building.calc_cost(num, status.research_percent_portals, tech,
                                                         status)
                 else:
-                    total_resource_cost, penalty = building.calc_costs(num, status.research_percent_construction, tech,
+                    total_resource_cost, penalty = building.calc_cost(num, status.research_percent_construction, tech,
                                                 status)
 
                 if not total_resource_cost:

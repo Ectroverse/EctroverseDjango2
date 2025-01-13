@@ -64,7 +64,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
                     main_fleet.ghost += ghost_fleet.ghost
                     main_fleet.save()
                     ghost_fleet.delete()
-                else:
+                elif ghost_fleet.specop != "Call to Arms" and ghost_fleet.target_planet.owner.id != ghost_fleet.owner.id:
                     portals = Planets.objects.filter(owner=ghost_fleet.owner.id, portal=True)
                     portal = find_nearest_portal(ghost_fleet.x, ghost_fleet.y, portals, status)
                     generate_fleet_order(ghost_fleet, portal.x, portal.y, speed, 5)

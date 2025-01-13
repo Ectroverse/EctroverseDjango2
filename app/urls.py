@@ -5,7 +5,6 @@ from django.conf import settings
 from django.conf.urls.static import static
 from galtwo.views import choose_empire
 from galtwo.views import register as tworegister
-from django.conf.urls import url
 
 urlpatterns = [
     path('', views.index, name='index'),  # root page
@@ -131,7 +130,9 @@ urlpatterns = [
     path('guide/upkeep', views.gupkeep, name='gupkeep'),
     path('kbguide', views.kbguide, name='kbguide'),
     
-    url(r'^activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,32})/$',
+    path('discord', views.discord, name='discord'),
+    
+    re_path(r'^activate/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,32})/$',
         views.activate, name='activate'),
     path('confirm', views.confirm, name='confirm'),
 ]

@@ -362,18 +362,15 @@ onload="startTime();">
                         <img src="/static/files_017" height="15"><br>						
                         <a href="https://discord.com/invite/U5FHwaEeCN" target="_blank">Discord</a><br>
                         <a href="/guide">Guide</a><br></font></b>
-                        
+                        <img src="/static/files_017" height="15">
             {% if status.galsel == 1 %}
-					<img src="/static/files_017" height="15">
 					<form action="/search" method="POST">{% csrf_token %}
-					<input type="text" name="u_inp" size="10"> <br>
-					<input type="submit" value="Search"></form>
 			{% elif status.galsel == 2 %}
-					<img src="/static/files_017" height="15">
 					<form action="/galtwo/search" method="POST">{% csrf_token %}
+			{% endif %}	
 					<input type="text" name="u_inp" size="10"> <br>
 					<input type="submit" value="Search"></form>
-			{% endif %}		
+				
 			
         	</div>
 	</div>
@@ -418,6 +415,5 @@ YOU SHOULD NEVER BE ABLE TO GET TO THIS PAGE!! THE VIEW REQUIRES AUTHENTICATION!
 <br><br><br>
 {% include "footer.html" %}
 </div>
-
 </body>
 </html>

@@ -4226,9 +4226,9 @@ def research(request):
 @user_passes_test(race_check, login_url="/choose_empire")
 def specops(request, *args):
     status = get_object_or_404(UserStatus, user=request.user)
-    race_ops = race_info_list[status.get_race_display()]["op_list"]
-    race_spells = race_info_list[status.get_race_display()]["spell_list"]
-    race_inca = race_info_list[status.get_race_display()]["incantation_list"]
+    race_ops = race_display_list[status.get_race_display()]["op_list"]
+    race_spells = race_display_list[status.get_race_display()]["spell_list"]
+    race_inca = race_display_list[status.get_race_display()]["incantation_list"]
 
     user_to_template_specop = None
     planet_to_template_specop = None
@@ -4346,12 +4346,13 @@ def specops(request, *args):
 
     if request.method == 'POST':
         if 'spell' in request.POST and 'unit_ammount' in request.POST:
+            sp = Ops.objects.get(name=request.POST['spell'])
             if status.psychic_readiness < 0:
                 msg = "You don't have enough psychic readiness to perform this operation!"
             elif int(request.POST['unit_ammount']) > main_fleet.wizard:
                 msg = "You don't have that many psychics!"
             else:
-                if psychicop_specs[request.POST['spell']][3] is False and request.POST['user_id2'] == "":
+                if sp.selfsp is False and request.POST['user_id2'] == "":
                     msg = "You must specify a target player for this spell!"
                 else:
                     if psychicop_specs[request.POST['spell']][3] is False:
@@ -4362,18 +4363,19 @@ def specops(request, *args):
                     if faction is None and psychicop_specs[request.POST['spell']][3] is False:
                         msg = err_msg
                     else:
-                        request.session['error'] = perform_spell(request.POST['spell'], int(request.POST['unit_ammount']), status, faction)
-                        if psychicop_specs[request.POST['spell']][3] is False:    
-                            request.session['specop_u_id'] = faction.id
+                        request.session['error'] = perform_spell(sp.name, int(request.POST['unit_ammount']), status, faction)
+                        if sp.selfsp is False:
+                            request.session['specop_u_id'] = faction.id    
                         return redirect(request.META['HTTP_REFERER'])
 
         print(request.POST)
         if 'operation' in request.POST and 'unit_ammount' in request.POST:
+            op = Ops.objects.get(name=request.POST['operation'])
             if int(request.POST['unit_ammount']) > main_fleet.agent:
                 msg = "You don't have that many agents!"
             elif request.POST['X'] == "" or request.POST['Y'] == "" or request.POST['I'] == "":
                 msg = "You must specify a planet!"
-            elif get_op_penalty(status.research_percent_operations, agentop_specs[request.POST['operation']][0]) == -1:
+            elif get_op_penalty(status.research_percent_operations, op.tech) == -1:
                 msg = "You don't have enough operations research to perform this covert operation!"
             else:
                 planet = None
@@ -4403,11 +4405,12 @@ def specops(request, *args):
                 msg = "Agents returned"
         print(request.POST)        
         if 'incantation' in request.POST and 'unit_ammount' in request.POST:
+            op = Ops.objects.get(name=request.POST['incantation'])
             if int(request.POST['unit_ammount']) > main_fleet.ghost:
                 msg = "You don't have that many ghost ships!"
-            elif request.POST['incantation'] != "Call to Arms" and request.POST['X'] == "" or request.POST['incantation'] != "Call to Arms" and request.POST['Y'] == "" or request.POST['incantation'] != "Call to Arms" and request.POST['I'] == "":
+            elif request.POST['X'] == "" or request.POST['Y'] == "" and request.POST['I'] == "":
                 msg = "You must specify a planet!"
-            elif get_op_penalty(status.research_percent_culture, inca_specs[request.POST['incantation']][0]) == -1:
+            elif get_op_penalty(status.research_percent_culture, op.tech) == -1:
                 msg = "You don't have enough culture research to perform this incantation!"
             else:
                 planet = None

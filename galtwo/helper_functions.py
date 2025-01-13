@@ -390,9 +390,10 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     if fleet_time < 1:
         if ghost > 0:
             msg = perform_incantation(ghost_fleet)
-            main_fleet.ghost += ghost_fleet.ghost
-            main_fleet.save()
-            ghost_fleet.delete()
+            if specop != "Call to Arms" and planet.owner.id != status.id:
+                main_fleet.ghost += ghost_fleet.ghost
+                main_fleet.save()
+                ghost_fleet.delete()
     return msg
 
 def build_on_planet(status, planet, building_list_dict):
@@ -546,7 +547,6 @@ def terraformer():
     arte = Artefacts.objects.get(name="Terraformer")    
     choosebonus = random.randint(1,5)
     bonus = random.randint(10,100)
-<<<<<<< HEAD
     if arte.empire_holding != None:
         for player in UserStatus.objects.all():
             if player.empire == arte.empire_holding:
@@ -683,7 +683,6 @@ def dutchman():
         ticks = random.randint(tick_hour*3, tick_hour*6)
         arte.ticks_left = ticks
         arte.save()
-=======
     for player in UserStatus.objects.filter(empire=arte.empire_holding):
         planet = []
         plcount = 0
@@ -860,4 +859,3 @@ def actobelisk():
         e.psychic_readiness_max = 115
         e.agent_readiness_max = 115
         e.save()
->>>>>>> 70b5168199b17da14ec1956ae32f86decf0c937a

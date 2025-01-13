@@ -380,6 +380,7 @@ class Fleet(models.Model):
     # got sick of having to search for it everytime actually, so decided to add it
     target_planet = models.ForeignKey(Planet, related_name="target", on_delete=models.SET_DEFAULT, blank=True,
                                       null=True, default=None)
+    random = models.IntegerField(null=True, blank=True, default=None)
 
 class UnitConstruction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
