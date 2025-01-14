@@ -8,6 +8,7 @@ import random
 import secrets
 import math
 from app.calculations import *
+from django.db import connection
 
 def specopReadiness(specop, type, user1, *args):
     user2 = None
@@ -498,6 +499,10 @@ def perform_operation(agent_fleet):
 
 
         if operation == "Observe Planet":
+            print("call specops("+str(agent_fleet.id)+");")
+            with connection.cursor() as cursor:
+                cursor.execute("call specops("+str(agent_fleet.id)+");")
+                
             if success < 0.4:
                 news_message += "No information was gathered about this planet!"
             if success >= 0.4:
@@ -540,13 +545,16 @@ def perform_operation(agent_fleet):
             if target_planet.artefact is not None:
             	if success >= 1.0:
                     news_message += "\nArtefact: Present, the " + target_planet.artefact.name
-            scouting = Scouting.objects.filter(empire=user1.empire, planet=target_planet).first()
-            if scouting is None:
-                Scouting.objects.create(user=user, planet=target_planet, empire=user1.empire, scout=success)
-            else:
-                if scouting.scout < success:
-                    scouting.scout = success
-                    scouting.save()
+
+
+
+            #scouting = Scouting.objects.filter(empire=user1.empire, planet=target_planet).first()
+            #if scouting is None:
+            #    Scouting.objects.create(user=user, planet=target_planet, empire=user1.empire, scout=success)
+            #else:
+            #   if scouting.scout < success:
+            #        scouting.scout = success
+            #        scouting.save()
 
         if operation == "Spy Target":
             if success < 0.4:
@@ -1025,7 +1033,7 @@ def perform_incantation(ghost_fleet):
         n_check1 = ["Survey System", "Sense Artefact", "Vortex Portal", "Planetary Shielding"] #no defense
         n_check2 = ["Call to Arms"] #defense if not self op
 
-        if target_planet.owner is not None and incantation not in n_check1 and not (incantation in n_check2 and target_planet.owner == user1.user):
+        if target_planet.owner is not None and incantation not in n_check1 and not (incantation in n_check2 and target_planet.owner == user1.id):
             user2 = UserStatus.objects.get(id=target_planet.owner.id)
             empire2 = user2.empire
             fleet2 = Fleet.objects.get(owner=user2.id, main_fleet=True)
@@ -1035,9 +1043,6 @@ def perform_incantation(ghost_fleet):
                       (1.0 + 0.01 * user2.research_percent_culture)) / 7
             defense2 = ghosts3 * race_info_list[user2.get_race_display()].get("ghost_ships_coeff", 1.0) * \
                       (1.0 + 0.01 * user2.research_percent_culture)
-
-        else:
-            user2 = user1
 
         if incantation in n_check1 and incantation != "Vortex Portal" and incantation != "Planetary Shielding":
             defense = user1.networth / ghost
@@ -1345,9 +1350,6 @@ def perform_incantation(ghost_fleet):
                 m_fleet = Fleet.objects.get(owner=user2.user, main_fleet=True)
                 sols = getattr(m_fleet, 'soldier')
                 setattr(m_fleet, 'soldier', sols + gained_soldiers)
-                if user2 == user1:
-                    mfghost = getattr(m_fleet, 'ghost')
-                    setattr(m_fleet, 'ghost', mfghost + ghost)   
                 m_fleet.save()
                 user2.population -= total_pop_lost
                 user2.save()
