@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   nginx:
       image: nginx:1.19
@@ -14,7 +12,7 @@ services:
       
 
   db:
-      image: postgres:12.0-alpine
+      image: postgres:17.2-alpine
       ports:
         - "5432:5432"
       env_file:
@@ -36,6 +34,13 @@ services:
         - "8001" # this is used for the uwsgi to nginx interface, not the actual website
       depends_on:
         - db
+  
+  java:
+      build: ./java
+      depends_on:
+        - db
+      volumes:
+        - .:/code
 
 # To persist the data beyond the life of the container we configured a volume. This config will bind postgres_data to the "/var/lib/postgresql/data/" directory in the container.
 volumes:

@@ -1,5 +1,4 @@
-FROM rappdw/docker-java-python:openjdk1.8.0_171-python3.6.6
-RUN java -version
+FROM python:3.11
 ENV PYTHONUNBUFFERED 1
 RUN mkdir /code
 WORKDIR /code

@@ -1,11 +1,3 @@
-## TODO
-
-Put your name after an item if you want to reserve it for yourself, not all items need assignments though
-
-#### v0.1 Remaining Items
-left to do:
-- any bugs?
-
 #### v0.2 Remaining Items
 
 - new player tutorial
@@ -18,7 +10,7 @@ left to do:
 
 0. Copy .env.template to .env (`cp .env.template .env`) and change the secret key if you care about security
 1. `docker-compose up -d`
-2. `docker exec -it ectroversedjango_python_1 /bin/bash` depending on machine may have to replace _ with -
+2. `docker exec -it ectroversedjango-python-1 /bin/bash` depending on machine may have to replace _ with -
 3. `python manage.py makemigrations` (if you are loading an older db, check below in readme, don't do later steps)
 4. `python manage.py migrate`
 5. `python manage.py createsuperuser` create a user named admin, with whatever pass you want, you can skip email
@@ -38,18 +30,6 @@ to kill the java process tick:
 1. `ps -aux` - get the list of currently running jobs
 2. ` kill PID` ,replacing the PID with the process ID of the Main.java
 
-this was the old way, which was never finished:
- `python manage.py process_tick` (will eventually get called every 10 minutes with a cronjob)
- go to http://127.0.0.1:8000 and it should work now
- to start automatic ticks, type `crontab -e` and add this line to the bottom: `* * * * * /usr/local/bin/python3 /code/manage.py process_tick 2>&1 >>/tmp/tick.log`
- control-x to exit crontab, do a `service cron restart`, and it should now automatically run ticks, check status with `ls /tmp/tick.log`
-
-## Starting up server once its setup
-
-1. `docker-compose up -d`
-
-that's it!  without docker this would be a dozen steps
-
 ## To rebuild the containers, like if a config setting changed (in project/requirements)
 First
 `docker-compose down`
@@ -61,7 +41,7 @@ To rebuild only the python container:
 
 ## To extract the db (for backing up for example)
 If you are loading an old db on a new server, don't go through steps 3-7 
-Go to python container first: `docker exec -it ectroversedjango_python_1 /bin/bash`
+Go to python container first: `docker exec -it ectroversedjango-python-1 /bin/bash`
 
 to extract:
 `python manage.py dumpdata --natural-foreign \
@@ -85,21 +65,21 @@ then:
 ## Look at logs
 
 Watch Django's console (i.e. the uwsgi log) with
-1. `docker exec -it ectroversedjango_python_1 /bin/bash`
+1. `docker exec -it ectroversedjango-python-1 /bin/bash`
 2. `tail -f /tmp/mylog.log`
 
 Nginx log:
-`docker logs -f ectroversedjango_nginx_1`
+`docker logs -f ectroversedjango-nginx-1`
 
 Database log:
-`docker logs -f ectroversedjango_db_1`
+`docker logs -f ectroversedjango-db-1`
 
 Restart all docker containers:
 `docker restart $(docker ps -q)`
 
 ## Console into the python container (which runs the Django app) to poke around or debug something
 
-`docker exec -it ectroversedjango_python_1 /bin/bash`
+`docker exec -it ectroversedjango-python-1 /bin/bash`
 
 ## Console into the potgres container psql
 1. `docker exec -it ectroversedjango_db_1 bash`
@@ -108,10 +88,10 @@ Restart all docker containers:
 the user name and db name are set in the db: -> environment: in the docker-compose.yml
 
 ## To run the java tick process:
-1. `docker exec -it ectroversedjango_python_1 /bin/bash`
+1. `docker exec -it ectroversedjango-java-1 /bin/bash`
 2. `cd java`
 3. `javac *.java -d .` - if wasnt allready compiled into bytecode
-4. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTick >> log.txt &`
+4. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTick_New >> log.txt &`
 
 to kill it:
 1. `ps -aux` - get the list of currently running jobs
