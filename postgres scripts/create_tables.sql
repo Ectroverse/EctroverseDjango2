@@ -119,6 +119,9 @@ values
 ((select id from classes where name = 'HK'),'ectrolium_production', 1.0,current_timestamp),
 ((select id from classes where name = 'HK'),'travel_speed', (1.4*2.0),current_timestamp),
 ((select id from classes where name = 'HK'),'research_max_military', 250.0,current_timestamp),
+((select id from classes where name = 'HK'),'psychic_coeff', 1.0,current_timestamp),
+((select id from classes where name = 'HK'),'ghost_coeff', 1.0,current_timestamp),
+((select id from classes where name = 'HK'),'agent_coeff', 1.0,current_timestamp),
 
 ((select id from classes where name = 'MT'),'pop_growth', (0.9*0.02),current_timestamp),
 ((select id from classes where name = 'MT'),'research_bonus_military', 0.9,current_timestamp),
@@ -135,6 +138,9 @@ values
 ((select id from classes where name = 'MT'),'ectrolium_production', 1.0,current_timestamp),
 ((select id from classes where name = 'MT'),'race_special_solar_15', 1.15,current_timestamp),
 ((select id from classes where name = 'MT'),'travel_speed', (1.0*2.0),current_timestamp),
+((select id from classes where name = 'MT'),'psychic_coeff', 1.4,current_timestamp),
+((select id from classes where name = 'MT'),'ghost_coeff', 1.2,current_timestamp),
+((select id from classes where name = 'MT'),'agent_coeff', 1.0,current_timestamp),
 
 ((select id from classes where name = 'FH'),'pop_growth', (0.8*0.02),current_timestamp),
 ((select id from classes where name = 'FH'),'research_bonus_military', 1.5,current_timestamp),
@@ -151,6 +157,9 @@ values
 ((select id from classes where name = 'FH'),'ectrolium_production', 1.2,current_timestamp),
 ((select id from classes where name = 'FH'),'travel_speed', (1.0*2.0),current_timestamp),
 ((select id from classes where name = 'FH'),'race_special_pop_research', 6000 ,current_timestamp),
+((select id from classes where name = 'FH'),'ghost_coeff', 1.1,current_timestamp),
+((select id from classes where name = 'FH'),'psychic_coeff', 1.0,current_timestamp),
+((select id from classes where name = 'FH'),'agent_coeff', 1.0,current_timestamp),
 
 ((select id from classes where name = 'SB'),'pop_growth', (1.2*0.02),current_timestamp),
 ((select id from classes where name = 'SB'),'research_bonus_military', 1.1,current_timestamp),
@@ -167,6 +176,9 @@ values
 ((select id from classes where name = 'SB'),'ectrolium_production', 1.0,current_timestamp),
 ((select id from classes where name = 'SB'),'travel_speed', (1.8*2.0),current_timestamp),
 ((select id from classes where name = 'SB'),'research_max_energy', 250.0,current_timestamp),
+((select id from classes where name = 'SB'),'psychic_coeff', 0.7,current_timestamp),
+((select id from classes where name = 'SB'),'agent_coeff', 1.3,current_timestamp),
+((select id from classes where name = 'SB'),'ghost_coeff', 1.0,current_timestamp),
 
 ((select id from classes where name = 'DW'),'pop_growth', (1.1*0.02),current_timestamp),
 ((select id from classes where name = 'DW'),'research_bonus_military', 1.0,current_timestamp),
@@ -184,6 +196,9 @@ values
 ((select id from classes where name = 'DW'),'travel_speed', (1.0*2.0),current_timestamp),
 ((select id from classes where name = 'DW'),'research_max_military', 100.0,current_timestamp),
 ((select id from classes where name = 'DW'),'research_max_construction', 250.0,current_timestamp),
+((select id from classes where name = 'DW'),'psychic_coeff', 1.5,current_timestamp),
+((select id from classes where name = 'DW'),'ghost_coeff', 1.3,current_timestamp),
+((select id from classes where name = 'DW'),'agent_coeff', 1.0,current_timestamp),
 
 ((select id from classes where name = 'WK'),'pop_growth', (1.2*0.02),current_timestamp),
 ((select id from classes where name = 'WK'),'research_bonus_military', 1.0,current_timestamp),
@@ -201,6 +216,9 @@ values
 ((select id from classes where name = 'WK'),'race_special_resource_interest', 0.005,current_timestamp),
 ((select id from classes where name = 'WK'),'travel_speed', (1.6*2.0),current_timestamp),
 ((select id from classes where name = 'WK'),'research_max_population', 250.0,current_timestamp),
+((select id from classes where name = 'WK'),'ghost_coeff', 1.15,current_timestamp),
+((select id from classes where name = 'WK'),'psychic_coeff', 1.0,current_timestamp),
+((select id from classes where name = 'WK'),'agent_coeff', 1.0,current_timestamp),
 
 ((select id from classes where name = 'JK'),'pop_growth', (1.0*0.02),current_timestamp),
 ((select id from classes where name = 'JK'),'research_bonus_military', 0.8,current_timestamp),
@@ -221,6 +239,9 @@ values
 ((select id from classes where name = 'JK'),'research_max_operations', 250.0,current_timestamp),
 ((select id from classes where name = 'JK'),'race_special_solar_15', 1.1,current_timestamp),
 ((select id from classes where name = 'JK'),'race_special_pop_research', 10000 ,current_timestamp),
+((select id from classes where name = 'JK'),'psychic_coeff', 1.0,current_timestamp),
+((select id from classes where name = 'JK'),'ghost_coeff', 1.0,current_timestamp),
+((select id from classes where name = 'JK'),'agent_coeff', 1.0,current_timestamp),
 
 ((select id from classes where name = 'FT'),'pop_growth', (0.9*0.02),current_timestamp),
 ((select id from classes where name = 'FT'),'research_bonus_military', 0.9,current_timestamp),
@@ -237,6 +258,9 @@ values
 ((select id from classes where name = 'FT'),'ectrolium_production', 1.0,current_timestamp),
 ((select id from classes where name = 'FT'),'travel_speed', (1.6*2.0),current_timestamp),
 ((select id from classes where name = 'FT'),'research_max_construction', 250.0,current_timestamp),
+((select id from classes where name = 'FT'),'agent_coeff', 1.2,current_timestamp),
+((select id from classes where name = 'FT'),'ghost_coeff', 1.2,current_timestamp),
+((select id from classes where name = 'FT'),'psychic_coeff', 1.0,current_timestamp),
 
 ((select id from classes where name = 'SM'),'pop_growth', (1.0*0.02),current_timestamp),
 ((select id from classes where name = 'SM'),'research_bonus_military', 1.1,current_timestamp),
@@ -259,7 +283,10 @@ values
 ((select id from classes where name = 'SM'),'research_max_population', 185.0,current_timestamp),
 ((select id from classes where name = 'SM'),'research_max_culture', 185.0,current_timestamp),
 ((select id from classes where name = 'SM'),'research_max_operations', 185.0,current_timestamp),
-((select id from classes where name = 'SM'),'research_max_portals', 185.0,current_timestamp);
+((select id from classes where name = 'SM'),'research_max_portals', 185.0,current_timestamp),
+((select id from classes where name = 'SM'),'psychic_coeff', 0.9,current_timestamp),
+((select id from classes where name = 'SM'),'agent_coeff', 0.9,current_timestamp),
+((select id from classes where name = 'SM'),'ghost_coeff', 1.0,current_timestamp);
 
 drop table if exists unit_stats;
 
