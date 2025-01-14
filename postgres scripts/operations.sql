@@ -90,37 +90,92 @@
 		and a.command_order in (6,7) --perform 
 		and a.ticks_remaining = 0
 	),
-	success as (
-		select op.id s_id, (((0.6 + (0.8/ 255.0) * (op.random & 255)) * 
-		1 -- agents_coeff 
-		* (case when op.c_o = 6 then op.agent else op.ghost end) *
+	attack as (
+	 select op.id a_id, (((0.6 + (0.8/ 255.0) * (op.random & 255)) * 
+		att.num_val * (case when op.c_o = 6 then op.agent else op.ghost end) *
 		(select (1.0 + 0.01 * (case when op.c_o = 6 then u.research_percent_operations 
 			else u.research_percent_culture end)) from '|| _userstatus_table ||' u where u.user_id = op.owner_id))/
-		(select difficulty from '|| _ops_table||' o where o.name = op.specop)) / (case when op.penalty > 0 then 1 + (0.01 * op.penalty) else 1 end) 
-		/ (case when p.owner_id is null then 50 end)
-		success
+		(select difficulty from '|| _ops_table||' o where o.name = op.specop)) / (case when op.penalty > 0 then 1 + (0.01 * op.penalty) else 1 end) attack
 		from operation op
-		join '|| _planets_table ||' p on p.id = op.p_id
+		join '|| _userstatus_table ||' a on a.id = op.owner_id
+		join classes c on c.name = a.race
+		join constants att on att.class = c.id and att.name = case when op.c_o = 6 then ''agent_coeff'' else ''ghost_coeff'' end
 		where op.penalty < 150
 	),
+	success as (
+		-- success
+		select op.id s_id, p.id p_id, atac.attack / 
+		--defence
+		(case when p.owner_id is null then 50 else
+		1.0 + (select  dc.num_val * (select case when op.c_o = 6 then df.agent else df.wizard end) * 
+        (1.0 + 0.005 * (select case when op.c_o = 6 then def.research_percent_operations else def.research_percent_culture end))
+		from '|| _userstatus_table ||' def
+		join classes d_c on d_c.name = def.race
+		join constants dc on dc.class = d_c.id and dc.name = case when op.c_o = 6 then ''agent_coeff'' else ''psychic_coeff'' end
+		join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = 
+		(select owner_id from '|| _planets_table ||' where id = op.p_id))
+		end / case when op.c_o = 6 then 1 else 7 end )
+		success,
+		-- ghost defence
+		atac.attack / (case when p.owner_id is null then 50 else
+		1.0 + (select  dcc.num_val * df.ghost * 
+        (1.0 + 0.005 * defc.research_percent_culture)
+		from '|| _userstatus_table ||' defc
+		join classes d_cc on d_cc.name = defc.race
+		join constants dcc on dcc.class = d_cc.id and dcc.name = ''ghost_coeff''
+		join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = 
+		(select owner_id from '|| _planets_table ||' where id = op.p_id)) end) 
+		g_def
+		
+		from operation op
+		join '|| _planets_table ||' p on (case when op.specop != ''Survey System'' then p.id = op.p_id else 
+		p.x = (select x from '|| _planets_table ||' where id = op.p_id) AND
+		p.y = (select y from '|| _planets_table ||' where id = op.p_id) end)
+		join attack atac on op.id = atac.a_id
+		where op.penalty < 150
+	),
+	attloss as (
+		select s.s_id al_id, (case when op.c_o = 6 then case when s.success < 2.0 then greatest(0, least(op.agent, (1.0 - (0.5 * power((0.5 * s.success ), 1.1))) *
+		(1.0 - power((0.5 * s.success), 0.2)) * (0.75 + (0.5 / 255.0) * (op.random & 255)) * op.agent)) else 0 end
+		else case when s.g_def < 2.0 then greatest(0, least(op.ghost, (1.0 - (0.5 * power((0.5 * s.g_def ), 1.1))) *
+		(1.0 - power((0.5 * s.g_def), 0.2)) * (0.75 + (0.5 / 255.0) * (op.random & 255)) * op.ghost)) else 0 end
+		end) losses
+		from success s
+		join operation op on op.id = s.s_id
+		where s.p_id = op.p_id
+	),
+
+	-- observe/ survey
+	
 	p_information as (
 		select s.s_id i_id, (
-		 case when s.success >= 0.4 then ''Planet Size: '' || p.size ||
-		 case when s.success >= 0.5 then 
+		 case when p.owner_id is not null then case when op.specop = ''Survey System'' then ''Planet: '' || p.i || chr(10) || '''' end ||
+		 ''Owned by: '' || 
+		 (select user_name from '|| _userstatus_table ||' where id = p.owner_id) || chr(10) || 
+		 case when al.losses > 0 and op.c_o = 6 then ''Attacker Lost: '' || al.losses || '' agents'' || chr(10) || '''' else '''' end || 
+		 '''' else '''' end ||
+		 case when s.success >= 0.4 then ''Planet'' || case when op.specop = ''Survey System'' then 
+		 '': '' || p.i || chr(10) || '''' else '''' end || '' Size: '' || p.size || 
+		 case when s.success >= 0.9 then 
 		 case when p.bonus_solar > 0 then chr(10) || ''Solar Bonus: '' || p.bonus_solar || ''%'' 
 		 when p.bonus_fission > 0 then chr(10) || ''Fission Bonus: '' || p.bonus_fission || ''%'' 
 		 when p.bonus_mineral > 0 then chr(10) || ''Mineral Bonus: '' || p.bonus_mineral || ''%'' 
 		 when p.bonus_crystal > 0 then chr(10) || ''Crystal Bonus: '' || p.bonus_crystal || ''%'' 
 		 when p.bonus_ectrolium > 0 then chr(10) || ''Ectrolium Bonus: '' || p.bonus_mineral || ''%'' 
 		 else '''' end 
-		 end
-		 else ''No information was gathered about this planet!'' end) news_info
+		 end 
+		 else ''No information was gathered about this planet!'' end
+		 ) news_info
 		from operation op
 		join '|| _planets_table ||' p on (case when op.specop = ''Observe Planet'' then p.id = op.p_id else 
 		p.x = (select x from '|| _planets_table ||' where id = op.p_id) AND
 		p.y = (select y from '|| _planets_table ||' where id = op.p_id) end)
-		join success s on s.s_id = op.id
-	),	 
+		join success s on s.s_id = op.id and s.p_id = p.id
+		join attloss al on al.al_id = op.id
+	),	
+
+	-- other ops
+	
 	information as (
 		select s.s_id i_id, (case when op.specop = ''Observe Planet'' THEN
 		( case when s.success > 0.4 then 
@@ -155,6 +210,7 @@
 		join '|| _planets_table ||' p on (case when op.specop = ''Observe Planet'' then p.id = op.p_id else 
 		p.x = (select x from '|| _planets_table ||' where id = op.p_id) AND
 		p.y = (select y from '|| _planets_table ||' where id = op.p_id) end)
+		and op.specop in (''Observe Planet'', ''Survey System'')
 	)
 	update '|| _userstatus_table ||' u
 	set military_flag = case when military_flag != 1 then 2 else 1 end -- red flag overrides green
