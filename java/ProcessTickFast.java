@@ -74,6 +74,16 @@ public class ProcessTickFast
 			ex.printStackTrace();
 		}
 		
+		try {
+
+			statement = con.createStatement();
+			statement.executeUpdate("call operations(2,0);");
+			 
+		}
+		catch (SQLException ex){
+			ex.printStackTrace();
+		}
+		
 		long python_script1 = System.nanoTime();
 		try{
 			ProcessBuilder pb = new ProcessBuilder("python", "/code/manage.py", "process_py");

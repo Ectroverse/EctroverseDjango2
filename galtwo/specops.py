@@ -510,7 +510,7 @@ def perform_operation(agent_fleet):
 
         if operation == "Observe Planet":
             with connection.cursor() as cursor:
-                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
+                cursor.execute("call operations("+str('2,')+str(agent_fleet.id)+");")
 
         if operation == "Spy Target":
             if success < 0.4:
@@ -1042,7 +1042,7 @@ def perform_incantation(ghost_fleet):
         
         if incantation == "Survey System":        
             with connection.cursor() as cursor:
-                cursor.execute("call operations("+str('1,')+str(ghost_fleet.id)+");")
+                cursor.execute("call operations("+str('2,')+str(ghost_fleet.id)+");")
 
         if incantation == "Sense Artefact":           
             arti = Planets.objects.all().exclude(artefact=None)
