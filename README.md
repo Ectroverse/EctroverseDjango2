@@ -4,6 +4,10 @@
 - finish Guide
 - add device fingerprinting to prevent double accounts
 
+## Note
+
+Change "ectroversedjango" to folder name on local machine for bash etc
+
 ## Getting it setup on a new machine:
 
 (you'll need docker and docker-compose installed, google how to do it for your OS)
@@ -15,16 +19,25 @@
 4. `python manage.py migrate`
 5. `python manage.py createsuperuser` create a user named admin, with whatever pass you want, you can skip email
 6. `python manage.py collectstatic --noinput`
-7. go to project/settings and # line 63
-8. http://127.0.0.1:8000/admin, in both Round Status create new entry and save
-9. in both UserStatus create a new record and assign to admin account
-10. `python manage.py generate_planets` (can take a while if its a big galaxy with a lot of planets)
-11. remove # from line 63 in project/settings
-12. go to http://127.0.0.1:8000, log in as admin, and choose a race
-13. `cd java`
-14. `javac *.java -d .` - if wasnt allready compiled into bytecode
-15. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTick >> log.txt &`
-16. Set the `Round statuss` object's `Is running` to True whenever you want the tick time to start running
+7. `python manage.py gen_ops_app'
+8. `python manage.py gen_ops_galtwo'
+9. go to project/settings and # line 63
+10. http://127.0.0.1:8000/admin, in both Round Status create new entry and save
+11. `python manage.py generate_planets` (can take a while if its a big galaxy with a lot of planets)
+12. `python manage.py generate_galtwo` (can take a while if its a big galaxy with a lot of planets)
+13. remove # from line 63 in project/settings
+14. go to http://127.0.0.1:8000, log in as admin, and choose a race
+15. `cd java`
+16. set regular round tick time in java/settings
+17. `javac *.java -d .` - if wasnt allready compiled into bytecode
+18. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickSlow >> log.txt &`
+19. Set the `Round status` object's `Is running` to True whenever you want the tick time to start running
+20. set fast round tick time in java/settings
+21. `javac *.java -d .` - if wasnt allready compiled into bytecode
+22. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickFast >> log.txt &`
+23. Set the `Round status` object's `Is running` to True whenever you want the tick time to start running
+
+## Activating accounts
 
 to kill the java process tick:
 1. `ps -aux` - get the list of currently running jobs
@@ -44,13 +57,11 @@ If you are loading an old db on a new server, don't go through steps 3-7
 Go to python container first: `docker exec -it ectroversedjango-python-1 /bin/bash`
 
 to extract:
-`python manage.py dumpdata --natural-foreign \
-   --exclude auth.permission --exclude contenttypes \
-   --indent 4 > db.json`
+`python manage.py dumpdata --natural-foreign --exclude auth.permission --exclude contenttypes --indent 4 > db.json`
 
 to load extracted:
 Delete the existing db first:
-``python manage.py flush`
+`python manage.py flush`
 then:
 `python manage.py loaddata db.json`
 
@@ -82,7 +93,7 @@ Restart all docker containers:
 `docker exec -it ectroversedjango-python-1 /bin/bash`
 
 ## Console into the potgres container psql
-1. `docker exec -it ectroversedjango_db_1 bash`
+1. `docker exec -it ectroversedjango-db-1 bash`
 2. `psql -U dbadmin djangodatabase`
 
 the user name and db name are set in the db: -> environment: in the docker-compose.yml
@@ -91,7 +102,8 @@ the user name and db name are set in the db: -> environment: in the docker-compo
 1. `docker exec -it ectroversedjango-java-1 /bin/bash`
 2. `cd java`
 3. `javac *.java -d .` - if wasnt allready compiled into bytecode
-4. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTick_New >> log.txt &`
+4. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickSlow >> log.txt &` for app tick
+5. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickSlow >> log.txt &` for galtwo tick
 
 to kill it:
 1. `ps -aux` - get the list of currently running jobs
