@@ -200,7 +200,7 @@ def register(response):
             
             
             ## USE THIS FOR EMAIL ACTIVATION
-            user.is_active = False
+            '''user.is_active = False
             user.save()
             current_site = Site.objects.get_current()
             mail_subject = 'Activate your Ectroverse account.'
@@ -215,16 +215,16 @@ def register(response):
                         mail_subject, message, to=[to_email]
             )
             email.send()
-            return render(response, "confirm.html", {"msg": "Please confirm your email address to complete the registration"})
+            return render(response, "confirm.html", {"msg": "Please confirm your email address to complete the registration"})'''
             
             ### USE THIS TO REGISTER WITHOUT EMAIL
-            '''user.is_active = True
+            user.is_active = True
             user.save()
             UserStatus.objects.create(id=user.id, user=user)
             Fleet.objects.create(owner=user, main_fleet=True)
             TwoStatus.objects.create(id=user.id, user=user)
             Fleets.objects.create(owner=user, main_fleet=True) 
-            return redirect("/portal")'''
+            return redirect("/portal")
     else:
         form = RegisterForm()
     return render(response, "register.html", {"form": form})
