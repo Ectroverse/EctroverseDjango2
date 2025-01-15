@@ -22,20 +22,19 @@ Change "ectroversedjango" to folder name on local machine for bash etc
 7. `python manage.py gen_ops_app`
 8. `python manage.py gen_ops_galtwo`
 9. go to project/settings and # line 63
-10. http://127.0.0.1:8000/admin, in both Round Status create new entry and save
-11. `python manage.py generate_planets` (can take a while if its a big galaxy with a lot of planets)
-12. `python manage.py generate_galtwo` (can take a while if its a big galaxy with a lot of planets)
-13. remove # from line 63 in project/settings
-14. go to http://127.0.0.1:8000, log in as admin, and choose a race
-15. `cd java`
-16. set regular round/ app tick time in java/settings
-17. `javac *.java -d .` - if wasnt allready compiled into bytecode
-18. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickSlow >> log.txt &`
-19. Set the `Round status` object's `Is running` to True whenever you want the tick time to start running
-20. set fast round/ galtwo tick time in java/settings
-21. `javac *.java -d .` - if wasnt allready compiled into bytecode
-22. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickFast >> log.txt &`
-23. Set the `Round status` object's `Is running` to True whenever you want the tick time to start running
+10. `python manage.py generate_planets` (can take a while if its a big galaxy with a lot of planets)
+11. `python manage.py generate_galtwo` (can take a while if its a big galaxy with a lot of planets)
+12. remove # from line 63 in project/settings
+13. go to http://127.0.0.1:8000, log in as admin, and choose a race
+14. `cd java`
+15. set regular round/ app tick time in java/settings
+16. `javac *.java -d .` - if wasnt allready compiled into bytecode
+17. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickSlow >> log.txt &`
+18. Set the `Round status` object's `Is running` to True whenever you want the tick time to start running
+19. set fast round/ galtwo tick time in java/settings
+20. `javac *.java -d .` - if wasnt allready compiled into bytecode
+21. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickFast >> log.txt &`
+22. Set the `Round status` object's `Is running` to True whenever you want the tick time to start running
 
 ## Activating accounts
 
