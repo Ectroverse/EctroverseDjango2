@@ -19,6 +19,8 @@
 		_news_table varchar(255);
 		_artefacts_table varchar(255);
 		_specops_table varchar(255);
+		_empire_table varchar(255);
+		_rel_table varchar(255);
 		
 		_roundstatus varchar(255);
 		_sql varchar;
@@ -36,6 +38,8 @@
 			_roundstatus := 'app_roundstatus';
 			_artefacts_table := 'app_artefacts';
 			_specops_table := 'app_specops';
+			_empire_table := 'app_empire';
+			_rel_table := 'app_relations';
 		else 
 			_planets_table := '"PLANETS"';
 			_userstatus_table := 'galtwo_userstatus';
@@ -45,6 +49,8 @@
 			_roundstatus := 'galtwo_roundstatus';
 			_artefacts_table := 'galtwo_artefacts';
 			_specops_table := 'galtwo_specops';
+			_empire_table := 'galtwo_empire';
+			_rel_table := 'galtwo_relations';
 		end if;
 
 		EXECUTE format('select max(round_number) from  %s ;', _roundstatus)
@@ -107,7 +113,7 @@
 	),
 	success as (
 		-- success
-		select op.id s_id, p.id p_id, COALESCE(atac.attack / 
+		select op.id s_id, p.id p_id, op.owner_id, op.specop, COALESCE(atac.attack / 
 		--defence
 		(case when p.owner_id is null then 50 else
 		1.0 + (select  dc.num_val * (select case when op.c_o = 6 then coalesce(df.agent,0) else coalesce(df.wizard,0) end) * 
@@ -139,6 +145,7 @@
 		join attack atac on op.id = atac.a_id
 		where op.penalty < 150
 	),
+	--losses
 	attloss as (
 		select s.s_id al_id, case when p.owner_id is null then 0 else round(case when op.c_o = 6 then case 
 		when s.success < 2.0 then greatest(0, least(coalesce(op.agent,0), (1.0 - (0.5 * power((0.5 * s.success ), 1.1))) *
@@ -170,10 +177,52 @@
 		where s.p_id = op.p_id
 	),
 	
+	--readiness
+	p_cost as (
+		select op.id id, u.empire_id atemp, op.penalty, op.base_cost, op.specop, op.owner_id,
+		(case when p.owner_id is null then 1 else
+		(select empire_id from '|| _userstatus_table ||' d where d.user_id = p.owner_id) end) demp,
+		(greatest((case when op.specop=''Survey System'' or p.owner_id is null then 1 else 
+		(0.5*(power(((1.0+u.num_planets)/(1.0+(select num_planets from '|| _userstatus_table ||' d where d.user_id = p.owner_id))), 1.8)+
+		(power(((1.0+(select planets from '|| _empire_table ||' where id = u.empire_id))/
+		(1.0+(select planets from '|| _empire_table ||' where id =(select empire_id from '|| _userstatus_table ||' d where d.user_id = p.owner_id)))), 1.2))))
+		end), 0.75)) fa
+		from operation op
+		join '|| _planets_table ||' p on p.id = op.p_id
+		join '|| _userstatus_table ||' u on u.id = op.owner_id
+	),
+	
+	fa_cost as (
+		select pc.id id, pc.atemp, pc.demp, pc.specop, pc.owner_id,(
+		select ((1.0 + 0.01 * penalty) * pc.base_cost * pc.fa)) fa
+		from p_cost pc
+	),
+	
+	w_cost as (
+		select c.id id, c.atemp, c.demp, c.specop, c.owner_id,(
+		select case when exists (select c.fa from '|| _rel_table ||'
+		where empire1_id in (c.atemp, c.demp) and empire2_id in (c.atemp, c.demp)
+		and relation_type in (''A'', ''W''))
+		then c.fa/3
+		else c.fa end) fa
+		from fa_cost c
+	),
+	
+	r_cost as (
+		select c.id id, c.specop, c.owner_id,(
+		select case when exists (select c.fa from '|| _rel_table ||'
+		where empire1_id in (c.atemp, c.demp) and empire2_id in (c.atemp, c.demp)
+		and relation_type in (''NC'', ''PC'', ''N'', ''C''))
+		then 50.0
+		else c.fa end) fa
+		from w_cost c
+	),
+	
 	-- observe/ survey
 	
 	p_information as (
 		select s.s_id i_id, (
+			pc.owner_id || chr(10) ||
 		 case when p.owner_id is not null then 
 					 case when op.specop = ''Survey System'' then ''Planet: '' || p.i || chr(10) || '''' 
 					 else '''' end ||
@@ -237,6 +286,7 @@
 		join success s on s.s_id = op.id and s.p_id = p.id
 		join attloss al on al.al_id = op.id
 		join defloss dl on dl.dl_id = op.id
+		join r_cost pc on pc.id = op.id
 		order by p.i
 	),	
 
@@ -249,32 +299,42 @@
 		from operation op
 		join '|| _planets_table ||' p on p.id = op.p_id
 		join success s on s.s_id = op.id
-	),	
+	),
+	--news
 	ins_news_success as (
 		insert into '|| _news_table||' 
-		( user1_id, user2_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, planet_id, fleet1, extra_info)
+		( user1_id, user2_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
+		is_read, tick_number, planet_id, fleet1, extra_info)
 		select e.owner_id, (select owner_id from '|| _planets_table ||' where id = e.p_id),   
 		(select empire_id from '|| _userstatus_table ||' u where u.user_id = e.owner_id), 
-		''AA'', current_timestamp, true, true, false, (select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
+		(case when e.c_o = 6 then ''AA'' else ''GA'' end), 
+		current_timestamp, true, true, false, 
+		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
 		(case when e.specop in (''Observe Planet'', ''Survey System'') then (select string_agg(i.news_info, ''
         '') from  p_information i where i.i_id = e.id) end)
 		from operation e
 	),
+	--scouting
 	merge_scout as (
 		merge into '|| _scouting_table ||' a
-		using (select op.owner_id, op.p_id, s.success, op.specop
-		from operation op 
-		join success s on s.p_id = op.p_id) o
-		on a.empire_id = (select empire_id from '|| _userstatus_table ||' u where u.user_id = o.owner_id) and a.planet_id = o.p_id 
-		and o.specop in (''Observe Planet'', ''Survey System'')
+		using (select op.owner_id, op.p_id, max(op.success) success
+		from success op
+		where op.specop in (''Observe Planet'', ''Survey System'')
+		group by op.p_id, op.owner_id
+		) o
+		on a.empire_id = (select empire_id from '|| _userstatus_table ||' u where u.user_id = o.owner_id) and 
+		a.planet_id = o.p_id
 		WHEN MATCHED THEN
 			UPDATE SET scout = case when o.success >= a.scout then o.success else a.scout end
 		WHEN NOT MATCHED THEN
 		  INSERT (planet_id, empire_id, user_id, scout)
 		  VALUES (o.p_id, (select empire_id from '|| _userstatus_table ||' u where u.user_id = o.owner_id), o.owner_id, o.success)
 	)
+	
 	update '|| _userstatus_table ||' u
-	set military_flag = case when military_flag != 1 then 2 else 1 end -- red flag overrides green
+	set military_flag = case when military_flag != 1 then 2 else 1 end,
+	agent_readiness = agent_readiness - (select sum(fa) from r_cost where specop=''Observe Planet'' and owner_id=u.id group by owner_id),
+	psychic_readiness = psychic_readiness - (select sum(fa) from r_cost where specop=''Survey System'' and owner_id=u.id group by owner_id)
 	from (select owner_id from operation group by owner_id) c 
 	where u.id = c.owner_id;
 	 
