@@ -160,14 +160,6 @@
 		join '|| _planets_table ||' p on p.id = op.p_id 
 		where s.p_id = op.p_id
 	),
-	attagentloss as (
-		update '|| _fleet_table ||' f
-		set agent = agent - l.losses
-		from operation op
-		join attloss l on l.al_id = op.id
-		where f.id = op.id
-		and op.c_o = 6
-	),
 	defloss as (
 		select s.s_id dl_id, op.defid, op.c_o,
 		case when p.owner_id is null then 0 else round(case when op.c_o = 6 then case 
@@ -239,7 +231,6 @@
 	
 	p_information as (
 		select s.s_id i_id, (
-			pc.owner_id || chr(10) ||
 		 case when p.owner_id is not null then 
 					 case when op.specop = ''Survey System'' then ''Planet: '' || p.i || chr(10) || '''' 
 					 else '''' end ||
@@ -303,19 +294,48 @@
 		join success s on s.s_id = op.id and s.p_id = p.id
 		join attloss al on al.al_id = op.id
 		join defloss dl on dl.dl_id = op.id
-		join r_cost pc on pc.id = op.id
 		order by p.i
 	),	
 
 	-- other ops
 	
-	information as (
-		select s.s_id i_id, (case when op.specop = ''Observe Planet'' THEN
-		( case when s.success > 0.4 then 
-		 (case when p.owner_id is null then ''Planet Size: '' || p.size end) else ''No information was gathered about this planet!'' end) end) news_info
+	op_information as (
+		select s.s_id i_id, (case when op.specop = ''Spy Target'' then
+		case when al.losses > 0 then ''Attacker Lost: '' || al.losses || '' agents'' || chr(10) || '''' 
+		else '''' end || 
+		case when dl.losses > 0 then ''Defender Lost: '' || dl.losses || '' agents'' || chr(10) || '''' 
+		else '''' end ||
+		case when s.success >= 0.4 then
+			case when s.success >= 0.5 then 
+					chr(10) || ''Fleet readiness: '' || u.fleet_readiness
+			else '''' end ||
+			case when s.success >= 0.7 then
+					chr(10) || ''Psychic readiness: '' || u.psychic_readiness
+			else '''' end ||
+			case when s.success >= 0.9 then
+					chr(10) || ''Agent readiness: '' || u.Agent_readiness
+			else '''' end ||
+			case when s.success >= 1.0 then
+					chr(10) || ''Energy: '' || u.energy
+			else '''' end ||
+			case when s.success >= 0.6 then
+					chr(10) || ''Minerals: '' || u.minerals
+			else '''' end ||
+				chr(10) || ''Crystals: '' || u.crystals ||
+			case when s.success >= 0.8 then
+					chr(10) || ''Ectrolium: '' || u.ectrolium
+			else '''' end ||
+			case when s.success >= 0.9 then
+					chr(10) || ''Population: '' || u.population
+			else '''' end 
+		else ''Your Agents failed'' end 
+		end) news_info
 		from operation op
-		join '|| _planets_table ||' p on p.id = op.p_id
+		join '|| _userstatus_table ||' u on u.id = op.defid
 		join success s on s.s_id = op.id
+		join attloss al on al.al_id = op.id
+		join defloss dl on dl.dl_id = op.id
+		where op.c_o = 6 and op.defid is not null
 	),
 	--news
 	ins_news_success as (
@@ -328,7 +348,8 @@
 		current_timestamp, true, true, false, 
 		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
 		(case when e.specop in (''Observe Planet'', ''Survey System'') then (select string_agg(i.news_info, ''
-        '') from  p_information i where i.i_id = e.id) end)
+        '') from  p_information i where i.i_id = e.id)else 
+		(select i.news_info from  op_information i where i.i_id = e.id)end)
 		from operation e
 	),
 	ins_news_defence as (
@@ -343,7 +364,7 @@
 		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
 		(case when e.c_o = 6 then 
 			case when s.success >= 1 then ''Their agents were successful!''
-			when s.success >= 0.4 then ''Our agents managed to stop the attackers before all information was stolen!''
+			when s.success >= 0.4 then ''Our agents managed to stop the attackers before all damage was done!''
 			else ''Our agents managed to defend'' end
 		end)
 		from operation e 
@@ -372,6 +393,7 @@
 		set i = s.i,
 		x = s.x,
 		y = s.y,
+		agent = agent - (case when a.command_order = 6 then at.losses else 0 end),
 		command_order = 5,
 		ticks_remaining = case when a.x = s.x and a.y = s.y then ticks_remaining 
 						  else floor((sqrt(pow((a.current_position_x - s.x),2) + pow((a.current_position_y - s.y),2))/
@@ -381,15 +403,18 @@
 	from 
 		(select * from
 		(select a.id a_id, a.owner_id, p.id p_id, p.x, p.y, p.i,
-		rank() over(partition by a.owner_id, a.id order by (pow((p.x - a.current_position_x),2) + pow((p.y - a.current_position_y),2)) asc)  rn
+		rank() over(partition by a.owner_id, a.id order by (pow((p.x - a.current_position_x),2) + pow((p.y - a.current_position_y),2)) asc) rn
 		from '|| _fleet_table ||' a, '|| _planets_table ||' p
 		where p.owner_id = a.owner_id
-		and p.portal = true and a.command_order in (6,7) and a.ticks_remaining = 0
+		and p.portal = true
 		) g where g.rn = 1) s 
 	join '|| _userstatus_table ||' u on u.id = s.owner_id
 	join classes l on l.name = u.race
 	join constants c on c.class = l.id and c.name = ''travel_speed''
+	join operation op on op.id= s.a_id
+	join attloss at on at.al_id = op.id
 	where a.id = s.a_id
+	and a.command_order in (6,7) and a.ticks_remaining = 0
 	)
 	update '|| _userstatus_table ||' u
 	set military_flag = case when military_flag != 1 then 2 else 1 end,

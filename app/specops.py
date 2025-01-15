@@ -492,7 +492,9 @@ def perform_operation(agent_fleet):
         news_message = ""
         news_message2 = ""
 
-        if success < 2.0 and target_planet.owner is not None and operation != "Observe Planet":
+        ignore = ["Observe Planet", "Spy Target"]
+        
+        if success < 2.0 and target_planet.owner is not None and operation not in ignore:
             stealth = False
             refdef = 0.5 * pow((0.5 * success), 1.1)
             refatt = 1.0 - refdef
@@ -513,24 +515,8 @@ def perform_operation(agent_fleet):
                 cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
 
         if operation == "Spy Target":
-            if success < 0.4:
-                news_message += "No information was gathered about this faction!"
-            if success >= 0.5:
-                news_message += "\nFleet readiness: " + str(user2.fleet_readiness)
-            if success >= 0.7:
-                news_message += "\nPsychic readiness: " + str(user2.psychic_readiness)
-            if success >= 0.9:
-                news_message += "\nAgent readiness: " + str(user2.agent_readiness)
-            if success >= 1.0:
-                news_message += "\nEnergy: " + str(user2.energy)
-            if success >= 0.6:
-                news_message += "\nMinerals: " + str(user2.minerals)
-            if success >= 0.4:
-                news_message += "\nCrystals: " + str(user2.crystals)
-            if success >= 0.8:
-                news_message += "\nEctrolium: " + str(user2.ectrolium)
-            if success >= 0.9:
-                news_message += "\nPopulation: " + str(user2.population)
+            with connection.cursor() as cursor:
+                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
 
         if operation == "Network Infiltration":
             lost_research_pct = 0
@@ -865,7 +851,7 @@ def perform_operation(agent_fleet):
                 news_message += "Your agents didn't succeed!"
                 news_message2 += "Your agents managed to defend!"
 
-        if operation != "Observe Planet":
+        if operation not in ignore:
             if target_planet.owner is not None:
                 user1.agent_readiness -= specopReadiness(agentop_specs[operation],"Operation", user1, user2)
             else: 

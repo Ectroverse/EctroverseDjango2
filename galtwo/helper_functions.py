@@ -352,9 +352,11 @@ def send_agents_ghosts(status, agents, ghost, x, y, i, specop):
     if fleet_time < 1:
 	    if agents > 0:
 	        msg = perform_operation(agent_fleet)
-	        main_fleet.agent += agent_fleet.agent
-	        main_fleet.save()
-	        agent_fleet.delete()
+	        ignore = ["Observe Planet", "Spy Target"]
+            if specop not in ignore:
+                main_fleet.agent += agent_fleet.agent
+                main_fleet.save()
+                agent_fleet.delete()
     return msg
     
 def send_ghosts(status, agents, ghost, x, y, i, specop):
@@ -391,9 +393,11 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
         if ghost > 0:
             msg = perform_incantation(ghost_fleet)
             if specop != "Call to Arms" and planet.owner.id != status.id:
-                main_fleet.ghost += ghost_fleet.ghost
-                main_fleet.save()
-                ghost_fleet.delete()
+                ignore = ["Survey System"]
+                if specop not in ignore:
+                    main_fleet.ghost += ghost_fleet.ghost
+                    main_fleet.save()
+                    ghost_fleet.delete()
     return msg
 
 def build_on_planet(status, planet, building_list_dict):

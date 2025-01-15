@@ -19,8 +19,8 @@ Change "ectroversedjango" to folder name on local machine for bash etc
 4. `python manage.py migrate`
 5. `python manage.py createsuperuser` create a user named admin, with whatever pass you want, you can skip email
 6. `python manage.py collectstatic --noinput`
-7. `python manage.py gen_ops_app'
-8. `python manage.py gen_ops_galtwo'
+7. `python manage.py gen_ops_app`
+8. `python manage.py gen_ops_galtwo`
 9. go to project/settings and # line 63
 10. http://127.0.0.1:8000/admin, in both Round Status create new entry and save
 11. `python manage.py generate_planets` (can take a while if its a big galaxy with a lot of planets)
