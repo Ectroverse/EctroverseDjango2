@@ -28,11 +28,11 @@ Change "ectroversedjango" to folder name on local machine for bash etc
 13. remove # from line 63 in project/settings
 14. go to http://127.0.0.1:8000, log in as admin, and choose a race
 15. `cd java`
-16. set regular round tick time in java/settings
+16. set regular round/ app tick time in java/settings
 17. `javac *.java -d .` - if wasnt allready compiled into bytecode
 18. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickSlow >> log.txt &`
 19. Set the `Round status` object's `Is running` to True whenever you want the tick time to start running
-20. set fast round tick time in java/settings
+20. set fast round/ galtwo tick time in java/settings
 21. `javac *.java -d .` - if wasnt allready compiled into bytecode
 22. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickFast >> log.txt &`
 23. Set the `Round status` object's `Is running` to True whenever you want the tick time to start running
@@ -103,7 +103,7 @@ the user name and db name are set in the db: -> environment: in the docker-compo
 2. `cd java`
 3. `javac *.java -d .` - if wasnt allready compiled into bytecode
 4. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickSlow >> log.txt &` for app tick
-5. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickSlow >> log.txt &` for galtwo tick
+5. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickFast >> log.txt &` for galtwo tick
 
 to kill it:
 1. `ps -aux` - get the list of currently running jobs
