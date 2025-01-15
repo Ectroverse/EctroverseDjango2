@@ -390,7 +390,7 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     if fleet_time < 1:
         if ghost > 0:
             msg = perform_incantation(ghost_fleet)
-            if specop != "Call to Arms" and planet.owner.id != status.id:
+            if specop != "Call to Arms" and planet.owner != status:
                 main_fleet.ghost += ghost_fleet.ghost
                 main_fleet.save()
                 ghost_fleet.delete()

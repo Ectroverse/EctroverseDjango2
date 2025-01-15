@@ -499,62 +499,8 @@ def perform_operation(agent_fleet):
 
 
         if operation == "Observe Planet":
-            print("call specops("+str(agent_fleet.id)+");")
             with connection.cursor() as cursor:
-                cursor.execute("call specops("+str(agent_fleet.id)+");")
-                
-            if success < 0.4:
-                news_message += "No information was gathered about this planet!"
-            if success >= 0.4:
-                news_message += "Planet size: " + str(target_planet.size)
-            if success >= 0.9:
-                if target_planet.bonus_solar > 0:
-                    news_message += "\nSolar bonus: " + str(target_planet.bonus_solar)
-                if target_planet.bonus_fission > 0:
-                    news_message += "\nFission bonus: " + str(target_planet.bonus_fission)
-                if target_planet.bonus_mineral > 0:
-                    news_message += "\nMineral bonus: " + str(target_planet.bonus_mineral)
-                if target_planet.bonus_crystal > 0:
-                    news_message += "\nCrystal bonus: " + str(target_planet.bonus_crystal)
-                if target_planet.bonus_ectrolium > 0:
-                    news_message += "\nEctrolium bonus: " + str(target_planet.bonus_ectrolium)
-            if target_planet.owner is not None:
-                if success >= 0.5:
-                    news_message += "\nCurrent population: " + str(target_planet.current_population)
-                if success >= 0.6:
-                    news_message += "\nMax population: " + str(target_planet.max_population)
-                if success >= 0.7:
-                    news_message += "\nPortal protection: " + str(target_planet.protection)
-                if success >= 0.8:
-                    news_message += "\nSolar collectors: " + str(target_planet.solar_collectors)
-                    news_message += "\nFission Reactors: " + str(target_planet.fission_reactors)
-                    news_message += "\nMineral Plants: " + str(target_planet.mineral_plants)
-                    news_message += "\nCrystal Labs: " + str(target_planet.crystal_labs)
-                    news_message += "\nRefinement Stations: " + str(target_planet.refinement_stations)
-                    news_message += "\nCities: " + str(target_planet.cities)
-                    news_message += "\nResearch Centers: " + str(target_planet.research_centers)
-                    news_message += "\nDefense Sats: " + str(target_planet.defense_sats)
-                    news_message += "\nShield Networks: " + str(target_planet.shield_networks)
-                if success >= 1.0:
-                    if target_planet.portal:
-                        news_message += "\nPortal: Present"
-                    elif target_planet.portal_under_construction:
-                        news_message += "\nPortal: Under construction"
-                    else:
-                        news_message += "\nPortal: Absent"
-            if target_planet.artefact is not None:
-            	if success >= 1.0:
-                    news_message += "\nArtefact: Present, the " + target_planet.artefact.name
-
-
-
-            #scouting = Scouting.objects.filter(empire=user1.empire, planet=target_planet).first()
-            #if scouting is None:
-            #    Scouting.objects.create(user=user, planet=target_planet, empire=user1.empire, scout=success)
-            #else:
-            #   if scouting.scout < success:
-            #        scouting.scout = success
-            #        scouting.save()
+                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
 
         if operation == "Spy Target":
             if success < 0.4:
@@ -914,65 +860,65 @@ def perform_operation(agent_fleet):
                 news_message += "Your agents didn't succeed!"
                 news_message2 += "Your agents managed to defend!"
 
-
-        if empire2 is None:
-            News.objects.create(user1=User.objects.get(id=user.id),
-                            user2=None,
-                            empire1=user1.empire,
-                            fleet1=operation,
-                            news_type='AA',
-                            date_and_time=datetime.now(),
-                            is_personal_news=True,
-                            is_empire_news=True,
-                            extra_info=news_message,
-                            tick_number=RoundStatus.objects.get().tick_number,
-                            planet=target_planet
-                            )
-        else:
-            News.objects.create(user1=User.objects.get(id=user.id),
-                            user2=User.objects.get(id=user2.id),
-                            empire1=user1.empire,
-                            empire2=empire2,
-                            fleet1=operation,
-                            news_type='AA',
-                            date_and_time=datetime.now(),
-                            is_personal_news=True,
-                            is_empire_news=True,
-                            extra_info=news_message,
-                            tick_number=RoundStatus.objects.get().tick_number,
-                            planet=target_planet
-                            )
-            if not stealth:
-                user2.military_flag = 1
-                user2.save()
-                News.objects.create(user1=User.objects.get(id=user2.id),
-                            user2=User.objects.get(id=user.id),
-                            empire1=empire2,
-                            empire2=user1.empire,
-                            fleet1=operation,
-                            news_type='AD',
-                            date_and_time=datetime.now(),
-                            is_personal_news=True,
-                            is_empire_news=True,
-                            extra_info=news_message2,
-                            tick_number=RoundStatus.objects.get().tick_number,
-                            planet=target_planet)
-            
-            elif stealth and agentop_specs[operation][3] == False:
-                user2.military_flag = 1
-                user2.save()
-                News.objects.create(user1=User.objects.get(id=user2.id),
-                            user2=None,
-                            empire1=empire2,
-                            empire2=None,
-                            fleet1=operation,
-                            news_type='AD',
-                            date_and_time=datetime.now(),
-                            is_personal_news=True,
-                            is_empire_news=True,
-                            extra_info=news_message2,
-                            tick_number=RoundStatus.objects.get().tick_number,
-                            planet=target_planet)
+        if operation != "Observe Planet":
+            if empire2 is None:
+                News.objects.create(user1=User.objects.get(id=user.id),
+                                user2=None,
+                                empire1=user1.empire,
+                                fleet1=operation,
+                                news_type='AA',
+                                date_and_time=datetime.now(),
+                                is_personal_news=True,
+                                is_empire_news=True,
+                                extra_info=news_message,
+                                tick_number=RoundStatus.objects.get().tick_number,
+                                planet=target_planet
+                                )
+            else:
+                News.objects.create(user1=User.objects.get(id=user.id),
+                                user2=User.objects.get(id=user2.id),
+                                empire1=user1.empire,
+                                empire2=empire2,
+                                fleet1=operation,
+                                news_type='AA',
+                                date_and_time=datetime.now(),
+                                is_personal_news=True,
+                                is_empire_news=True,
+                                extra_info=news_message,
+                                tick_number=RoundStatus.objects.get().tick_number,
+                                planet=target_planet
+                                )
+                if not stealth:
+                    user2.military_flag = 1
+                    user2.save()
+                    News.objects.create(user1=User.objects.get(id=user2.id),
+                                user2=User.objects.get(id=user.id),
+                                empire1=empire2,
+                                empire2=user1.empire,
+                                fleet1=operation,
+                                news_type='AD',
+                                date_and_time=datetime.now(),
+                                is_personal_news=True,
+                                is_empire_news=True,
+                                extra_info=news_message2,
+                                tick_number=RoundStatus.objects.get().tick_number,
+                                planet=target_planet)
+                
+                elif stealth and agentop_specs[operation][3] == False:
+                    user2.military_flag = 1
+                    user2.save()
+                    News.objects.create(user1=User.objects.get(id=user2.id),
+                                user2=None,
+                                empire1=empire2,
+                                empire2=None,
+                                fleet1=operation,
+                                news_type='AD',
+                                date_and_time=datetime.now(),
+                                is_personal_news=True,
+                                is_empire_news=True,
+                                extra_info=news_message2,
+                                tick_number=RoundStatus.objects.get().tick_number,
+                                planet=target_planet)
 
         return news_message
 
@@ -1033,7 +979,7 @@ def perform_incantation(ghost_fleet):
         n_check1 = ["Survey System", "Sense Artefact", "Vortex Portal", "Planetary Shielding"] #no defense
         n_check2 = ["Call to Arms"] #defense if not self op
 
-        if target_planet.owner is not None and incantation not in n_check1 and not (incantation in n_check2 and target_planet.owner == user1.id):
+        if target_planet.owner is not None and incantation not in n_check1 and not (incantation in n_check2 and target_planet.owner == user1.user):
             user2 = UserStatus.objects.get(id=target_planet.owner.id)
             empire2 = user2.empire
             fleet2 = Fleet.objects.get(owner=user2.id, main_fleet=True)
@@ -1043,6 +989,9 @@ def perform_incantation(ghost_fleet):
                       (1.0 + 0.01 * user2.research_percent_culture)) / 7
             defense2 = ghosts3 * race_info_list[user2.get_race_display()].get("ghost_ships_coeff", 1.0) * \
                       (1.0 + 0.01 * user2.research_percent_culture)
+
+        else:
+            user2 = user1
 
         if incantation in n_check1 and incantation != "Vortex Portal" and incantation != "Planetary Shielding":
             defense = user1.networth / ghost
@@ -1083,57 +1032,8 @@ def perform_incantation(ghost_fleet):
                 news_message2 += "Defender lost: " + str(loss2) + " psychics.\n"            
         
         if incantation == "Survey System":        
-            planets = Planet.objects.filter(x=target_planet.x, y=target_planet.y).order_by('i')
-            for p in planets:
-                if p.owner is not None:
-                    user3 = UserStatus.objects.get(id=p.owner.id)
-                    fleet3 = Fleet.objects.get(owner=user3.id, main_fleet=True)
-                    ghosts3 = fleet3.wizard / 7
-                    defense = ghosts3 * race_info_list[user3.get_race_display()].get("psychics_coeff", 1.0) * \
-                      (1.0 + 0.01 * user3.research_percent_culture)
-                    success = attack / (defense + 1)
-                else:
-                    defense = user1.networth / ghost
-                    success = attack / (defense + 1)
-                if success < 0.4:
-                    if p.owner is not None:
-                        news_message += "\n\nPlanet " + str(p.x) + "," +str(p.y) + ":" + str(p.i) + " owned by " +str(p.owner.userstatus.user_name)
-                    else:
-                        news_message += "\n\nPlanet " + str(p.x) + "," +str(p.y) + ":" + str(p.i)
-                    news_message += "\nNo information was gathered about this planet!"
-                if success >= 0.4:
-                    if p.owner is not None:
-                        news_message += "\nPlanet " + str(p.x) + "," +str(p.y) + ":" + str(p.i) + " owned by " +str(p.owner.userstatus.user_name)
-                    else:
-                        news_message += "\nPlanet " + str(p.x) + "," +str(p.y) + ":" + str(p.i)
-                    news_message += "\nPlanet size: " + str(p.size) + ""
-                if success >= 0.9:
-                    if p.bonus_solar > 0:
-                        news_message += "\nSolar Bonus: " + str(p.bonus_solar)
-                    if p.bonus_fission > 0:
-                        news_message += "\nFission Bonus: " + str(p.bonus_fission)
-                    if p.bonus_mineral > 0:
-                        news_message += "\nMineral Bonus: " + str(p.bonus_mineral)
-                    if p.bonus_crystal > 0:
-                        news_message += "\nCrystal Bonus: " + str(p.bonus_crystal)
-                    if p.bonus_ectrolium > 0:
-                        news_message += "\nEctrolium Bonus: " + str(p.bonus_ectrolium)
-                if p.artefact is not None:
-                    if success >= 1.0:
-                        news_message += "\nArtefact: Present, the " + p.artefact.name
-                if success >= 1:
-                    if p.owner is not None:
-                        if p.portal:
-                            news_message += "\nPortal"
-                        else:
-                            news_message += "\nPortal Protection: " + str(p.protection) + "%"
-                scouting = Scouting.objects.filter(empire=user1.empire, planet=p).first()
-                if scouting is None:
-                    Scouting.objects.create(user=user, planet=p, empire=user1.empire, scout=success)
-                else:
-                    if success > scouting.scout:
-                        scouting.scout = success
-                        scouting.save()
+            with connection.cursor() as cursor:
+                cursor.execute("call operations("+str('1,')+str(ghost_fleet.id)+");")
 
         if incantation == "Sense Artefact":           
             arti = Planet.objects.all().exclude(artefact=None)
@@ -1350,6 +1250,9 @@ def perform_incantation(ghost_fleet):
                 m_fleet = Fleet.objects.get(owner=user2.user, main_fleet=True)
                 sols = getattr(m_fleet, 'soldier')
                 setattr(m_fleet, 'soldier', sols + gained_soldiers)
+                if user2 == user1:
+                    mfghost = getattr(m_fleet, 'ghost')
+                    setattr(m_fleet, 'ghost', mfghost + ghost)   
                 m_fleet.save()
                 user2.population -= total_pop_lost
                 user2.save()
@@ -1374,66 +1277,66 @@ def perform_incantation(ghost_fleet):
             user1.psychic_readiness -= inca_specs[incantation][1]
         user1.save()
 
-                
-        if empire2 is None:
-            News.objects.create(user1=User.objects.get(id=user.id),
-                            user2=None,
-                            empire1=user1.empire,
-                            fleet1=incantation,
-                            news_type='GA',
-                            date_and_time=datetime.now(),
-                            is_personal_news=True,
-                            is_empire_news=True,
-                            extra_info=news_message,
-                            tick_number=RoundStatus.objects.get().tick_number,
-                            planet=target_planet
-                            )
-        else:
-            News.objects.create(user1=User.objects.get(id=user.id),
-                            user2=User.objects.get(id=user2.id),
-                            empire1=user1.empire,
-                            empire2=empire2,
-                            fleet1=incantation,
-                            news_type='GA',
-                            date_and_time=datetime.now(),
-                            is_personal_news=True,
-                            is_empire_news=True,
-                            extra_info=news_message,
-                            tick_number=RoundStatus.objects.get().tick_number,
-                            planet=target_planet
-                            )
-            if not stealth:
-                user2.military_flag = 1
-                user2.save()
-                News.objects.create(user1=User.objects.get(id=user2.id),
-                            user2=User.objects.get(id=user.id),
-                            empire1=empire2,
-                            empire2=user1.empire,
-                            fleet1=incantation,
-                            news_type='GD',
-                            date_and_time=datetime.now(),
-                            is_personal_news=True,
-                            is_empire_news=True,
-                            extra_info=news_message2,
-                            tick_number=RoundStatus.objects.get().tick_number,
-                            planet=target_planet
+        if incantation != "Survey System":        
+            if empire2 is None:
+                News.objects.create(user1=User.objects.get(id=user.id),
+                                user2=None,
+                                empire1=user1.empire,
+                                fleet1=incantation,
+                                news_type='GA',
+                                date_and_time=datetime.now(),
+                                is_personal_news=True,
+                                is_empire_news=True,
+                                extra_info=news_message,
+                                tick_number=RoundStatus.objects.get().tick_number,
+                                planet=target_planet
+                                )
+            else:
+                News.objects.create(user1=User.objects.get(id=user.id),
+                                user2=User.objects.get(id=user2.id),
+                                empire1=user1.empire,
+                                empire2=empire2,
+                                fleet1=incantation,
+                                news_type='GA',
+                                date_and_time=datetime.now(),
+                                is_personal_news=True,
+                                is_empire_news=True,
+                                extra_info=news_message,
+                                tick_number=RoundStatus.objects.get().tick_number,
+                                planet=target_planet
+                                )
+                if not stealth:
+                    user2.military_flag = 1
+                    user2.save()
+                    News.objects.create(user1=User.objects.get(id=user2.id),
+                                user2=User.objects.get(id=user.id),
+                                empire1=empire2,
+                                empire2=user1.empire,
+                                fleet1=incantation,
+                                news_type='GD',
+                                date_and_time=datetime.now(),
+                                is_personal_news=True,
+                                is_empire_news=True,
+                                extra_info=news_message2,
+                                tick_number=RoundStatus.objects.get().tick_number,
+                                planet=target_planet
 
-                            )
-            if stealth and inca_specs[incantation][3] == False:
-                user2.military_flag = 1
-                user2.save()
-                News.objects.create(user1=User.objects.get(id=user2.id),
-                            user2=None,
-                            empire1=empire2,
-                            empire2=None,
-                            fleet1=incantation,
-                            news_type='GD',
-                            date_and_time=datetime.now(),
-                            is_personal_news=True,
-                            is_empire_news=True,
-                            extra_info=news_message2,
-                            tick_number=RoundStatus.objects.get().tick_number,
-                            planet=target_planet
+                                )
+                if stealth and inca_specs[incantation][3] == False:
+                    user2.military_flag = 1
+                    user2.save()
+                    News.objects.create(user1=User.objects.get(id=user2.id),
+                                user2=None,
+                                empire1=empire2,
+                                empire2=None,
+                                fleet1=incantation,
+                                news_type='GD',
+                                date_and_time=datetime.now(),
+                                is_personal_news=True,
+                                is_empire_news=True,
+                                extra_info=news_message2,
+                                tick_number=RoundStatus.objects.get().tick_number,
+                                planet=target_planet
 
                             )
     return news_message
