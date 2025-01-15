@@ -27,7 +27,6 @@ from .battle import *
 from app.views import NewsFeed as FeedNews
 from app.views import Portal
 from django.views.decorators.clickjacking import xframe_options_exempt
-from app.models import Ops
 
 import json
 import numpy as np
@@ -4295,8 +4294,6 @@ def specops(request, *args):
                     b_cost = int(s.readiness * (1-(cloak.effect1/100)))
                 else:
                     b_cost = s.readiness  
-                if s.name == "Grow Planet's Size":
-                    b_cost = int(b_cost*1.5)
                 if user_to_template_specop:
                     fr = specopReadiness(s.name, "Spell", status, user_to_template_specop)
                 else:
@@ -4333,8 +4330,6 @@ def specops(request, *args):
                 else:
                     fr = None
                 b_cost = g.readiness
-                if g.name == "Sense Artefact":
-                    b_cost = int(b_cost*2)
                 if robo.empire_holding == status.empire:
                     tech = get_op_penalty(status.research_percent_operations, (g.tech/2))
                 else:

@@ -83,14 +83,16 @@
 
 	--operations
 	with operation as (
-		select a.id id, owner_id, agent, ghost, specop, target_planet_id p_id, random, command_order c_o, 
+		select a.id id, owner_id, a.agent agents, a.ghost ghosts, specop, target_planet_id p_id, random, command_order c_o, 
 		(select readiness from '|| _ops_table||' o where o.name = specop) base_cost,
 			(case when (select tech from '|| _ops_table||' o where o.name = specop)-
 			(case when a.command_order = 6 then u. research_percent_operations 
 			else u.research_percent_culture end) < 0 then 0
 			else (select tech from '|| _ops_table||' o where o.name = specop) -
 			(case when a.command_order = 6 then u. research_percent_operations 
-			else u.research_percent_culture end) end) penalty
+			else u.research_percent_culture end) end) penalty,
+			(select owner_id from '|| _planets_table ||' where id = target_planet_id) defid,
+			(select stealth from '|| _ops_table||' o where o.name = a.specop) stealth
 		from '|| _fleet_table ||' a 
 		join '|| _userstatus_table ||' u on u.user_id = a.owner_id
 		where a.main_fleet = FALSE
@@ -101,7 +103,7 @@
 	),
 	attack as (
 	 select op.id a_id, (((0.6 + (0.8/ 255.0) * (op.random & 255)) * 
-		att.num_val * (case when op.c_o = 6 then coalesce(op.agent,0) else coalesce(op.ghost,0) end) *
+		att.num_val * (case when op.c_o = 6 then coalesce(op.agents,0) else coalesce(op.ghosts,0) end) *
 		(select (1.0 + 0.01 * (case when op.c_o = 6 then u.research_percent_operations 
 			else u.research_percent_culture end)) from '|| _userstatus_table ||' u where u.user_id = op.owner_id))/
 		(select difficulty from '|| _ops_table||' o where o.name = op.specop)) / (case when op.penalty > 0 then 1 + (0.01 * op.penalty) else 1 end) attack
@@ -148,18 +150,27 @@
 	--losses
 	attloss as (
 		select s.s_id al_id, case when p.owner_id is null then 0 else round(case when op.c_o = 6 then case 
-		when s.success < 2.0 then greatest(0, least(coalesce(op.agent,0), (1.0 - (0.5 * power((0.5 * s.success ), 1.1))) *
-		(1.0 - power((0.5 * s.success), 0.2)) * (0.75 + (0.5 / 255.0) * (op.random & 255)) * coalesce(op.agent,0))) else 0 end
-		else case when s.g_def < 2.0 then greatest(0, least(coalesce(op.ghost,0), (1.0 - (0.5 * power((0.5 * s.g_def ), 1.1))) *
-		(1.0 - power((0.5 * s.g_def), 0.2)) * (0.75 + (0.5 / 255.0) * (op.random & 255)) * coalesce(op.ghost,0))) else 0 end
+		when s.success < 2.0 then greatest(0, least(coalesce(op.agents,0), (1.0 - (0.5 * power((0.5 * s.success ), 1.1))) *
+		(1.0 - power((0.5 * s.success), 0.2)) * (0.75 + (0.5 / 255.0) * (op.random & 255)) * coalesce(op.agents,0))) else 0 end
+		else case when s.g_def < 2.0 then greatest(0, least(coalesce(op.ghosts,0), (1.0 - (0.5 * power((0.5 * s.g_def ), 1.1))) *
+		(1.0 - power((0.5 * s.g_def), 0.2)) * (0.75 + (0.5 / 255.0) * (op.random & 255)) * coalesce(op.ghosts,0))) else 0 end
 		end) end losses
 		from success s
 		join operation op on op.id = s.s_id
 		join '|| _planets_table ||' p on p.id = op.p_id 
 		where s.p_id = op.p_id
 	),
+	attagentloss as (
+		update '|| _fleet_table ||' f
+		set agent = agent - l.losses
+		from operation op
+		join attloss l on l.al_id = op.id
+		where f.id = op.id
+		and op.c_o = 6
+	),
 	defloss as (
-		select s.s_id dl_id, case when p.owner_id is null then 0 else round(case when op.c_o = 6 then case 
+		select s.s_id dl_id, op.defid, op.c_o,
+		case when p.owner_id is null then 0 else round(case when op.c_o = 6 then case 
 		when s.success < 2.0 then greatest(0, least(coalesce(
 		(select agent from '|| _fleet_table ||' where main_fleet=true and owner_id = p.owner_id),0), 
 		(0.5 * power((0.5 * s.success ), 1.1)) *
@@ -177,6 +188,12 @@
 		where s.p_id = op.p_id
 	),
 	
+	defagentloss as (
+		update '|| _fleet_table ||' f
+		set agent = agent - l.lost
+		from (select sum(losses) lost , defid from defloss where c_o = 6 group by defid) l
+		where f.owner_id=l.defid and main_fleet=true
+	),
 	--readiness
 	p_cost as (
 		select op.id id, u.empire_id atemp, op.penalty, op.base_cost, op.specop, op.owner_id,
@@ -314,6 +331,26 @@
         '') from  p_information i where i.i_id = e.id) end)
 		from operation e
 	),
+	ins_news_defence as (
+		insert into '|| _news_table||' 
+		( user1_id, user2_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
+		is_read, tick_number, planet_id, fleet1, extra_info)
+		select (select owner_id from '|| _planets_table ||' where id = e.p_id), 
+		(case when s.success > 2.0 then e.owner_id else null end),
+		(select empire_id from '|| _userstatus_table ||' u where u.user_id = e.defid), 
+		(case when e.c_o = 6 then ''AD'' else ''GD'' end), 
+		current_timestamp, true, true, false, 
+		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
+		(case when e.c_o = 6 then 
+			case when s.success >= 1 then ''Their agents were successful!''
+			when s.success >= 0.4 then ''Our agents managed to stop the attackers before all information was stolen!''
+			else ''Our agents managed to defend'' end
+		end)
+		from operation e 
+		join success s on s.s_id = e.id
+		where e.defid is not null
+		and (s.success < 2.0 or e.stealth = false)
+	),
 	--scouting
 	merge_scout as (
 		merge into '|| _scouting_table ||' a
@@ -329,15 +366,85 @@
 		WHEN NOT MATCHED THEN
 		  INSERT (planet_id, empire_id, user_id, scout)
 		  VALUES (o.p_id, (select empire_id from '|| _userstatus_table ||' u where u.user_id = o.owner_id), o.owner_id, o.success)
+	),
+	send_home as (
+		update '|| _fleet_table ||' a
+		set i = s.i,
+		x = s.x,
+		y = s.y,
+		command_order = 5,
+		ticks_remaining = case when a.x = s.x and a.y = s.y then ticks_remaining 
+						  else floor((sqrt(pow((a.current_position_x - s.x),2) + pow((a.current_position_y - s.y),2))/
+						  c.num_val) * coalesce((select (1+(effect1/100)) from '|| _artefacts_table ||' where name = ''Blackhole'' and
+						  empire_holding_id = s.owner_id),1)--num_val is speed 
+						  ) end
+	from 
+		(select * from
+		(select a.id a_id, a.owner_id, p.id p_id, p.x, p.y, p.i,
+		rank() over(partition by a.owner_id, a.id order by (pow((p.x - a.current_position_x),2) + pow((p.y - a.current_position_y),2)) asc)  rn
+		from '|| _fleet_table ||' a, '|| _planets_table ||' p
+		where p.owner_id = a.owner_id
+		and p.portal = true and a.command_order in (6,7) and a.ticks_remaining = 0
+		) g where g.rn = 1) s 
+	join '|| _userstatus_table ||' u on u.id = s.owner_id
+	join classes l on l.name = u.race
+	join constants c on c.class = l.id and c.name = ''travel_speed''
+	where a.id = s.a_id
 	)
-	
 	update '|| _userstatus_table ||' u
 	set military_flag = case when military_flag != 1 then 2 else 1 end,
-	agent_readiness = agent_readiness - (select sum(fa) from r_cost where specop=''Observe Planet'' and owner_id=u.id group by owner_id),
-	psychic_readiness = psychic_readiness - (select sum(fa) from r_cost where specop=''Survey System'' and owner_id=u.id group by owner_id)
+	agent_readiness = agent_readiness - COALESCE((select sum(fa) from r_cost where specop=''Observe Planet'' and owner_id=u.id group by owner_id),0),
+	psychic_readiness = psychic_readiness - COALESCE((select sum(fa) from r_cost where specop=''Survey System'' and owner_id=u.id group by owner_id),0)
 	from (select owner_id from operation group by owner_id) c 
 	where u.id = c.owner_id;
-	 
+	
+	-- join main fleet
+	with recalled_fleets as 
+	(select owner_id, 
+		sum(bomber) bomber ,
+		sum(fighter ) fighter  ,
+		sum(transport ) transport  ,
+		sum(cruiser ) cruiser  ,
+		sum(carrier ) carrier  ,
+		sum(soldier ) soldier  ,
+		sum(droid ) droid  ,
+		sum(goliath ) goliath  ,
+		sum(phantom ) phantom  ,
+		sum(agent ) agent  ,
+		sum(ghost ) ghost  ,
+		sum(exploration) exploration 
+	  from '|| _fleet_table ||' a 
+	  where a.main_fleet = false
+	  and a.command_order = 5
+	  and a.ticks_remaining = 0
+	  group by owner_id)
+      
+	, join_main_fleet as (
+	update '|| _fleet_table ||' a1
+	set
+	bomber = a1.bomber + b.bomber,
+	fighter  = a1.fighter  + b.fighter ,
+	transport  = a1.transport  + b.transport ,
+	cruiser  = a1.cruiser  + b.cruiser ,
+	carrier  = a1.carrier  + b.carrier ,
+	soldier  = a1.soldier  + b.soldier ,
+	droid  = a1.droid  + b.droid ,
+	goliath  = a1.goliath  + b.goliath ,
+	phantom  = a1.phantom  + b.phantom ,
+	agent  = a1.agent  + b.agent ,
+	ghost  = a1.ghost  + b.ghost ,
+	exploration = a1.exploration + b.exploration
+	from recalled_fleets b
+	where a1.main_fleet = true and
+	a1.owner_id = b.owner_id
+	)
+	
+	delete from '|| _fleet_table ||' a
+	where 
+	a.main_fleet = false
+	and a.command_order = 5
+	and a.ticks_remaining = 0;
+	
 	';
 
 	execute _sql;

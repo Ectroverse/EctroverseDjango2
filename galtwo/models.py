@@ -378,6 +378,7 @@ class Fleet(models.Model):
     # got sick of having to search for it everytime actually, so decided to add it
     target_planet = models.ForeignKey(Planets, related_name="target", on_delete=models.SET_DEFAULT, blank=True,
                                       null=True, default=None)
+    random = models.IntegerField(null=True, blank=True, default=None)                                 
 
 class UnitConstruction(models.Model):
     user = models.ForeignKey(User, related_name='galtwoucon', on_delete=models.CASCADE)
@@ -543,3 +544,18 @@ class Ticks_log(models.Model):
     calc_time_ms = models.DecimalField(max_digits=12, decimal_places=6)
     dt = models.DateTimeField()
     error = models.TextField(null=True)
+
+class Ops(models.Model):
+    class SpecopType(models.TextChoices):
+        O = 'O', _('Agent operation')
+        S = 'S', _('Psychic spell')
+        G = 'G', _('Ghost incantation')
+    specop_type = models.CharField(max_length=1, choices=SpecopType.choices, default='O')
+    name = models.CharField(max_length=50, blank=True, null=True, default=None)
+    ident = models.CharField(max_length=2)
+    tech = models.IntegerField()
+    readiness = models.IntegerField()
+    difficulty = models.DecimalField(max_digits=2, decimal_places=1)
+    selfsp = models.BooleanField(default=False)
+    stealth = models.BooleanField(default=False)
+    description = models.CharField(max_length=255, default=None)

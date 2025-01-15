@@ -10,32 +10,44 @@ import math
 from app.calculations import *
 from django.db import connection
 
+ops = {}
+for o in Ops.objects.filter(specop_type="O"):
+    ops[o.name] = [o.tech,o.readiness,o.difficulty,o.stealth,o.ident,o.description]
+for o in Ops.objects.filter(specop_type="S"):
+    ops[o.name] = [o.tech,o.readiness,o.difficulty,o.stealth,o.ident,o.description]
+for o in Ops.objects.filter(specop_type="G"):
+    ops[o.name] = [o.tech,o.readiness,o.difficulty,o.stealth,o.ident,o.description]
+
 def specopReadiness(specop, type, user1, *args):
     user2 = None
     if args:
         user2 = args[0]
     
-    robo = Artefacts.objects.get(name="Advanced Robotics")
-    if robo.empire_holding == user1.empire:
-        o_tech = specop[0]/2
-    else:
-        o_tech = specop[0]
+    robo = Artefacts.objects.get(name="Advanced Robotics")        
     if type == "Spell":
-        penalty = get_op_penalty(user1.research_percent_culture, o_tech)
-        print("penalty %s" % penalty)
+        if robo.empire_holding == user1.empire:
+            penalty = get_op_penalty(user1.research_percent_culture, ops[specop][0]/2)
+        else:
+            penalty = get_op_penalty(user1.research_percent_culture, ops[specop][0])
+            print("penalty %s" % penalty)
         if user2 == None and specop[3] == False:
             return -1
         if specop[3]: #if self op
-            fr = int((1.0 + 0.01 * penalty) * specop[1])
+            fr = int((1.0 + 0.01 * penalty) * ops[specop][1])
             cloak = Artefacts.objects.get(name="Magus Cloak")
             if cloak.empire_holding == user1.empire:
                 fr = round(fr*(1-(cloak.effect1/100)))
             return fr
     elif type == 'Incantation':
-        penalty = get_op_penalty(user1.research_percent_culture, o_tech)
+        if robo.empire_holding == user1.empire:
+            penalty = get_op_penalty(user1.research_percent_culture, ops[specop][0]/2)
+        else:
+            penalty = get_op_penalty(user1.research_percent_culture, ops[specop][0])
     else:
-        penalty = get_op_penalty(user1.research_percent_operations, o_tech)
-
+        if robo.empire_holding == user1.empire:
+            penalty = get_op_penalty(user1.research_percent_operations, ops[specop][0]/2)
+        else:
+            penalty = get_op_penalty(user1.research_percent_operations, ops[specop][0])
 
     if penalty == -1:
         return -1
@@ -53,9 +65,7 @@ def specopReadiness(specop, type, user1, *args):
     if fa < 0.75:
         fa = 0.75
 
-
-
-    fa = (1.0 + 0.01 * penalty) * specop[1] * fa
+    fa = (1.0 + 0.01 * penalty) * ops[specop][1] * fa
 
     relations_from_empire = Relations.objects.filter(empire1=empire1)
     relations_to_empire = Relations.objects.filter(empire2=empire1)
@@ -482,7 +492,7 @@ def perform_operation(agent_fleet):
         news_message = ""
         news_message2 = ""
 
-        if success < 2.0 and target_planet.owner is not None:
+        if success < 2.0 and target_planet.owner is not None and operation != "Observe Planet":
             stealth = False
             refdef = 0.5 * pow((0.5 * success), 1.1)
             refatt = 1.0 - refdef
@@ -563,11 +573,6 @@ def perform_operation(agent_fleet):
                                " the target faction currently!"
             else:
                 news_message += "Your agents couldn't gather any information!"
-        if target_planet.owner is not None:
-            user1.agent_readiness -= specopReadiness(agentop_specs[operation],"Operation", user1, user2)
-        else: 
-            user1.agent_readiness -= agentop_specs[operation][1]
-        user1.save()
 
         if operation == "Maps theft":
             if success < 1:
@@ -861,6 +866,12 @@ def perform_operation(agent_fleet):
                 news_message2 += "Your agents managed to defend!"
 
         if operation != "Observe Planet":
+            if target_planet.owner is not None:
+                user1.agent_readiness -= specopReadiness(agentop_specs[operation],"Operation", user1, user2)
+            else: 
+                user1.agent_readiness -= agentop_specs[operation][1]
+            user1.save()
+        
             if empire2 is None:
                 News.objects.create(user1=User.objects.get(id=user.id),
                                 user2=None,
@@ -1270,14 +1281,13 @@ def perform_incantation(ghost_fleet):
             Specops.objects.create(user_to= user1.user, specop_type='G', name='Vortex Portal', ticks_left=length, planet=target_planet)
             news_message += "Vortex Portal created at " + str(target_planet.x) + "," + str(target_planet.y) + " for a duration of " + str(length) + " weeks!"
 
-        n_check = ["Survey System", "Sense Artefact", "Vortex Portal"]
-        if target_planet.owner is not None and incantation not in n_check:
-            user1.psychic_readiness -= specopReadiness(inca_specs[incantation],"Incantation", user1, user2)
-        else: 
-            user1.psychic_readiness -= inca_specs[incantation][1]
-        user1.save()
-
-        if incantation != "Survey System":        
+        if incantation != "Survey System": 
+            n_check = ["Sense Artefact", "Vortex Portal"]
+            if target_planet.owner is not None and incantation not in n_check:
+                user1.psychic_readiness -= specopReadiness(inca_specs[incantation],"Incantation", user1, user2)
+            else: 
+                user1.psychic_readiness -= inca_specs[incantation][1]
+            user1.save()
             if empire2 is None:
                 News.objects.create(user1=User.objects.get(id=user.id),
                                 user2=None,
