@@ -101,7 +101,7 @@
 		and (case when a.command_order = 6 then u.agent_readiness >= 0 else u.psychic_readiness >= 0 end)
 		and a.id = case when '|| fleet_id ||' = 0 then a.id else '|| fleet_id ||' end
 	),
-	attack as (
+	/*attack as (
 	 select op.id a_id, (((0.6 + (0.8/ 255.0) * (op.random & 255)) * 
 		att.num_val * (case when op.c_o = 6 then coalesce(op.agents,0) else coalesce(op.ghosts,0) end) *
 		(select (1.0 + 0.01 * (case when op.c_o = 6 then u.research_percent_operations 
@@ -112,10 +112,10 @@
 		join classes c on c.name = a.race
 		join constants att on att.class = c.id and att.name = case when op.c_o = 6 then ''agent_coeff'' else ''ghost_coeff'' end
 		where op.penalty < 150
-	),
+	),*/
 	success as (
 		-- success
-		select op.id s_id, p.id p_id, op.owner_id, op.specop, COALESCE(atac.attack / 
+		select op.id s_id, p.id p_id, op.owner_id, op.specop, COALESCE(ops_attack('|gal_nr|', df.id, def.id, op.specop)  / 
 		--defence
 		(case when p.owner_id is null then 50 else
 		1.0 + (select  dc.num_val * (select case when op.c_o = 6 then coalesce(df.agent,0) else coalesce(df.wizard,0) end) * 
@@ -129,7 +129,7 @@
 		end / case when op.c_o = 6 then 1 else 7 end ),0)
 		success,
 		-- ghost defence
-		case when op.c_o = 7 then COALESCE(atac.attack / (case when p.owner_id is null then 50 else
+		case when op.c_o = 7 then COALESCE(ops_attack('|gal_nr|', df.id, def.id, op.specop) / (case when p.owner_id is null then 50 else
 		1.0 + (select  dcc.num_val * coalesce(df.ghost,0) * 
         (1.0 + 0.005 * defc.research_percent_culture)
 		from '|| _userstatus_table ||' defc
@@ -144,7 +144,7 @@
 		join '|| _planets_table ||' p on (case when op.specop != ''Survey System'' then p.id = op.p_id else 
 		p.x = (select x from '|| _planets_table ||' where id = op.p_id) AND
 		p.y = (select y from '|| _planets_table ||' where id = op.p_id) end)
-		join attack atac on op.id = atac.a_id
+		--join attack atac on op.id = atac.a_id
 		where op.penalty < 150
 	),
 	--losses
