@@ -1,4 +1,4 @@
-	CREATE OR REPLACE PROCEDURE operations(gal_nr integer default null, fleet_id integer default null)
+	CREATE OR REPLACE PROCEDURE incantations(gal_nr integer default null, fleet_id integer default null)
 	LANGUAGE plpgsql AS
 	$$
 	declare
@@ -86,61 +86,67 @@
 		update '|| _fleet_table ||'
 		set random = random()*(2147483647-0)
 		where main_fleet = FALSE
-		and command_order = 6 --perform 
+		and command_order in (6,7) --perform 
 		and ticks_remaining = 0;
 
 	--operations
 	with operation as (
-		select a.id id, owner_id, a.agent agents, specop, target_planet_id p_id, random, command_order c_o, 
+		select a.id id, owner_id, a.ghost ghosts, specop, target_planet_id p_id, random, command_order c_o, 
 		(select readiness from '|| _ops_table||' o where o.name = specop) base_cost,
 		case when (select tech from '|| _ops_table||' o where o.name = specop) = 0 then 0 else 
-		(case when greatest(0,pow(((select tech from '|| _ops_table||' o where o.name = specop) - u.research_percent_operations),1.2),0) < 0 then 0
-		else greatest(0,pow(((select tech from '|| _ops_table||' o where o.name = specop) - u.research_percent_operations),1.2),0) end) end penalty,
+		(case when greatest(0,pow(((select tech from '|| _ops_table||' o where o.name = specop) - u.research_percent_culture),1.2),0) < 0 then 0
+		else greatest(0,pow(((select tech from '|| _ops_table||' o where o.name = specop) - u.research_percent_culture),1.2),0) end) end penalty,
 		(select owner_id from '|| _planets_table ||' where id = target_planet_id) defid,
 		(select stealth from '|| _ops_table||' o where o.name = a.specop) stealth
 		from '|| _fleet_table ||' a 
 		join '|| _userstatus_table ||' u on u.user_id = a.owner_id
 		where a.main_fleet = FALSE
-		and a.command_order = 6 --perform 
+		and a.command_order = 7 --perform 
 		and a.ticks_remaining = 0
-		and u.agent_readiness >= 0
+		and u.psychic_readiness >= 0
 		and a.id = case when '|| fleet_id ||' = 0 then a.id else '|| fleet_id ||' end
 	),
 	attack as (
-	 select op.id a_id, (((0.6 + (0.8/ 255.0) * (op.random & 255))) * att.num_val * coalesce(op.agents,0) *
-		(select (1.0 + 0.01 * u.research_percent_operations) from '|| _userstatus_table ||' u where u.user_id = op.owner_id)/
+	 select op.id a_id, (((0.6 + (0.8/ 255.0) * (op.random & 255))) * att.num_val * coalesce(op.ghosts,0) *
+		(select (1.0 + 0.01 * u.research_percent_culture) from '|| _userstatus_table ||' u where u.user_id = op.owner_id)/
 		(select difficulty from '|| _ops_table||' o where o.name = op.specop) / 
 		(case when op.penalty > 0 then 1 + (0.01 * op.penalty) else 1 end)) attack
 		from operation op
 		join '|| _userstatus_table ||' a on a.id = op.owner_id
 		join classes c on c.name = a.race
-		join constants att on att.class = c.id and att.name = ''agent_coeff''
+		join constants att on att.class = c.id and att.name = ''ghost_coeff''
 		where op.penalty < 150
 	),
 	success as (
 		-- success
-		select op.id s_id, p.id p_id, op.owner_id, op.specop,COALESCE((atac.attack / 
+		select op.id s_id, p.id p_id, op.owner_id, op.specop, COALESCE((atac.attack / 
 		--defence
 		(case when p.owner_id is null then 50 else
-		1.0 + (select dc.num_val * (COALESCE(df.agent,0)) * (1.0 + 0.005 * def.research_percent_operations)
+		1.0 + (select dc.num_val * (COALESCE(df.wizard,0)) * (1.0 + 0.005 * def.research_percent_culture)
 		from '|| _userstatus_table ||' def
 		join classes d_c on d_c.name = def.race
-		join constants dc on dc.class = d_c.id and dc.name = ''agent_coeff''
-		join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = op.defid) end)),0) success
+		join constants dc on dc.class = d_c.id and dc.name = ''psychic_coeff''
+		join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = op.defid) end / 7)),0) success,
+		-- ghost defence
+		COALESCE((atac.attack / (case when p.owner_id is null then 50 else
+		1.0 + (select dc.num_val * (COALESCE(df.ghost,0)) * (1.0 + 0.005 * def.research_percent_culture)
+		from '|| _userstatus_table ||' def
+		join classes d_c on d_c.name = def.race
+		join constants dc on dc.class = d_c.id and dc.name = ''ghost_coeff''
+		join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = op.defid) end / 7)),0) g_def
+		
 		from operation op
-		join '|| _planets_table ||' p on p.id = op.p_id
+		join '|| _planets_table ||' p on (case when op.specop != ''Survey System'' then p.id = op.p_id else 
+		p.x = (select x from '|| _planets_table ||' where id = op.p_id) AND
+		p.y = (select y from '|| _planets_table ||' where id = op.p_id) end)
 		join attack atac on op.id = atac.a_id
 		where op.penalty < 150
 	),
 	--losses
 	attloss as (
-		select s.s_id al_id, (case when p.owner_id is null then 0 
-		else 
-			round(case when s.success < 2.0 
-			then greatest(0, least(coalesce(op.agents,0), (1.0 - (0.5 * power((0.5 * s.success ), 1.1))) *
-			(1.0 - power((0.5 * s.success), 0.2)) * (0.75 + (0.5 / 255.0) * (op.random & 255)) * coalesce(op.agents,0))) 
-			else 0 end) 
-		end) losses
+		select s.s_id al_id, case when p.owner_id is null then 0 else round(case
+		when s.g_def < 2.0 then greatest(0, least(coalesce(op.ghosts,0), (1.0 - (0.5 * power((0.5 * s.g_def ), 1.1))) *
+		(1.0 - power((0.5 * s.g_def), 0.2)) * (0.75 + (0.5 / 255.0) * (op.random & 255)) * coalesce(op.ghosts,0))) else 0 end) end losses
 		from success s
 		join operation op on op.id = s.s_id
 		join '|| _planets_table ||' p on p.id = op.p_id 
@@ -148,11 +154,18 @@
 	),
 	defloss as (
 		select s.s_id dl_id, op.defid, op.c_o, 
-		case when p.owner_id is null then 0 else round(case 
-		when s.success < 2.0 then greatest(0, least(coalesce((select agent from '|| _fleet_table ||' where main_fleet=true and owner_id = p.owner_id),0), 
-		(0.5 * power((0.5 * s.success ), 1.1)) * (1.0 - power((0.5 * s.success), 0.2)) * (0.75 + (0.5 / 255.0) 
-		* (op.random & 255))) * coalesce((select agent from '|| _fleet_table ||' where main_fleet=true and owner_id = p.owner_id),0))else 0 end)
-		end losses
+		case when op.specop not in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') then
+			(case when p.owner_id is null or p.owner_id = op.owner_id then 0 else round(case 
+			when s.success < 2.0 then greatest(0, least(coalesce((select wizard from '|| _fleet_table ||' where main_fleet=true and owner_id = p.owner_id),0), 
+			(0.5 * power((0.5 * s.success ), 1.1)) * (1.0 - power((0.5 * s.success), 0.2)) * (0.75 + (0.5 / 255.0) 
+			* (cast(random()*(2147483647-0) as int) & 255)) * coalesce((select wizard from '|| _fleet_table ||' where main_fleet=true and owner_id = p.owner_id),0)))
+			else 0 end ) end) else 0 end losses,
+		case when op.specop not in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') then		
+			(case when p.owner_id is null or p.owner_id = op.owner_id then 0 else round(case 
+			when s.g_def < 2.0 then greatest(0, least(coalesce((select ghost from '|| _fleet_table ||' where main_fleet=true and owner_id = p.owner_id),0), 
+			(0.5 * power((0.5 * s.g_def ), 1.1)) * (1.0 - power((0.5 * s.g_def), 0.2)) * (0.75 + (0.5 / 255.0) 
+			* (cast(random()*(2147483647-0) as int) & 255)) * coalesce((select ghost from '|| _fleet_table ||' where main_fleet=true and owner_id = p.owner_id),0)))
+			else 0 end ) end) else 0 end g_losses
 		from success s
 		join operation op on op.id = s.s_id
 		join '|| _planets_table ||' p on p.id = op.p_id
@@ -161,8 +174,9 @@
 	
 	deflosses as (
 		update '|| _fleet_table ||' f
-		set agent = agent - l.lost
-		from (select sum(losses) lost , defid from defloss group by defid) l
+		set wizard = wizard - l.plost,
+		ghost = ghost - l.glost
+		from (select sum(losses) plost , sum(g_losses) glost, defid from defloss group by defid) l
 		where f.owner_id=l.defid and main_fleet=true
 	),
 	--readiness
@@ -170,7 +184,7 @@
 		select op.id id, u.empire_id atemp, op.penalty, op.base_cost, op.specop, op.owner_id,
 		(case when p.owner_id is null then 1 else
 		(select empire_id from '|| _userstatus_table ||' d where d.user_id = p.owner_id) end) demp,
-		(greatest((case when p.owner_id is null then 1 else 
+		(greatest((case when op.specop in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') or p.owner_id is null then 1 else 
 		(0.5*(power(((1.0+u.num_planets)/(1.0+(select num_planets from '|| _userstatus_table ||' d where d.user_id = p.owner_id))), 1.8)+
 		(power(((1.0+(select planets from '|| _empire_table ||' where id = u.empire_id))/
 		(1.0+(select planets from '|| _empire_table ||' where id =(select empire_id from '|| _userstatus_table ||' d where d.user_id = p.owner_id)))), 1.2))))
@@ -206,16 +220,17 @@
 		from w_cost c
 	),
 	
-	-- ops
+	-- incas
 	
-	observe as (
-		select s.s_id i_id, ( 
-		 case when al.losses > 0 then ''Attacker Lost: '' || al.losses || '' agents'' || chr(10) || '''' 
-		 else '''' end || 
-		 case when dl.losses > 0 then ''Defender Lost: '' || dl.losses || '' agents'' || chr(10) || '''' 
-		 else '''' end ||
+	survey as (
+		select s.s_id i_id, (
+		chr(10) ||''Planet: '' || p.i || chr(10) ||
+		case when p.owner_id is not null then 
+			 ''Owned by: '' || (select user_name from '|| _userstatus_table ||' where id = p.owner_id) || chr(10) || 
+			 '''' 
+		else '''' end ||
 		case when s.success >= 0.4 then 
-			''Planet Size: '' || p.size ||
+			''Size: '' || p.size ||
 			 case when s.success >= 0.9 then 
 				 case when p.bonus_solar > 0 then chr(10) || ''Solar Bonus: '' || p.bonus_solar || ''%'' 
 				 when p.bonus_fission > 0 then chr(10) || ''Fission Bonus: '' || p.bonus_fission || ''%'' 
@@ -259,185 +274,23 @@
 		 else ''No information was gathered about this planet!'' || '''' end
 		 ) news_info
 		from operation op
-		join '|| _planets_table ||' p on p.id = op.p_id 
+		join '|| _planets_table ||' p on p.x = (select x from '|| _planets_table ||' where id = op.p_id) AND
+		p.y = (select y from '|| _planets_table ||' where id = op.p_id)
 		join success s on s.s_id = op.id and s.p_id = p.id
-		join attloss al on al.al_id = op.id
-		join defloss dl on dl.dl_id = op.id
+		order by p.i
 	),	
-
-	-- other ops
-	nuke_planet as (
-		update '|| _planets_table ||' p
-		set owner_id = null,
-		size = cast(random()*(p.size-(p.size*0.8))+(p.size*0.8) as int),
-		current_population = p.size * 20,
-		max_population = p.size * 200,
-		protection = 0,
-		overbuilt = 0,
-		overbuilt_percent = 0, 
-		bonus_fission = (case when p.bonus_solar=0 and p.bonus_mineral=0 and p.bonus_crystal=0 and p.bonus_ectrolium=0 then
-		cast(random()*(100-10)+10 as int) else 0 end),
-		solar_collectors = 0,
-		fission_reactors = 0,
-		mineral_plants = 0,
-		crystal_labs = 0,
-		refinement_stations = 0,
-		cities = 0,
-		research_centers = 0,
-		defense_sats = 0,
-		shield_networks = 0,
-		portal = false,
-		portal_under_construction = false,
-		total_buildings = 0,
-		buildings_under_construction = 0
-		from operation op
-		join success s on s.s_id = op.id
-		where op.specop = ''Nuke Planet'' and s.success >= 1.0 and p.id = op.p_id
-	),
-	nuke_constr as (
-		delete from '|| _construction_table ||' 
-		where planet_id in ( 
-		select op.p_id from operation op
-		join success s on s.s_id = op.id
-		where op.specop = ''Nuke Planet'' and s.success >= 1.0)
-	),
-	nuke_station as (
-		delete from '|| _fleet_table ||' 
-		where id in ( 
-		select op.id from operation op
-		join success s on s.s_id = op.id
-		where op.specop = ''Nuke Planet'' and s.success >= 1.0)
-	),
-	--news
-	op_information as (
-		select s.s_id i_id, (
-		case when al.losses > 0 then ''Attacker Lost: '' || al.losses || '' agents'' || chr(10) || '''' 
-		else '''' end || 
-		case when dl.losses > 0 then ''Defender Lost: '' || dl.losses || '' agents'' || '''' 
-		else '''' end ||
-		case when op.specop = ''Spy Target'' then
-			case when s.success >= 0.4 then
-				case when s.success >= 0.5 then 
-						chr(10) || ''Fleet readiness: '' || u.fleet_readiness || ''%''
-				else '''' end ||
-				case when s.success >= 0.7 then
-						chr(10) || ''Psychic readiness: '' || u.psychic_readiness || ''%''
-				else '''' end ||
-				case when s.success >= 0.9 then
-						chr(10) || ''Agent readiness: '' || u.agent_readiness || ''%''
-				else '''' end ||
-				case when s.success >= 1.0 then
-						chr(10) || ''Energy: '' || u.energy
-				else '''' end ||
-				case when s.success >= 0.6 then
-						chr(10) || ''Minerals: '' || u.minerals
-				else '''' end ||
-					chr(10) || ''Crystals: '' || u.crystals ||
-				case when s.success >= 0.8 then
-						chr(10) || ''Ectrolium: '' || u.ectrolium
-				else '''' end ||
-				case when s.success >= 0.9 then
-						chr(10) || ''Population: '' || u.population
-				else '''' end 
-			else ''Your Agents failed'' end 
-		when op.specop = ''Infiltration'' then
-			case when s.success >= 0.4 then
-				case when s.success >= 0.5 then
-						chr(10) || ''Energy: '' || u.energy
-				else '''' end ||
-				case when s.success >= 0.6 then
-						chr(10) || ''Minerals: '' || u.minerals
-				else '''' end ||
-					chr(10) || ''Crystals: '' || u.crystals ||
-				case when s.success >= 0.8 then
-						chr(10) || ''Ectrolium: '' || u.ectrolium
-				else '''' end ||
-				case when s.success >= 0.7 then
-						chr(10) || ''Solar Collectors: '' || u.total_solar_collectors
-				else '''' end  ||
-				case when s.success >= 1.0 then 
-						chr(10) || ''Fission Reactors: '' || u.total_fission_reactors 
-				else '''' end ||
-				case when s.success >= 0.7 then
-						chr(10) || ''Crystal Laboratories: '' || u.total_mineral_plants 
-				else '''' end ||
-				case when s.success >= 0.9 then
-						chr(10) || ''Refinement Stations: '' || u.total_refinement_stations 
-				else '''' end ||
-				case when s.success >= 0.5 then
-						chr(10) || ''Cities: '' || u.total_cities 
-				else '''' end ||
-				case when s.success >= 0.6 then
-						chr(10) || ''Research Centers: '' || u.total_research_centers 
-				else '''' end ||
-					chr(10) || ''Defense Satellites: '' || u.total_defense_sats ||
-				case when s.success >= 0.9 then
-						chr(10) || ''Shield Networks: '' || u.total_shield_networks 
-				else '''' end ||
-				case when s.success >= 1.0 then
-						chr(10) || ''Military Research: '' || u.research_percent_military || ''%''
-				else '''' end ||
-				case when s.success >= 0.9 then
-						chr(10) || ''Contruction Research: '' || u.research_percent_construction || ''%'' 
-				else '''' end ||
-				case when s.success >= 0.8 then
-						chr(10) || ''Technology Research: '' || u.research_percent_tech || ''%'' 
-				else '''' end ||
-				case when s.success >= 0.6 then
-						chr(10) || ''Energy Research: '' || u.research_percent_energy || ''%'' 
-				else '''' end ||
-				case when s.success >= 0.7 then
-						chr(10) || ''Population Research: '' || u.research_percent_population || ''%'' 
-				else '''' end ||
-				case when s.success >= 0.8 then
-						chr(10) || ''Culture Research: '' || u.research_percent_culture || ''%'' 
-				else '''' end ||
-				case when s.success >= 1.0 then
-						chr(10) || ''Operations Research: '' || u.research_percent_operations || ''%'' 
-						|| chr(10) || ''Portals Research: '' || u.research_percent_portals || ''%'' 
-				else '''' end
-			else ''Your Agents failed'' end
-				
-		end) news_info
-		from operation op
-		join '|| _userstatus_table ||' u on u.id = op.defid
-		join success s on s.s_id = op.id
-		join attloss al on al.al_id = op.id
-		join defloss dl on dl.dl_id = op.id
-		where op.defid is not null and op.specop in (''Spy Target'', ''Infiltration'')
-	),
-	
-	nuke_news as (
-		select s.s_id i_id, ( --375
-		case when al.losses > 0 then ''Attacker Lost: '' || al.losses || '' agents'' || chr(10) || '''' 
-		else '''' end || 
-		case when dl.losses > 0 then ''Defender Lost: '' || dl.losses || '' agents'' || '''' 
-		else '''' end ||
-		case when s.success >= 1.0 then 
-			''The planet was nuked! Most of population is dead. Planets building size is reduced.'' ||
-			case when exists (select id from '|| _fleet_table ||' where target_planet_id = op.p_id and command_order = 8 and ticks_remaining = 0) then 
-			''Stationed fleet was completely destroyed in the blast!''
-			else '''' end
-		else ''Your Agents failed'' end) news_info
-		from operation op
-		join success s on s.s_id = op.id
-		join attloss al on al.al_id = op.id
-		join defloss dl on dl.dl_id = op.id
-		where op.specop = ''Nuke Planet''
-	),
 	ins_news_success as (
 		insert into '|| _news_table||' 
 		( user1_id, user2_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
 		is_read, tick_number, planet_id, fleet1, extra_info)
 		select e.owner_id, (select owner_id from '|| _planets_table ||' where id = e.p_id),   
 		(select empire_id from '|| _userstatus_table ||' u where u.user_id = e.owner_id), 
-		''AA'', current_timestamp, true, true, false, 
+		''GA'', current_timestamp, true, true, false, 
 		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
-		(case when e.specop = ''Observe Planet'' then (select i.news_info from observe i where i.i_id = e.id)
-		when e.specop = ''Nuke Planet'' then (select i.news_info from nuke_news i where i.i_id = e.id)
-		else (select i.news_info from op_information i where i.i_id = e.id)end)
+		(select string_agg(i.news_info, ''
+        '') from survey i where i.i_id = e.id)
 		from operation e
-		join success s on s.s_id =e.id
+		join success s on s.s_id = e.id
 	),
 	ins_news_defence as (
 		insert into '|| _news_table||' 
@@ -446,27 +299,21 @@
 		select (select owner_id from '|| _planets_table ||' where id = e.p_id), 
 		(case when s.success > 2.0 then e.owner_id else null end),
 		(select empire_id from '|| _userstatus_table ||' u where u.user_id = e.defid), 
-		''AD'', current_timestamp, true, true, false, 
+		''GD'', 
+		current_timestamp, true, true, false, 
 		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
-		(case when e.specop = ''Nuke Planet'' then
-			case when s.success >= 1 then ''The planet was destroyed!''
-			else ''Our agents managed to defend!'' end
-		else
-			case when s.success >= 1 then ''Their agents were successful!''
-			when s.success >= 0.4 then ''Our agents managed to stop the attackers before all damage was done!''
-			else ''Our agents managed to defend!'' end
-		end)
+		(''TESTING'')
 		from operation e 
 		join success s on s.s_id = e.id
 		where e.defid is not null
-		and (s.success < 2.0 or e.stealth = false)
+		and (s.success < 2.0 or e.stealth = false) and e.specop not in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'')
 	),
 	--scouting
 	merge_scout as (
 		merge into '|| _scouting_table ||' a
 		using (select op.owner_id, op.p_id, max(op.success) success
 		from success op
-		where op.specop = ''Observe Planet''
+		where op.specop in (''Survey System'')
 		group by op.p_id, op.owner_id
 		) o
 		on a.empire_id = (select empire_id from '|| _userstatus_table ||' u where u.user_id = o.owner_id) and 
@@ -482,7 +329,7 @@
 		set i = s.i,
 		x = s.x,
 		y = s.y,
-		agent = agent - at.losses,
+		ghost = ghost - losses,
 		command_order = 5,
 		ticks_remaining = case when a.x = s.x and a.y = s.y then ticks_remaining 
 						  else floor((sqrt(pow((a.current_position_x - s.x),2) + pow((a.current_position_y - s.y),2))/
@@ -503,11 +350,11 @@
 	join operation op on op.id= s.a_id
 	join attloss at on at.al_id = op.id
 	where a.id = s.a_id
-	and a.command_order = 6 and a.ticks_remaining = 0
+	and a.command_order = 7 and a.ticks_remaining = 0
 	)
 	update '|| _userstatus_table ||' u
 	set military_flag = case when military_flag != 1 then 2 else 1 end,
-	agent_readiness = agent_readiness - COALESCE((select sum(fa) from r_cost where owner_id=u.id group by owner_id),0)
+	psychic_readiness = psychic_readiness - COALESCE((select sum(fa) from r_cost where owner_id=u.id group by owner_id),0)
 	from (select owner_id from operation group by owner_id) c 
 	where u.id = c.owner_id;
 	
@@ -561,7 +408,7 @@
 	';
 
 	execute _sql;
-
+	  
 	_end_ts   := clock_timestamp();
 	
 	select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
@@ -584,7 +431,7 @@
 	values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, '''|| 'SQLSTATE: ' || SQLSTATE || ' SQLERRM: ' || SQLERRM ||''');
 	';
 	execute _sql;  
-	  
+ 
 	END
 	$$;
 	 

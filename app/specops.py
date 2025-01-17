@@ -492,7 +492,7 @@ def perform_operation(agent_fleet):
         news_message = ""
         news_message2 = ""
 
-        ignore = ["Observe Planet", "Spy Target"]
+        ignore = ["Observe Planet", "Spy Target", "Infiltration", "Nuke Planet"]
         
         if success < 2.0 and target_planet.owner is not None and operation not in ignore:
             stealth = False
@@ -665,50 +665,8 @@ def perform_operation(agent_fleet):
                 news_message2 += "\nYour agents managed to defend!"
 
         if operation == "Infiltration":
-            if success < 0.4:
-                news_message += "No information was gathered about this faction!"
-            if success >= 0.5:
-                news_message += "Energy: " + str(user2.energy)
-            if success >= 0.6:
-                news_message += "\nMinerals: " + str(user2.minerals)
-            if success >= 0.4:
-                news_message += "\nCrystals: " + str(user2.crystals)
-            if success >= 0.8:
-                news_message += "\nEctrolium: " + str(user2.ectrolium)
-            if success >= 0.7:
-                news_message += "\nSolar Collectors: " + str(user2.total_solar_collectors)
-            if success >= 1.0:
-                news_message += "\nFission Reactors: " + str(user2.total_fission_reactors)
-            if success >= 0.7:
-                news_message += "\nMineral Plants: " + str(user2.total_mineral_plants)
-            if success >= 0.6:
-                news_message += "\nCrystal Laboratories: " + str(user2.total_crystal_labs)
-            if success >= 0.9:
-                news_message += "\nRefinement Stations: " + str(user2.total_refinement_stations)
-            if success >= 0.5:
-                news_message += "\nCities: " + str(user2.total_cities)
-            if success >= 0.6:
-                news_message += "\nResearch Centers: " + str(user2.total_research_centers)
-            if success >= 0.4:
-                news_message += "\nDefense Satellites: " + str(user2.total_defense_sats)
-            if success >= 0.9:
-                news_message += "\nShield Network: " + str(user2.total_shield_networks)
-            if success >= 1.0:
-                news_message += "\nMilitary Research: " + str(user2.research_percent_military) + "%"
-            if success >= 0.9:
-                news_message += "\nContruction Research: " + str(user2.research_percent_construction) + "%"
-            if success >= 0.8:
-                news_message += "\nTechnology Research: " + str(user2.research_percent_tech) + "%"
-            if success >= 0.6:
-                news_message += "\nEnergy Research: " + str(user2.research_percent_energy) + "%"
-            if success >= 0.7:
-                news_message += "\nPopulation Research: " + str(user2.research_percent_population) + "%"
-            if success >= 0.8:
-                news_message += "\nCulture Research: " + str(user2.research_percent_culture) + "%"
-            if success >= 1.0:
-                news_message += "\nOperations Research: " + str(user2.research_percent_operations) + "%"
-            if success >= 1.0:
-                news_message += "\nPortals Research: " + str(user2.research_percent_portals) + "%"
+            with connection.cursor() as cursor:
+                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
 
         if operation == "Bribe officials":
             if success >= 0.6:
@@ -766,42 +724,8 @@ def perform_operation(agent_fleet):
                 news_message2 += "Your agents managed to defend!"
 
         if operation == "Nuke Planet":
-            if target_planet.home_planet == True:
-                news_message += "You cannot nuke a home planet"
-            else:
-                if success >= 1.0:
-                    news_message += "The planet was nuked! Most of population is dead. Planet's building size is reduced.\n"
-                    news_message2 += "The planet was nuked! Most of population is dead. Planet's building size is reduced.\n"
-                    target_planet.owner = None
-                    if target_planet.artefact is not None:
-                        target_planet.artefact.empire_holding = None
-                        target_planet.artefact.save()
-                    raze_all_buildings2(target_planet, user2)
-                    target_planet.protection = 0
-                    target_planet.overbuilt = 0
-                    target_planet.overbuilt_percent = 0
-                    target_planet.buildings_under_construction = 0
-                    target_planet.portal_under_construction = False
-                    target_planet.portal = False
-                    for con in Construction.objects.all():
-                            if con.planet == target_planet:
-                                con.delete()
-                    stationed_fleet = Fleet.objects.filter(on_planet=target_planet).first()
-                    if stationed_fleet is not None:
-                        stationed_fleet.delete()
-                        news_message += "Stationed fleet was completely destroyed in the blast!\n"
-                        news_message2 += "Stationed fleet was completely destroyed in the blast!\n"
-                    target_planet.size *= random.randint(80,99)/100
-                    target_planet.current_population = target_planet.size * 20
-                    if target_planet.bonus_solar == 0 and target_planet.bonus_mineral == 0 and target_planet.bonus_crystal == 0 and target_planet.bonus_ectrolium == 0 and target_planet.artefact == False:
-                        target_planet.bonus_fission += random.randint(10,100)
-                        news_message += "Radioactive waste has improved Fission performance!"
-                        news_message2 += "Radioactive waste has improved Fission performance!"
-                    target_planet.save()
-
-                else:
-                    news_message += "Your agents didn't succeed!"
-                    news_message2 += "Your agents managed to defend!"
+            with connection.cursor() as cursor:
+                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
                 
 
         if operation == "Bio Infection":
@@ -1030,7 +954,7 @@ def perform_incantation(ghost_fleet):
         
         if incantation == "Survey System":        
             with connection.cursor() as cursor:
-                cursor.execute("call operations("+str('1,')+str(ghost_fleet.id)+");")
+                cursor.execute("call incantations("+str('1,')+str(ghost_fleet.id)+");")
 
         if incantation == "Sense Artefact":           
             arti = Planet.objects.all().exclude(artefact=None)
