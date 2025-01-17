@@ -21,7 +21,7 @@ BEGIN
 		_fleet_table := 'galtwo_fleet';
 	end if;
 	
-	select ops_penalty(specop, u_id) into _op_penalty;
+	select ops_penalty(gal_nr, specop, u_id) into _op_penalty;
 	
 	select into _op_type, _diff
 	o.specop_type, o.difficulty

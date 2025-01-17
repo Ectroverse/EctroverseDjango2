@@ -23,15 +23,12 @@ BEGIN
 	
 	_sql = '
 	select 
-	cast (pow(_op_tech - case when _op_type = ''G'' then u.research_percent_culture
-				   when _op_type = ''O'' then u.research_percent_operations
-				   end, 1.2) as int)
+	cast (greatest(0,pow('||_op_tech||' - case when '''||_op_type||''' = ''G'' then u.research_percent_culture
+				   when '''||_op_type||''' = ''O'' then u.research_percent_operations
+				   end, 1.2)) as int)
 	from '||_userstatus_table||' u
-	where u.user_id = u_id;
+	where u.user_id = '||u_id||';
 	
-	if _penalty < 0 then 
-		return 0; 
-	end if;
 	';
 	
 	execute _sql into _penalty;

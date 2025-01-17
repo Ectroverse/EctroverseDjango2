@@ -115,7 +115,7 @@
 	),*/
 	success as (
 		-- success
-		select op.id s_id, p.id p_id, op.owner_id, op.specop, COALESCE(ops_attack('|gal_nr|', df.id, def.id, op.specop)  / 
+		select op.id s_id, p.id p_id, op.owner_id, op.specop, COALESCE((ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop)  / 
 		--defence
 		(case when p.owner_id is null then 50 else
 		1.0 + (select  dc.num_val * (select case when op.c_o = 6 then coalesce(df.agent,0) else coalesce(df.wizard,0) end) * 
@@ -126,17 +126,18 @@
 		join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = 
 		(select owner_id from '|| _planets_table ||' where id = p.id)
 		where def.id = df.owner_id)
-		end / case when op.c_o = 6 then 1 else 7 end ),0)
+		end / case when op.c_o = 6 then 1 else 7 end )),0)
 		success,
 		-- ghost defence
-		case when op.c_o = 7 then COALESCE(ops_attack('|gal_nr|', df.id, def.id, op.specop) / (case when p.owner_id is null then 50 else
+		case when op.c_o = 7 then COALESCE((ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop) / 
+		(case when p.owner_id is null then 50 else
 		1.0 + (select  dcc.num_val * coalesce(df.ghost,0) * 
         (1.0 + 0.005 * defc.research_percent_culture)
 		from '|| _userstatus_table ||' defc
 		join classes d_cc on d_cc.name = defc.race
 		join constants dcc on dcc.class = d_cc.id and dcc.name = ''ghost_coeff''
 		join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = 
-		(select owner_id from '|| _planets_table ||' where id = op.p_id)) end),0)
+		(select owner_id from '|| _planets_table ||' where id = op.p_id)) end)),0)
 		else 0 end
 		g_def
 		

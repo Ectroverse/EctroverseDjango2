@@ -651,6 +651,13 @@ set energy = greatest(0, energy + energy_income),
 minerals = greatest(0, minerals + mineral_income),
 crystals = greatest(0, crystals + crystal_income),
 ectrolium = greatest(0, ectrolium + ectrolium_income);
+
+--obelisk
+update '|| _userstatus_table ||' u
+set fleet_readiness_max = (case when u.empire_id=a.empire_holding_id then 100+a.effect1 else 100 end),
+psychic_readiness_max = (case when u.empire_id=a.empire_holding_id then 100+a.effect1  else 100 end),
+agent_readiness_max = (case when u.empire_id=a.empire_holding_id then 100+a.effect1  else 100 end)
+from '|| _artefacts_table ||' a where name=''Obelisk'';
  
 -- readiness update
 update '|| _userstatus_table ||' u
@@ -1160,6 +1167,145 @@ where numplayers > 0;
 update '|| _artefacts_table||'
 set ticks_left = ticks_left -1 where ticks_left > 0 and empire_holding_id is not null;
 
+-- terraformer
+
+with bonus as(
+	select cast(random()*(100-10)+10 as int) perc, cast(random()*(5-1)+1 as int) bonus,
+	(SELECT id from '|| _planets_table ||' p WHERE home_planet = False AND bonus_solar=0 AND bonus_mineral=0 
+	AND bonus_crystal=0 and bonus_ectrolium = 0 and bonus_fission = 0 AND p.owner_id = u.id
+	ORDER BY RANDOM() LIMIT 1) pid,
+	u.id uid, u.empire_id eid, a.id tid
+	from '|| _artefacts_table||' a
+	join '|| _userstatus_table ||' u on empire_id = a.empire_holding_id
+	where a.name = ''Terraformer'' and ticks_left = 0
+	),	
+t_planet as (
+	update '|| _planets_table||' p
+	set bonus_solar = (case when b.bonus = 1 then b.perc else p.bonus_solar end),
+	bonus_fission = (case when b.bonus = 2 then b.perc else p.bonus_fission end),
+	bonus_mineral = (case when b.bonus = 3 then b.perc else p.bonus_mineral end),
+	bonus_crystal = (case when b.bonus = 4 then b.perc else p.bonus_crystal end),
+	bonus_ectrolium = (case when b.bonus = 5 then b.perc else p.bonus_ectrolium end)
+	from bonus b
+	where p.id = b.pid
+	and b.pid is not null
+	),
+ins_news_success as (insert into '|| _news_table||' 
+	( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
+	is_read, tick_number, planet_id, extra_info)
+	select b.uid, b.eid, ''TE'', current_timestamp, true, true, false,
+	(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), b.pid,
+	(case when b.bonus=1 then b.perc || ''% solar'' when b.bonus=2 then b.perc || ''% fission'' when b.bonus=3 then b.perc || ''% mineral''
+	when b.bonus=4 then b.perc || ''% crystal'' when b.bonus=5 then b.perc || ''% ectrolium'' end) news_info
+	from bonus b
+	where b.pid is not null
+	),
+flag as (
+	update '|| _userstatus_table ||' u
+	set military_flag = case when military_flag != 1 then 2 else 1 end
+	from bonus where eid = u.empire_id
+	)
+update '|| _artefacts_table||' a
+	set ticks_left = cast(random()*((((60.0/r.tick_time) * 
+	60.0)*6)-(((60.0/r.tick_time) * 60.0)*3))+(((60.0/r.tick_time) * 60.0)*3) as int)
+	from bonus b 
+	join '|| _roundstatus||' r on id=1
+	where b.tid = a.id;
+
+-- dutchman
+
+with p_sel as(
+	select cast(random()*(100-10)+10 as int) perc, cast(random()*(5-1)+1 as int) bonus,
+	(SELECT id from '|| _planets_table ||'
+	ORDER BY RANDOM() LIMIT 1) pid,
+	a.empire_holding_id eid, a.id tid
+	from '|| _artefacts_table||' a
+	where a.name = ''Flying Dutchman'' and ticks_left = 0
+	),	
+t_news as (
+	select fd.eid,
+		 (chr(10) ||''Planet: '' || p.i || chr(10) ||
+		 case when p.owner_id is not null then 
+		 ''Owned by: '' || (select user_name from '|| _userstatus_table ||' where id = p.owner_id) || chr(10) || 
+		 '''' else '''' end ||
+		''Size: '' || p.size ||
+		case when p.bonus_solar > 0 then chr(10) || ''Solar Bonus: '' || p.bonus_solar || ''%'' 
+			when p.bonus_fission > 0 then chr(10) || ''Fission Bonus: '' || p.bonus_fission || ''%'' 
+			when p.bonus_mineral > 0 then chr(10) || ''Mineral Bonus: '' || p.bonus_mineral || ''%'' 
+			when p.bonus_crystal > 0 then chr(10) || ''Crystal Bonus: '' || p.bonus_crystal || ''%'' 
+			when p.bonus_ectrolium > 0 then chr(10) || ''Ectrolium Bonus: '' || p.bonus_mineral || ''%'' 
+		else '''' end ||
+		case when p.owner_id is not null then
+			chr(10) || ''Current population: '' || p.current_population ||
+			chr(10) || ''Max population: '' || p.max_population ||
+			chr(10) || ''Portal protection: '' || p.protection ||
+			chr(10) || ''Solar Collectors: '' || p.solar_collectors ||
+			chr(10) || ''Fission Reactors: '' || p.fission_reactors  ||
+			chr(10) || ''Mineral Plants: '' || p.mineral_plants ||
+			chr(10) || ''Crystal Labs: '' || p.crystal_labs || 
+			chr(10) || ''Refinement Stations: '' || p.refinement_stations ||
+			chr(10) || ''Cities: '' || p.cities ||
+			chr(10) || ''Research Centers: '' || p.research_centers ||
+			chr(10) || ''Defense Sats: '' || p.defense_sats ||
+			chr(10) || ''Shield Networks: '' || p.shield_networks ||
+			chr(10) || ''Portal: '' ||
+			case when p.portal = true then ''Present'' 
+				when p.portal_under_construction = true then ''Under construction'' 
+			else ''Absent'' end
+		else '''' end ||
+		case when p.artefact_id is not null then
+			chr(10) || ''Artefact: '' ||
+			(select name from '|| _artefacts_table||' a where a.id = p.artefact_id)
+		else '''' end
+		 ) news_info
+		from p_sel fd
+		join '|| _planets_table ||' p on p.x = (select x from '|| _planets_table ||' where id = fd.pid) AND
+		p.y = (select y from '|| _planets_table ||' where id = fd.pid) 
+		order by p.i
+	),
+merge_scout as (
+		merge into '|| _scouting_table ||' s
+		using (select fd.eid eid, fd.tid, p.id pid
+			from p_sel fd
+			join '|| _planets_table ||' p on p.x = (select x from '|| _planets_table ||' where id = fd.pid) AND
+			p.y = (select y from '|| _planets_table ||' where id = fd.pid) 
+			order by p.i) a
+		on s.empire_id = a.eid and s.planet_id = a.pid
+		WHEN MATCHED THEN
+			UPDATE SET scout = (case when s.scout > 1.0 then s.scout else 1.0 end)
+		WHEN NOT MATCHED THEN
+		  INSERT (planet_id, empire_id, user_id, scout)
+		  VALUES (a.pid, a.eid, (select id from '|| _userstatus_table ||' u 
+			where u.empire_id = a.eid and empire_role=''PM''), 1.0)
+	),
+ins_news_success as (insert into '|| _news_table||' 
+	( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
+	is_read, tick_number, extra_info)
+	select u.id,
+		fd.eid, ''DU'', current_timestamp, true, (case when u.empire_role = ''PM'' then true else false end), 
+		false,(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'),
+		''System '' || (select x from '|| _planets_table ||' where id = fd.pid) || '','' ||
+		(select y from '|| _planets_table ||' where id = fd.pid) || '' has been scouted by the Flying Dutchman!'' || chr(10) ||
+		(select string_agg(news_info, ''
+		'') from t_news)
+	from p_sel fd
+	join '|| _userstatus_table ||' u on empire_id = fd.eid
+	),
+flag as (
+	update '|| _userstatus_table ||' u
+	set military_flag = case when military_flag != 1 then 2 else 1 end
+	from p_sel where eid = u.empire_id
+	)
+update '|| _artefacts_table||' a
+	set ticks_left = cast(random()*((((60.0/r.tick_time) * 
+	60.0)*6)-(((60.0/r.tick_time) * 60.0)*3))+(((60.0/r.tick_time) * 60.0)*3) as int)
+	from p_sel fd 
+	join '|| _roundstatus||' r on id=1
+	where fd.tid = a.id;
+	
+-- dutchman
+
+-- grow arti
 update '|| _planets_table||'
 set size = size + ' || 
     case when gal_nr = 'slow' then 
@@ -1171,7 +1317,7 @@ set size = size + ' ||
 
 || '
 where id = (select on_planet_id from '|| _artefacts_table||' where name = ''You Grow, Girl!'');
-
+--1120
 -- tree arti
 update '|| _artefacts_table||' a
 set effect1  = effect1 + (((1.2 * ((select sum(total_research_centers) from '|| _userstatus_table ||' where empire_id = a.empire_holding_id)*6)) +
@@ -1179,7 +1325,7 @@ COALESCE((select (sum(population)/6000) from '|| _userstatus_table ||' where emp
 COALESCE((select (sum(population)/10000) from '|| _userstatus_table ||' where empire_id = a.empire_holding_id and race = ''JK''),0)) *
 coalesce((select (1 + (sum(specop_strength)/100.0)) from '|| _specops_table ||' e where name = ''Enlightenment'' and e.user_to_id 
 in (select id from '|| _userstatus_table ||' where empire_id = a.empire_holding_id) and extra_effect = ''Research''),1)/10) * 
-coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = u.empire_id),1),
+coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = a.empire_holding_id),1),
 effect2 = effect2 + case 
 when effect2 < least(200, floor(200 * (1 - exp((effect1+0.0)/(-10 * 
 (select sum(networth) from '|| _userstatus_table ||' where empire_id = a.empire_holding_id)+0.0))))) then 1 
@@ -1228,6 +1374,7 @@ FROM '|| _artefacts_table||' art WHERE art.empire_holding_id is not null GROUP B
 UPDATE '|| _relations_table||' SET relation_remaining_time = relation_remaining_time - 1 WHERE relation_type in (''W'', ''NC'', ''C'');
 DELETE FROM '|| _relations_table||' WHERE relation_remaining_time = 0;
 
+--delete news
 DELETE FROM '|| _news_table ||' WHERE is_personal_news = false AND 
 (select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||') - tick_number > 
 (select (((60.0/tick_time) * 60.0)*24) from '|| _roundstatus||');
@@ -1239,28 +1386,7 @@ DELETE FROM '|| _news_table ||' WHERE is_personal_news = true AND is_read = true
 
 execute _sql;
    
-_end_ts   := clock_timestamp();
 
-select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
-
---RAISE NOTICE 'Execution time in ms = %' , _retstr;
-
-_sql := 
-'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt)
-values ('|| _round_number||' , '|| _retstr|| ', current_timestamp);
-';
-
-execute _sql;
-
-EXCEPTION WHEN OTHERS THEN
-_end_ts   := clock_timestamp();
-select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
---RAISE NOTICE 'error msg is %', SQLERRM;
-_sql := 
-'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt, error)
-values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, '''|| 'SQLSTATE: ' || SQLSTATE || ' SQLERRM: ' || SQLERRM ||''');
-';
-execute _sql;
   
 END
 $$;
