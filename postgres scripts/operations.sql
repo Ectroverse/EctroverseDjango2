@@ -1,4 +1,4 @@
-	CREATE OR REPLACE PROCEDURE operations(gal_nr integer default null, fleet_id integer default null)
+	CREATE OR REPLACE PROCEDURE operations(gal_nr integer default null, fleet_id integer default 0)
 	LANGUAGE plpgsql AS
 	$$
 	declare
@@ -93,9 +93,8 @@
 	with operation as (
 		select a.id id, owner_id, a.agent agents, specop, target_planet_id p_id, random, command_order c_o, 
 		(select readiness from '|| _ops_table||' o where o.name = specop) base_cost,
-		case when (select tech from '|| _ops_table||' o where o.name = specop) = 0 then 0 else 
-		(case when greatest(0,pow(((select tech from '|| _ops_table||' o where o.name = specop) - u.research_percent_operations),1.2),0) < 0 then 0
-		else greatest(0,pow(((select tech from '|| _ops_table||' o where o.name = specop) - u.research_percent_operations),1.2),0) end) end penalty,
+		case when u.research_percent_operations >= (select tech from '|| _ops_table||' o where o.name = specop) then 0 else 
+		pow(abs((select tech from '|| _ops_table||' o where o.name = specop) - u.research_percent_operations),1.2) end penalty,
 		(select owner_id from '|| _planets_table ||' where id = target_planet_id) defid,
 		(select stealth from '|| _ops_table||' o where o.name = a.specop) stealth
 		from '|| _fleet_table ||' a 
@@ -105,7 +104,101 @@
 		and a.ticks_remaining = 0
 		and u.agent_readiness >= 0
 		and a.id = case when '|| fleet_id ||' = 0 then a.id else '|| fleet_id ||' end
+		and (a.specop in (''Observe Planet'', ''Nuke Planet'') or (select owner_id from '|| _planets_table ||' where id = target_planet_id) is not null)
 	),
+	
+	-- cant op empty planets
+	
+	not_empty as (
+		select a.id id, target_planet_id p_id, specop, owner_id oid
+		from '|| _fleet_table ||' a 
+		where a.specop not in (''Observe Planet'', ''Nuke Planet'') 
+		and (select owner_id from '|| _planets_table ||' where id = target_planet_id) is null
+		and a.main_fleet = false
+		and a.command_order = 6 --perform 
+		and a.ticks_remaining = 0
+	),
+	send_empty_home as (
+		update '|| _fleet_table ||' a
+		set i = s.i,
+		x = s.x,
+		y = s.y,
+		command_order = 5,
+		ticks_remaining = case when a.x = s.x and a.y = s.y then ticks_remaining 
+						  else floor((sqrt(pow((a.current_position_x - s.x),2) + pow((a.current_position_y - s.y),2))/
+						  c.num_val) * coalesce((select (1+(effect1/100)) from '|| _artefacts_table ||' where name = ''Blackhole'' and
+						  empire_holding_id = s.owner_id),1)--num_val is speed 
+						  ) end
+	from 
+		(select * from
+		(select a.id a_id, a.owner_id, p.id p_id, p.x, p.y, p.i,
+		rank() over(partition by a.owner_id, a.id order by (pow((p.x - a.current_position_x),2) + pow((p.y - a.current_position_y),2)) asc) rn
+		from '|| _fleet_table ||' a, '|| _planets_table ||' p
+		where p.owner_id = a.owner_id
+		and p.portal = true
+		) g where g.rn = 1) s 
+	join '|| _userstatus_table ||' u on u.id = s.owner_id
+	join classes l on l.name = u.race
+	join constants c on c.class = l.id and c.name = ''travel_speed''
+	join not_empty op on op.id= s.a_id
+	where a.command_order = 6 and a.ticks_remaining = 0
+	),
+	flag_failed_empty as (
+		update '|| _userstatus_table ||' u
+		set military_flag = 1
+		from (select oid id from not_empty group by oid) f 
+		where u.id = f.id
+	),
+	not_empty_news as (
+		insert into '|| _news_table||' 
+		( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
+		is_read, tick_number, planet_id, fleet1, extra_info)
+		select e.oid, (select empire_id from '|| _userstatus_table ||' u where u.user_id = e.oid), 
+		''AA'', current_timestamp, true, false, false, 
+		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
+		''Your Agents cannot perform '' || e.specop || '' on an empty planet!'' || chr(10) || ''Agents returning!''
+		from not_empty e
+	),
+	-- penalty to high
+	penalty_to_high_news as (
+		insert into '|| _news_table||' 
+		( user1_id, user2_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
+		is_read, tick_number, planet_id, fleet1, extra_info)
+		select e.owner_id, (select id from '|| _userstatus_table ||' u where u.user_id = e.defid),
+		(select empire_id from '|| _userstatus_table ||' u where u.user_id = e.owner_id), 
+		''AA'', current_timestamp, true, false, false, 
+		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
+		''Operations technology not high enough to perform '' || e.specop || chr(10) || ''Agents returning!''
+		from operation e
+		where penalty >= 150
+	),
+	penalty_to_high_send_home as (
+		update '|| _fleet_table ||' a
+		set i = s.i,
+		x = s.x,
+		y = s.y,
+		command_order = 5,
+		ticks_remaining = case when a.x = s.x and a.y = s.y then ticks_remaining 
+						  else floor((sqrt(pow((a.current_position_x - s.x),2) + pow((a.current_position_y - s.y),2))/
+						  c.num_val) * coalesce((select (1+(effect1/100)) from '|| _artefacts_table ||' where name = ''Blackhole'' and
+						  empire_holding_id = s.owner_id),1)--num_val is speed 
+						  ) end
+	from 
+		(select * from
+		(select a.id a_id, a.owner_id, p.id p_id, p.x, p.y, p.i,
+		rank() over(partition by a.owner_id, a.id order by (pow((p.x - a.current_position_x),2) + pow((p.y - a.current_position_y),2)) asc) rn
+		from '|| _fleet_table ||' a, '|| _planets_table ||' p
+		where p.owner_id = a.owner_id
+		and p.portal = true
+		) g where g.rn = 1) s 
+	join '|| _userstatus_table ||' u on u.id = s.owner_id
+	join classes l on l.name = u.race
+	join constants c on c.class = l.id and c.name = ''travel_speed''
+	join operation op on op.id= s.a_id
+	where op.penalty >= 150
+	),
+	--success
+	
 	attack as (
 	 select op.id a_id, (((0.6 + (0.8/ 255.0) * (op.random & 255))) * att.num_val * coalesce(op.agents,0) *
 		(select (1.0 + 0.01 * u.research_percent_operations) from '|| _userstatus_table ||' u where u.user_id = op.owner_id)/
@@ -119,14 +212,15 @@
 	),
 	success as (
 		-- success
-		select op.id s_id, p.id p_id, op.owner_id, op.specop,COALESCE((atac.attack / 
+		select op.id s_id, p.id p_id, op.owner_id, op.specop, greatest((atac.attack / 
 		--defence
 		(case when p.owner_id is null then 50 else
 		1.0 + (select dc.num_val * (COALESCE(df.agent,0)) * (1.0 + 0.005 * def.research_percent_operations)
 		from '|| _userstatus_table ||' def
 		join classes d_c on d_c.name = def.race
 		join constants dc on dc.class = d_c.id and dc.name = ''agent_coeff''
-		join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = op.defid) end)),0) success
+		join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = op.defid
+		where def.id = df.owner_id) end)),0) success
 		from operation op
 		join '|| _planets_table ||' p on p.id = op.p_id
 		join attack atac on op.id = atac.a_id
@@ -178,11 +272,12 @@
 		from operation op
 		join '|| _planets_table ||' p on p.id = op.p_id
 		join '|| _userstatus_table ||' u on u.id = op.owner_id
+		where op.penalty < 150
 	),
 	
 	fa_cost as (
 		select pc.id id, pc.atemp, pc.demp, pc.specop, pc.owner_id,(
-		select ((1.0 + 0.01 * penalty) * pc.base_cost * pc.fa)) fa
+		select case when penalty >= 150 then 0 else ((1.0 + 0.01 * penalty) * pc.base_cost * pc.fa) end) fa
 		from p_cost pc
 	),
 	
@@ -266,6 +361,135 @@
 	),	
 
 	-- other ops
+	ops as (
+		select s.s_id i_id, (
+		case when al.losses > 0 then ''Attacker Lost: '' || al.losses || '' agents'' || chr(10) || '''' 
+		else '''' end || 
+		case when dl.losses > 0 then ''Defender Lost: '' || dl.losses || '' agents'' || chr(10) || '''' 
+		else '''' end ||
+		case when op.specop = ''Spy Target'' then 
+			case when s.success >= 0.4 then
+				case when s.success >= 0.5 then 
+						 ''Fleet readiness: '' || u.fleet_readiness || ''%''
+				else '''' end ||
+				case when s.success >= 0.7 then
+						chr(10) || ''Psychic readiness: '' || u.psychic_readiness || ''%''
+				else '''' end ||
+				case when s.success >= 0.9 then
+						chr(10) || ''Agent readiness: '' || u.agent_readiness || ''%''
+				else '''' end ||
+				case when s.success >= 1.0 then
+						chr(10) || ''Energy: '' || u.energy
+				else '''' end ||
+				case when s.success >= 0.6 then
+						chr(10) || ''Minerals: '' || u.minerals
+				else '''' end ||
+					chr(10) || ''Crystals: '' || u.crystals ||
+				case when s.success >= 0.8 then
+						chr(10) || ''Ectrolium: '' || u.ectrolium
+				else '''' end ||
+				case when s.success >= 0.9 then
+						chr(10) || ''Population: '' || u.population
+				else '''' end 
+			else ''Your Agents failed'' end
+		when op.specop = ''Infiltration'' then
+			case when s.success >= 0.4 then
+				case when s.success >= 0.5 then
+					 ''Energy: '' || u.energy
+				else '''' end ||
+				case when s.success >= 0.6 then
+						chr(10) || ''Minerals: '' || u.minerals
+				else '''' end ||
+				case when s.success >= 0.4 then
+					chr(10) || ''Crystals: '' || u.crystals
+				else '''' end ||
+				case when s.success >= 0.8 then
+						chr(10) || ''Ectrolium: '' || u.ectrolium
+				else '''' end ||
+				case when s.success >= 0.7 then
+						chr(10) || ''Solar Collectors: '' || u.total_solar_collectors
+				else '''' end  ||
+				case when s.success >= 1.0 then 
+						chr(10) || ''Fission Reactors: '' || u.total_fission_reactors 
+				else '''' end ||
+				case when s.success >= 0.7 then
+						chr(10) || ''Crystal Laboratories: '' || u.total_mineral_plants 
+				else '''' end ||
+				case when s.success >= 0.9 then
+						chr(10) || ''Refinement Stations: '' || u.total_refinement_stations 
+				else '''' end ||
+				case when s.success >= 0.5 then
+						chr(10) || ''Cities: '' || u.total_cities 
+				else '''' end ||
+				case when s.success >= 0.6 then
+						chr(10) || ''Research Centers: '' || u.total_research_centers 
+				else '''' end ||
+				case when s.success >= 0.4 then
+					chr(10) || ''Defense Satellites: '' || u.total_defense_sats
+				else '''' end ||
+				case when s.success >= 0.9 then
+						chr(10) || ''Shield Networks: '' || u.total_shield_networks 
+				else '''' end ||
+				case when s.success >= 1.0 then
+						chr(10) || ''Military Research: '' || u.research_percent_military || ''%''
+				else '''' end ||
+				case when s.success >= 0.9 then
+						chr(10) || ''Contruction Research: '' || u.research_percent_construction || ''%'' 
+				else '''' end ||
+				case when s.success >= 0.8 then
+						chr(10) || ''Technology Research: '' || u.research_percent_tech || ''%'' 
+				else '''' end ||
+				case when s.success >= 0.6 then
+						chr(10) || ''Energy Research: '' || u.research_percent_energy || ''%'' 
+				else '''' end ||
+				case when s.success >= 0.7 then
+						chr(10) || ''Population Research: '' || u.research_percent_population || ''%'' 
+				else '''' end ||
+				case when s.success >= 0.8 then
+						chr(10) || ''Culture Research: '' || u.research_percent_culture || ''%'' 
+				else '''' end ||
+				case when s.success >= 1.0 then
+						chr(10) || ''Operations Research: '' || u.research_percent_operations || ''%'' 
+						|| chr(10) || ''Portals Research: '' || u.research_percent_portals || ''%'' 
+				else '''' end
+			else ''Your Agents failed''			
+			end
+		when op.specop = ''Diplomatic Espionage'' then
+			case when s.success >= 1.0 then 
+				chr(10) || ''Your agents gathered information about all special operations affecting the target faction currently!''
+			else
+				chr(10) || ''Your agents couldnt gather any information!''
+			end
+		end) news_info
+		from operation op
+		join '|| _userstatus_table ||' u on u.id = op.defid
+		join success s on s.s_id = op.id
+		join attloss al on al.al_id = op.id
+		join defloss dl on dl.dl_id = op.id
+		where op.specop != ''Observe Planet''
+	),
+	calc_time as (
+		select s.s_id cid,
+		(case when s.specop = ''Diplomatic Espionage'' then
+			case when s.success >= 1 then 50.0 else
+			least(50, cast(power(7, s.success) as int)) end
+		else 0 end) time
+		from operation op
+		join success s on s.s_id = op.id
+		where s.success >= 1.0
+	),
+	d_espo as (
+		insert into '|| _specops_table ||'
+		(user_to_id, user_from_id, specop_type, stealth, extra_effect, name, ticks_left, specop_strength, specop_strength2)
+		select (select owner_id from '|| _planets_table ||' where id = op.p_id), s.owner_id, ''O'', 
+		(case when s.success >= 2.0 then true else false end), ''show special operations affecting target'',
+		s.specop, t.time, 0, 0
+		from operation op
+		join success s on s.s_id = op.id
+		join calc_time t on t.cid = s.s_id
+		where s.success >= 1.0
+		and t.time > 0
+	),
 	nuke_planet as (
 		update '|| _planets_table ||' p
 		set owner_id = null,
@@ -307,111 +531,12 @@
 		select op.id from operation op
 		join success s on s.s_id = op.id
 		where op.specop = ''Nuke Planet'' and s.success >= 1.0)
-	),
-	--news
-	op_information as (
-		select s.s_id i_id, (
-		case when al.losses > 0 then ''Attacker Lost: '' || al.losses || '' agents'' || chr(10) || '''' 
-		else '''' end || 
-		case when dl.losses > 0 then ''Defender Lost: '' || dl.losses || '' agents'' || '''' 
-		else '''' end ||
-		case when op.specop = ''Spy Target'' then
-			case when s.success >= 0.4 then
-				case when s.success >= 0.5 then 
-						chr(10) || ''Fleet readiness: '' || u.fleet_readiness || ''%''
-				else '''' end ||
-				case when s.success >= 0.7 then
-						chr(10) || ''Psychic readiness: '' || u.psychic_readiness || ''%''
-				else '''' end ||
-				case when s.success >= 0.9 then
-						chr(10) || ''Agent readiness: '' || u.agent_readiness || ''%''
-				else '''' end ||
-				case when s.success >= 1.0 then
-						chr(10) || ''Energy: '' || u.energy
-				else '''' end ||
-				case when s.success >= 0.6 then
-						chr(10) || ''Minerals: '' || u.minerals
-				else '''' end ||
-					chr(10) || ''Crystals: '' || u.crystals ||
-				case when s.success >= 0.8 then
-						chr(10) || ''Ectrolium: '' || u.ectrolium
-				else '''' end ||
-				case when s.success >= 0.9 then
-						chr(10) || ''Population: '' || u.population
-				else '''' end 
-			else ''Your Agents failed'' end 
-		when op.specop = ''Infiltration'' then
-			case when s.success >= 0.4 then
-				case when s.success >= 0.5 then
-						chr(10) || ''Energy: '' || u.energy
-				else '''' end ||
-				case when s.success >= 0.6 then
-						chr(10) || ''Minerals: '' || u.minerals
-				else '''' end ||
-					chr(10) || ''Crystals: '' || u.crystals ||
-				case when s.success >= 0.8 then
-						chr(10) || ''Ectrolium: '' || u.ectrolium
-				else '''' end ||
-				case when s.success >= 0.7 then
-						chr(10) || ''Solar Collectors: '' || u.total_solar_collectors
-				else '''' end  ||
-				case when s.success >= 1.0 then 
-						chr(10) || ''Fission Reactors: '' || u.total_fission_reactors 
-				else '''' end ||
-				case when s.success >= 0.7 then
-						chr(10) || ''Crystal Laboratories: '' || u.total_mineral_plants 
-				else '''' end ||
-				case when s.success >= 0.9 then
-						chr(10) || ''Refinement Stations: '' || u.total_refinement_stations 
-				else '''' end ||
-				case when s.success >= 0.5 then
-						chr(10) || ''Cities: '' || u.total_cities 
-				else '''' end ||
-				case when s.success >= 0.6 then
-						chr(10) || ''Research Centers: '' || u.total_research_centers 
-				else '''' end ||
-					chr(10) || ''Defense Satellites: '' || u.total_defense_sats ||
-				case when s.success >= 0.9 then
-						chr(10) || ''Shield Networks: '' || u.total_shield_networks 
-				else '''' end ||
-				case when s.success >= 1.0 then
-						chr(10) || ''Military Research: '' || u.research_percent_military || ''%''
-				else '''' end ||
-				case when s.success >= 0.9 then
-						chr(10) || ''Contruction Research: '' || u.research_percent_construction || ''%'' 
-				else '''' end ||
-				case when s.success >= 0.8 then
-						chr(10) || ''Technology Research: '' || u.research_percent_tech || ''%'' 
-				else '''' end ||
-				case when s.success >= 0.6 then
-						chr(10) || ''Energy Research: '' || u.research_percent_energy || ''%'' 
-				else '''' end ||
-				case when s.success >= 0.7 then
-						chr(10) || ''Population Research: '' || u.research_percent_population || ''%'' 
-				else '''' end ||
-				case when s.success >= 0.8 then
-						chr(10) || ''Culture Research: '' || u.research_percent_culture || ''%'' 
-				else '''' end ||
-				case when s.success >= 1.0 then
-						chr(10) || ''Operations Research: '' || u.research_percent_operations || ''%'' 
-						|| chr(10) || ''Portals Research: '' || u.research_percent_portals || ''%'' 
-				else '''' end
-			else ''Your Agents failed'' end
-				
-		end) news_info
-		from operation op
-		join '|| _userstatus_table ||' u on u.id = op.defid
-		join success s on s.s_id = op.id
-		join attloss al on al.al_id = op.id
-		join defloss dl on dl.dl_id = op.id
-		where op.defid is not null and op.specop in (''Spy Target'', ''Infiltration'')
-	),
-	
+	),	
 	nuke_news as (
 		select s.s_id i_id, ( --375
 		case when al.losses > 0 then ''Attacker Lost: '' || al.losses || '' agents'' || chr(10) || '''' 
 		else '''' end || 
-		case when dl.losses > 0 then ''Defender Lost: '' || dl.losses || '' agents'' || '''' 
+		case when dl.losses > 0 then ''Defender Lost: '' || dl.losses || '' agents'' || chr(10) || '''' 
 		else '''' end ||
 		case when s.success >= 1.0 then 
 			''The planet was nuked! Most of population is dead. Planets building size is reduced.'' ||
@@ -425,6 +550,7 @@
 		join defloss dl on dl.dl_id = op.id
 		where op.specop = ''Nuke Planet''
 	),
+	--news
 	ins_news_success as (
 		insert into '|| _news_table||' 
 		( user1_id, user2_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
@@ -433,9 +559,10 @@
 		(select empire_id from '|| _userstatus_table ||' u where u.user_id = e.owner_id), 
 		''AA'', current_timestamp, true, true, false, 
 		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
-		(case when e.specop = ''Observe Planet'' then (select i.news_info from observe i where i.i_id = e.id)
+		(case when e.specop = ''Observe Planet'' then (select news_info from observe where i_id = e.id)
 		when e.specop = ''Nuke Planet'' then (select i.news_info from nuke_news i where i.i_id = e.id)
-		else (select i.news_info from op_information i where i.i_id = e.id)end)
+		else (select news_info from ops i where i_id = e.id)
+		end)
 		from operation e
 		join success s on s.s_id =e.id
 	),
@@ -506,9 +633,9 @@
 	and a.command_order = 6 and a.ticks_remaining = 0
 	)
 	update '|| _userstatus_table ||' u
-	set military_flag = case when military_flag != 1 then 2 else 1 end,
+	set military_flag = case when c.penalty >=150 then 1 else case when military_flag != 1 then 2 else 1 end end ,
 	agent_readiness = agent_readiness - COALESCE((select sum(fa) from r_cost where owner_id=u.id group by owner_id),0)
-	from (select owner_id from operation group by owner_id) c 
+	from (select owner_id, max(penalty) penalty from operation group by owner_id) c 
 	where u.id = c.owner_id;
 	
 	-- join main fleet
@@ -560,30 +687,7 @@
 	
 	';
 
-	execute _sql;
-
-	_end_ts   := clock_timestamp();
-	
-	select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
-
-	--RAISE NOTICE 'Execution time in ms = %' , _retstr;
-
-	_sql := 
-	'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt)
-	values ('|| _round_number||' , '|| _retstr|| ', current_timestamp);
-	';
-
-	execute _sql;
-
-	EXCEPTION WHEN OTHERS THEN
-	_end_ts   := clock_timestamp();
-	select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
-	--RAISE NOTICE 'error msg is %', SQLERRM;
-	_sql := 
-	'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt, error)
-	values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, '''|| 'SQLSTATE: ' || SQLSTATE || ' SQLERRM: ' || SQLERRM ||''');
-	';
-	execute _sql;  
+	execute _sql; 
 	  
 	END
 	$$;

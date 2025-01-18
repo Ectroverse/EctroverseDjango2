@@ -351,7 +351,7 @@ def send_agents_ghosts(status, agents, ghost, x, y, i, specop):
     if fleet_time < 1 and rstatus.is_running == True:
         if agents > 0:
             msg = perform_operation(agent_fleet)
-            ignore = ["Observe Planet", "Spy Target", "Infiltration", "Nuke Planet"]
+            ignore = ["Observe Planet", "Spy Target", "Infiltration", "Nuke Planet", "Diplomatic Espionage"]
             if specop not in ignore:
                 main_fleet.agent += agent_fleet.agent
                 main_fleet.save()

@@ -10,7 +10,7 @@ from galtwo.map_settings import *
 from django.db import transaction
 from app.models import NewsFeed
 import requests
-from discord import Webhook, RequestsWebhookAdapter
+from discord import SyncWebhook
 
 ## change tick time in map_settings and javagt>settings
 
@@ -335,13 +335,19 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         settings()
         game_round.round_start = datetime(2025, 1, 6, 15, 00, 00)
         game_round.save()
-        msg = "The Fast Round has been Reset, starting tomorrow, January 6th at 3pm UTC! 10s ticks, 2 new (old) races added!"
-        #NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
+        msg = "Testing"
+        NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
         msg = "<@&1201666532753547315> " + str(msg)
-        webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
-        #webhook.send(msg)
-        webhk = Webhook.from_url("https://discord.com/api/webhooks/1227218151629000744/MeckPYnnT6hoiznfBz5oxm6pjWdgCXxVLOmLf7kFa78cYpimyDNK1BxgBdQOyZgD9qgu", adapter=RequestsWebhookAdapter())
-        #webhk.send(msg)
+        
+        webhook_url = "https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE"
+        wbhk_url = "https://discord.com/api/webhooks/1227218151629000744/MeckPYnnT6hoiznfBz5oxm6pjWdgCXxVLOmLf7kFa78cYpimyDNK1BxgBdQOyZgD9qgu"
+        session = requests.Session()
+
+        webhook = SyncWebhook.from_url(webhook_url, session=session)
+        wbhk = SyncWebhook.from_url(wbhk_url, session=session)
+
+        webhook.send(msg)
+        wbhk.send(msg)
         
         print("Generating Galaxy Two and resetting users took " + str(time.time() - start_t) + "seconds")
 

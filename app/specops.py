@@ -492,7 +492,7 @@ def perform_operation(agent_fleet):
         news_message = ""
         news_message2 = ""
 
-        ignore = ["Observe Planet", "Spy Target", "Infiltration", "Nuke Planet"]
+        ignore = ["Observe Planet", "Spy Target", "Infiltration", "Nuke Planet", "Diplomatic Espionage"]
         
         if success < 2.0 and target_planet.owner is not None and operation not in ignore:
             stealth = False
@@ -543,22 +543,8 @@ def perform_operation(agent_fleet):
                 news_message2 += "\nNo research was lost!"
 
         if operation == "Diplomatic Espionage":
-            if success >= 1.0:
-                if success >= 1:
-                    time = 50
-                else:
-                    time = min(50, int(pow(7, success)))
-                Specops.objects.create(user_to=user2.user,
-                                       user_from=user1.user,
-                                       specop_type='O',
-                                       stealth=stealth,
-                                       extra_effect="show special operations affecting target",
-                                       name="Diplomatic Espionage",
-                                       ticks_left=time)
-                news_message += "Your agents gathered information about all special operations affecting" \
-                               " the target faction currently!"
-            else:
-                news_message += "Your agents couldn't gather any information!"
+            with connection.cursor() as cursor:
+                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
 
         if operation == "Maps theft":
             if success < 1:
