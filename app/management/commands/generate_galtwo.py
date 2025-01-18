@@ -339,15 +339,12 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
         msg = "<@&1201666532753547315> " + str(msg)
         
-        webhook_url = "https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE"
-        wbhk_url = "https://discord.com/api/webhooks/1227218151629000744/MeckPYnnT6hoiznfBz5oxm6pjWdgCXxVLOmLf7kFa78cYpimyDNK1BxgBdQOyZgD9qgu"
+        webhook_url = "your webhook"
         session = requests.Session()
 
         webhook = SyncWebhook.from_url(webhook_url, session=session)
-        wbhk = SyncWebhook.from_url(wbhk_url, session=session)
-
-        webhook.send(msg)
-        wbhk.send(msg)
+        
+        #webhook.send(msg)
         
         print("Generating Galaxy Two and resetting users took " + str(time.time() - start_t) + "seconds")
 
