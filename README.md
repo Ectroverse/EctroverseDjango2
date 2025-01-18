@@ -7,34 +7,38 @@
 ## Note
 
 Change "ectroversedjango" to folder name on local machine for bash etc
+I would delete all migrations from app/ galtwo
 
 ## Getting it setup on a new machine:
 
 (you'll need docker and docker-compose installed, google how to do it for your OS)
 
 0. Copy .env.template to .env (`cp .env.template .env`) and change the secret key if you care about security
-1. `docker-compose up -d`
+1. `docker-compose up -d` will take a while on first set up
 2. `docker exec -it ectroversedjango-python-1 /bin/bash` depending on machine may have to replace _ with -
-3. `python manage.py makemigrations` (if you are loading an older db, check below in readme, don't do later steps)
-4. `python manage.py migrate`
-5. `python manage.py createsuperuser` create a user named admin, with whatever pass you want, you can skip email
-6. `python manage.py collectstatic --noinput`
-7. `python manage.py gen_ops_app`
-8. `python manage.py gen_ops_galtwo`
-9. go to project/settings and # line 63
-10. `python manage.py generate_planets` (can take a while if its a big galaxy with a lot of planets)
-11. `python manage.py generate_galtwo` (can take a while if its a big galaxy with a lot of planets)
-12. remove # from line 63 in project/settings
-13. go to http://127.0.0.1:8000, log in as admin, and choose a race
-14. `cd java`
-15. set regular round/ app tick time in java/settings
-16. `javac *.java -d .` - if wasnt allready compiled into bytecode
-17. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickSlow >> log.txt &`
-18. Set the `Round status` object's `Is running` to True whenever you want the tick time to start running
-19. set fast round/ galtwo tick time in java/settings
-20. `javac *.java -d .` - if wasnt allready compiled into bytecode
-21. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickFast >> log.txt &`
-22. Set the `Round status` object's `Is running` to True whenever you want the tick time to start running
+3. (if you are loading an older db, check below in readme, don't do later steps)
+4. `python manage.py makemigrations app` 
+5. `python manage.py migrate app`
+6. `python manage.py makemigrations galtwo`
+7. `python manage.py migrate galtwo`
+8. `python manage.py migrate`  
+9. `python manage.py createsuperuser` create a user named admin, with whatever pass you want, you can skip email
+10. `python manage.py collectstatic --noinput`
+11. `python manage.py initial`
+12. go to project/settings and # line 63
+13. `python manage.py generate_planets` (can take a while if its a big galaxy with a lot of planets)
+14. `python manage.py generate_galtwo` (can take a while if its a big galaxy with a lot of planets)
+15. remove # from line 63 in project/settings
+16. go to http://127.0.0.1:8000, log in as admin, and choose a race
+17. `cd java`
+18. set regular round/ app tick time in java/settings
+19. `javac *.java -d .` - if wasnt allready compiled into bytecode
+20. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickSlow >> log.txt &`
+21. Set the `Round status`, admin panel app, object's `Is running` to True whenever you want the tick time to start running
+22. set fast round/ galtwo tick time in java/settings
+23. `javac *.java -d .` - if wasnt allready compiled into bytecode
+24. `java -cp postgresql-42.2.19.jar: org.ectroverse.processtick.ProcessTickFast >> log.txt &`
+25. Set the `Round status`, admin panel galtwo, object's `Is running` to True whenever you want the tick time to start running
 
 ## Activating accounts
 
