@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from app.models import *
 from galtwo.models import UserStatus as TwoStatus, RoundStatus as StatusRound, Ops as Op
+from app.constants import *
 import time
 from django.db.models import Q
 from django.db import connection
