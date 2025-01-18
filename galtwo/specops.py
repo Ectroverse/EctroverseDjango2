@@ -10,44 +10,32 @@ import math
 from galtwo.calculations import *
 from django.db import connection
 
-'''ops = {}
-for o in Ops.objects.filter(specop_type="O"):
-    ops[o.name] = [o.tech,o.readiness,o.difficulty,o.stealth,o.ident,o.description]
-for o in Ops.objects.filter(specop_type="S"):
-    ops[o.name] = [o.tech,o.readiness,o.difficulty,o.stealth,o.ident,o.description]
-for o in Ops.objects.filter(specop_type="G"):
-    ops[o.name] = [o.tech,o.readiness,o.difficulty,o.stealth,o.ident,o.description]'''
-
 def specopReadiness(specop, type, user1, *args):
     user2 = None
     if args:
         user2 = args[0]
     
-    robo = Artefacts.objects.get(name="Advanced Robotics")        
+    tech = Ops.objects.get(name=specop).tech
+    readiness = Ops.objects.get(name=specop).readiness
+    
+    robo = Artefacts.objects.get(name="Advanced Robotics")  
+    if robo.empire_holding == user1.empire:
+        tech /= 2
+    
     if type == "Spell":
-        if robo.empire_holding == user1.empire:
-            penalty = get_op_penalty(user1.research_percent_culture, ops[specop][0]/2)
-        else:
-            penalty = get_op_penalty(user1.research_percent_culture, ops[specop][0])
-            print("penalty %s" % penalty)
+        penalty = get_op_penalty(user1.research_percent_culture, tech)
         if user2 == None and specop[3] == False:
             return -1
         if specop[3]: #if self op
-            fr = int((1.0 + 0.01 * penalty) * ops[specop][1])
+            fr = int((1.0 + 0.01 * penalty) * readiness)
             cloak = Artefacts.objects.get(name="Magus Cloak")
             if cloak.empire_holding == user1.empire:
                 fr = round(fr*(1-(cloak.effect1/100)))
             return fr
     elif type == 'Incantation':
-        if robo.empire_holding == user1.empire:
-            penalty = get_op_penalty(user1.research_percent_culture, ops[specop][0]/2)
-        else:
-            penalty = get_op_penalty(user1.research_percent_culture, ops[specop][0])
+        penalty = get_op_penalty(user1.research_percent_culture, tech)
     else:
-        if robo.empire_holding == user1.empire:
-            penalty = get_op_penalty(user1.research_percent_operations, ops[specop][0]/2)
-        else:
-            penalty = get_op_penalty(user1.research_percent_operations, ops[specop][0])
+        penalty = get_op_penalty(user1.research_percent_operations, tech)
 
     if penalty == -1:
         return -1
@@ -65,7 +53,7 @@ def specopReadiness(specop, type, user1, *args):
     if fa < 0.75:
         fa = 0.75
 
-    fa = (1.0 + 0.01 * penalty) * ops[specop][1] * fa
+    fa = (1.0 + 0.01 * penalty) * readiness * fa
 
     relations_from_empire = Relations.objects.filter(empire1=empire1)
     relations_to_empire = Relations.objects.filter(empire2=empire1)
@@ -91,12 +79,10 @@ def specopReadiness(specop, type, user1, *args):
                 ally = True
             if rel.relation_type == 'NC' or rel.relation_type == 'PC' or rel.relation_type == 'N' or rel.relation_type == 'C':
                 nap = True
-    print("before %s %s %s %s" % (specop[0], specop[1], penalty, fa))
 
     if empire1.id == empire2.id or ally or war:
         fa /= 3
 
-    print("after %s %s %s %s" % (specop[0], specop[1], penalty, fa))
 
     if nap:
         fa = max(50, fa)
@@ -105,7 +91,6 @@ def specopReadiness(specop, type, user1, *args):
         fa = 300
 
     return round(fa)
-
 
 def get_op_penalty(research, requirement):
     a = requirement - research
