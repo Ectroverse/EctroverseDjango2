@@ -10,7 +10,6 @@ import datetime
 import numpy as np
 
 import requests
-from discord import Webhook, RequestsWebhookAdapter
 
 
 
