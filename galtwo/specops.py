@@ -10,13 +10,13 @@ import math
 from galtwo.calculations import *
 from django.db import connection
 
-ops = {}
+'''ops = {}
 for o in Ops.objects.filter(specop_type="O"):
     ops[o.name] = [o.tech,o.readiness,o.difficulty,o.stealth,o.ident,o.description]
 for o in Ops.objects.filter(specop_type="S"):
     ops[o.name] = [o.tech,o.readiness,o.difficulty,o.stealth,o.ident,o.description]
 for o in Ops.objects.filter(specop_type="G"):
-    ops[o.name] = [o.tech,o.readiness,o.difficulty,o.stealth,o.ident,o.description]
+    ops[o.name] = [o.tech,o.readiness,o.difficulty,o.stealth,o.ident,o.description]'''
 
 def specopReadiness(specop, type, user1, *args):
     user2 = None

@@ -33,11 +33,11 @@ admin.site.register(NewsFeed, registerModel)
 class FleetAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Fleet._meta.get_fields()]
 admin.site.register(Fleet, FleetAdmin)
-
+'''
 class OpsAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Ops._meta.get_fields()]
 admin.site.register(Ops, OpsAdmin)
-
+'''
 class SpecopsAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Specops._meta.get_fields()]
 admin.site.register(Specops, SpecopsAdmin)
