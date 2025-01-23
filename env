@@ -1,5 +1,5 @@
 SECRETKEY=secretkey
 POSTGRES_USER=dbadmin
 POSTGRES_PASSWORD=pass
- 
+DBPASS=pass
 

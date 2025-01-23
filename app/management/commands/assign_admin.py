@@ -8,6 +8,7 @@ from django.db import connection
 import random
 import datetime
 import numpy as np
+from django.contrib.auth import get_user_model
 
 import requests
 
@@ -15,6 +16,6 @@ class Command(BaseCommand): # must be called command, use file name to name the 
     @transaction.atomic
     def handle(self, *args, **options):   
         User = get_user_model()
-        user = User.objects.filter(id=1)
+        user = User.objects.get(id=1)
         UserStatus.objects.create(id=user.id, user=user)
         TwoStatus.objects.create(id=user.id, user=user)

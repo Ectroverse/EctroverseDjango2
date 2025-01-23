@@ -206,6 +206,8 @@
 		from w_cost c
 	),
 	
+	
+	
 	-- ops
 	
 	observe as (

@@ -60,7 +60,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    #'app.middleware.SessionTimeoutMiddleware',
+    'app.middleware.SessionTimeoutMiddleware',
 
 ]
 

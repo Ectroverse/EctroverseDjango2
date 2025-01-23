@@ -9,8 +9,8 @@ import random
 from app.map_settings import *
 from django.db import transaction
 from galtwo.models import HallOfFame as Fame
-import requests
-from discord import Webhook, RequestsWebhookAdapter
+import requests 
+from discord import SyncWebhook
 from django.core.mail import send_mail
 
 def random_combination(iterable, r):
@@ -334,6 +334,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         msg = "Regular Round has been reset, starting 30th December at 6PM UTC, ending 30th January at 6PM UTC. No artefacts, most planets wins."
         NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
         dmsg = "<@&1201666532753547315> " + str(msg)
+        '''
         webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
         webhook.send(dmsg)
         webhk = Webhook.from_url("https://discord.com/api/webhooks/1227218151629000744/MeckPYnnT6hoiznfBz5oxm6pjWdgCXxVLOmLf7kFa78cYpimyDNK1BxgBdQOyZgD9qgu", adapter=RequestsWebhookAdapter())
@@ -345,6 +346,6 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             recievers.append(user.email)
 
         send_mail(subject, message, "admin@ectroverse.co.uk", recievers)
-
+        '''
         print("Generating planets and resetting users took " + str(time.time() - start_t) + "seconds")
 
