@@ -203,10 +203,6 @@
 		else c.fa end) fa
 		from w_cost c
 	),
-	
-<<<<<<< HEAD
-	
-=======
 	prevent_neg as (
 		select id from (
 		select b.*, lag(c_sum, 1, 100) over(partition by owner_id order by id) lag_sum from (
@@ -218,11 +214,8 @@
 		where u.agent_readiness >= 0 --the the first op always completes
 		)b  
 		) c where lag_sum >= 0
-	),
->>>>>>> af673816ef45ee0fa17f8cbf0913ae1cabcb01fa
-	
+	),	
 	-- ops
-	
 	observe as (
 		select s.s_id i_id, ( 
 		 case when al.losses > 0 then ''Attacker Lost: '' || al.losses || '' agents'' || chr(10) || '''' 

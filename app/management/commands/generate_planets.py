@@ -338,13 +338,12 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         msg = "Regular Round has been reset, starting 30th December at 6PM UTC, ending 30th January at 6PM UTC. No artefacts, most planets wins."
         NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
         dmsg = "<@&1201666532753547315> " + str(msg)
-<<<<<<< HEAD
+
         '''
         webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
         webhook.send(dmsg)
         webhk = Webhook.from_url("https://discord.com/api/webhooks/1227218151629000744/MeckPYnnT6hoiznfBz5oxm6pjWdgCXxVLOmLf7kFa78cYpimyDNK1BxgBdQOyZgD9qgu", adapter=RequestsWebhookAdapter())
         webhk.send(dmsg)
-=======
         
         webhook_url = ""
         session = requests.Session()
@@ -353,20 +352,8 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         
         #webhook.send(msg)
 
-        
->>>>>>> af673816ef45ee0fa17f8cbf0913ae1cabcb01fa
-        subject = "A new round is starting soon!"
-        message = "Hello! \nCan you conquer the Galaxy? \n" + str(msg) + "\n\n https://ectroverse.org"
-        recievers = []
-        for user in User.objects.all():
-            recievers.append(user.email)
-
-<<<<<<< HEAD
         send_mail(subject, message, "admin@ectroverse.co.uk", recievers)
         '''
-=======
-        send_mail(subject, message, "EMAIL", recievers)
 
->>>>>>> af673816ef45ee0fa17f8cbf0913ae1cabcb01fa
         print("Generating planets and resetting users took " + str(time.time() - start_t) + "seconds")
 
