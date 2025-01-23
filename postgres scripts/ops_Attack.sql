@@ -10,23 +10,29 @@ declare
 	_diff numeric;
 	_fleet_table varchar;
 	_userstatus_table varchar;
+	_ops_table varchar;
 	_sql varchar;
 BEGIN
 
 	if gal_nr = 1 then
 		_userstatus_table := 'app_userstatus';
 		_fleet_table := 'app_fleet';
+		
+		select into _op_type, _diff
+		o.specop_type, o.difficulty
+		from app_ops o
+		where o.name = specop;
 	else 
 		_userstatus_table := 'galtwo_userstatus';
 		_fleet_table := 'galtwo_fleet';
+		
+		select into _op_type, _diff
+		o.specop_type, o.difficulty
+		from galtwo_ops o
+		where o.name = specop;
 	end if;
 	
 	select ops_penalty(gal_nr, specop, u_id) into _op_penalty;
-	
-	select into _op_type, _diff
-	o.specop_type, o.difficulty
-	from app_ops o
-	where o.name = specop;
 	
 	if _op_penalty >= 150 then
 	 	return 0;

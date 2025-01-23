@@ -102,7 +102,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'djangodatabase',
         'USER': 'dbadmin',
-        'PASSWORD': os.getenv('DBPASS'), # defined in .env
+        'PASSWORD': 'pass', # defined in .env
         'HOST': 'db', # matches name in docker-compose
         'PORT': '5432',
     }
@@ -186,12 +186,12 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 EMAIL_USE_TLS = True
 
-EMAIL_HOST = 'smtp.zoho.eu'
+EMAIL_HOST = 'EMAIL HOST'
 
-EMAIL_HOST_USER = 'admin@ectroverse.co.uk'
+EMAIL_HOST_USER = 'EMAIL ADDRESS'
 
 #Must generate specific password for your app in [gmail settings][1]
-EMAIL_HOST_PASSWORD = 'Beau@8613'
+EMAIL_HOST_PASSWORD = 'EMAIL PASSWORD'
 
 EMAIL_PORT = 587
 

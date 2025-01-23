@@ -124,7 +124,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             
         #if msg != '':
         #    NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
-        #    webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
+        #    webhook = Webhook.from_url("", adapter=RequestsWebhookAdapter())
         #    webhook.send(msg)
             
         act_play = UserStatus.objects.exclude(user_name='').exclude(user_name='user-display-name')

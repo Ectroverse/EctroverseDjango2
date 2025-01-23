@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+8from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from app.models import *
 from app.calculations import *
@@ -129,7 +129,7 @@ class Command(BaseCommand): # must be called command, use file name to name the 
             
         if msg != '':
             NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
-            webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
+            
             #webhook.send(msg) 
             
         print("Process ops took: " +  str(time.time() - start_t) )

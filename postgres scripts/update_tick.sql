@@ -887,10 +887,10 @@ update '|| _fleet_table ||' a
 	x = s.x,
 	y = s.y,
 	ticks_remaining = case when a.x = s.x and a.y = s.y then ticks_remaining 
-					  else floor((sqrt(pow((a.current_position_x - s.x),2) + pow((a.current_position_y - s.y),2))/
-					  c.num_val) * coalesce((select (1+(effect1/100)) from '|| _artefacts_table ||' where name = ''Blackhole'' and
-					  empire_holding_id = s.owner_id),1)--num_val is speed 
-					  ) end
+						  else floor((sqrt(pow((a.current_position_x - s.x),2) + pow((a.current_position_y - s.y),2))/
+						  c.num_val) * coalesce((select (1+(effect1/100)) from '|| _artefacts_table ||' where name = ''Blackhole'' and
+						  empire_holding_id = s.owner_id),1)--num_val is speed 
+						  ) end
 from 
 	(select * from
 	(select a.id a_id, a.owner_id, p.id p_id, p.x, p.y, p.i,
