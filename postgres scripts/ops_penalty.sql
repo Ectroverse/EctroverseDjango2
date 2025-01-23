@@ -23,9 +23,11 @@ BEGIN
 	
 	_sql = '
 	select 
-	cast (greatest(0,pow('||_op_tech||' - case when '''||_op_type||''' = ''G'' then u.research_percent_culture
-				   when '''||_op_type||''' = ''O'' then u.research_percent_operations
-				   end, 1.2)) as int)
+	(case when (case when '''||_op_type||''' = ''G'' then u.research_percent_culture
+		   when '''||_op_type||''' = ''O'' then u.research_percent_operations end) >= '||_op_tech||' then 0 else 
+			cast (greatest(0,pow('||_op_tech||' - case when '''||_op_type||''' = ''G'' then u.research_percent_culture
+		   when '''||_op_type||''' = ''O'' then u.research_percent_operations
+		   end, 1.2)) as int) end)
 	from '||_userstatus_table||' u
 	where u.user_id = '||u_id||';
 	

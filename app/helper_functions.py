@@ -9,7 +9,7 @@ from datetime import timedelta
 from django.template import RequestContext
 from .helper_classes import *
 from .calculations import *
-
+from django.db import connection
 
 def give_first_planet(user, status, planet):
     planet.solar_collectors = staring_solars
@@ -350,12 +350,8 @@ def send_agents_ghosts(status, agents, ghost, x, y, i, specop):
     rstatus = RoundStatus.objects.get(id=1)
     if fleet_time < 1 and rstatus.is_running == True:
         if agents > 0:
-            msg = perform_operation(agent_fleet)
-            ignore = ["Observe Planet", "Spy Target", "Infiltration", "Nuke Planet", "Diplomatic Espionage"]
-            if specop not in ignore:
-                main_fleet.agent += agent_fleet.agent
-                main_fleet.save()
-                agent_fleet.delete()
+            with connection.cursor() as cursor:
+                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
 
     return msg
     
