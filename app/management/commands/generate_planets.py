@@ -9,11 +9,7 @@ import random
 from app.map_settings import *
 from django.db import transaction
 from galtwo.models import HallOfFame as Fame
-<<<<<<< HEAD
 import requests 
-=======
-import requests
->>>>>>> af673816ef45ee0fa17f8cbf0913ae1cabcb01fa
 from discord import SyncWebhook
 from django.core.mail import send_mail
 

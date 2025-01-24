@@ -23,6 +23,8 @@
 		_rel_table varchar(255);
 		_construction_table varchar(255);
 		_ticks_log_table varchar(255);
+		_system_table varchar(255);
+		_sensing_table varchar(255);
 		
 		_roundstatus varchar(255);
 		_sql varchar;
@@ -45,6 +47,8 @@
 			_construction_table := 'app_construction';
 			_ticks_log_table := 'app_ticks_log';
 			_ops_table := 'app_ops';
+			_system_table := 'app_system';
+			_sensing_table := 'app_sensing';
 		else 
 			_planets_table := '"PLANETS"';
 			_userstatus_table := 'galtwo_userstatus';
@@ -59,6 +63,8 @@
 			_construction_table := 'galtwo_construction';
 			_ticks_log_table := 'galtwo_ticks_log';
 			_ops_table := 'galtwo_ops';
+			_system_table := 'galtwo_system';
+			_sensing_table := 'galtwo_sensing';
 		end if;
 
 		EXECUTE format('select max(round_number) from  %s ;', _roundstatus)
@@ -95,7 +101,8 @@
 		(select readiness from '|| _ops_table||' o where o.name = specop) base_cost,
 		ops_penalty('||gal_nr||', specop, owner_id) penalty,
 		(select owner_id from '|| _planets_table ||' where id = target_planet_id) defid,
-		(select stealth from '|| _ops_table||' o where o.name = a.specop) stealth
+		(select stealth from '|| _ops_table||' o where o.name = a.specop) stealth,
+		u.empire_id
 		from '|| _fleet_table ||' a 
 		join '|| _userstatus_table ||' u on u.user_id = a.owner_id
 		where a.main_fleet = FALSE
@@ -118,7 +125,8 @@
 	),
 	success as (
 		-- success
-		select op.id s_id, p.id p_id, op.owner_id, op.specop, greatest(least((ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop) / 
+		select op.id s_id, p.id p_id, op.owner_id, op.specop, ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop) attack,
+		greatest((ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop) / 
 		--defence
 		(case when p.owner_id is null then 50 else
 		1.0 + (select ((dc.num_val * (COALESCE(df.wizard,0)) * (1.0 + 0.005 * def.research_percent_culture)) / 7)
@@ -126,7 +134,7 @@
 		join classes d_c on d_c.name = def.race
 		join constants dc on dc.class = d_c.id and dc.name = ''psychic_coeff''
 		join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = op.defid
-		where def.id = df.owner_id) end)),3.0),0) success,
+		where def.id = df.owner_id) end)),0) success,
 		-- ghost defence
 		greatest(least((ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop) / 
 		--defence
@@ -291,8 +299,60 @@
 		p.y = (select y from '|| _planets_table ||' where id = op.p_id)
 		join success s on s.s_id = op.id and s.p_id = p.id
 		join prevent_neg n on n.id = op.id
+		where op.specop = ''Survey System''
 		order by p.i
 	),	
+	sense as (
+		select empire_id, user_id, fleet_id, p_id, system_id, x, y from(
+		select op.id fleet_id, op.empire_id, op.owner_id user_id, op.p_id,
+			greatest((2*random(0.2,0.8)*log10(10 * s.attack)), 1) strength,
+			 sqrt(1+ pow(p.x-p2.x,2) + pow(p.y-p2.y,2) ) dist,
+			 s.success,
+			 p2.id system_id, p2.x, p2.y
+			from operation op
+			join prevent_neg n on n.id = op.id
+			join success s on s.s_id = op.id
+			join '|| _planets_table ||' p on p.id = op.p_id
+			join '|| _system_table ||' p2 on 1=1
+			where op.specop = ''Sense Artefact''
+		) where strength >= dist
+		group by empire_id, user_id, fleet_id, p_id, system_id, x, y
+		),
+	ins_sense as 
+		(
+		merge into '|| _sensing_table ||' a
+		using (select empire_id, system_id 
+		from sense
+		group by empire_id, system_id
+		) s
+		on a.empire_id = s.empire_id and a.system_id = s.system_id
+		WHEN MATCHED THEN
+			UPDATE SET scout = 1.0
+		WHEN NOT MATCHED THEN
+		  INSERT (scout, empire_id, system_id)
+		  VALUES (1, s.empire_id, s.system_id)
+	), 
+	sense_arti as 
+	(
+		select a.id arti_id, p.id planet_id, s.fleet_id, s.empire_id, s.user_id,
+		''Your Ghost Ships have located an Artefact at Planet:'' || p.x ||'',''|| p.y || '','' || p.i news_info
+		from '|| _artefacts_table ||'  a
+		join '|| _planets_table ||' p on p.id = a.on_planet_id
+		join sense s on s.x = p.x and s.y = p.y
+	),
+	merge_arti_scout as 
+	(
+		merge into '|| _scouting_table ||' a
+		using (select empire_id, user_id, planet_id
+		from sense_arti
+		) s
+		on a.empire_id = s.empire_id and a.user_id = s.user_id and a.planet_id = s.planet_id 
+		WHEN MATCHED THEN
+			UPDATE SET scout = 1.0
+		WHEN NOT MATCHED THEN
+		  INSERT (scout, empire_id, user_id, planet_id)
+		  VALUES (1, s.empire_id, s.user_id, s.planet_id)
+	),
 	ins_news_success as (
 		insert into '|| _news_table||' 
 		( user1_id, user2_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
@@ -301,8 +361,10 @@
 		(select empire_id from '|| _userstatus_table ||' u where u.user_id = e.owner_id), 
 		''GA'', current_timestamp, true, true, false, 
 		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
-		(select string_agg(i.news_info, ''
-        '') from survey i where i.i_id = e.id)
+		(case when e.specop = ''Survey System'' then (select string_agg(i.news_info, '''|| chr(10) || ''') from survey i where i.i_id = e.id)
+			  when e.specop = ''Sense Artefact'' then (select string_agg(i.news_info, '''|| chr(10) || ''') from sense_arti i where i.fleet_id = e.id)
+			  end
+			)
 		from operation e
 		join prevent_neg n on n.id = e.id
 		where n.id = e.id
@@ -383,6 +445,7 @@
 		  INSERT (planet_id, empire_id, user_id, scout)
 		  VALUES (o.p_id, (select empire_id from '|| _userstatus_table ||' u where u.user_id = o.owner_id), o.owner_id, o.success)
 	),
+	/*
 	send_home as (
 		update '|| _fleet_table ||' a
 		set i = s.i,
@@ -409,7 +472,7 @@
 	join operation op on op.id= s.a_id
 	where a.id = s.a_id
 	and a.command_order = 7 and a.ticks_remaining = 0
-	),
+	),*/
 	deflosses as (
 		update '|| _fleet_table ||' f
 		set wizard = wizard - COALESCE((select sum(losses) from defloss where defid = f.owner_id),0),
@@ -424,7 +487,7 @@
 	where u.id = c.owner_id;
 	
 	-- join main fleet
-	with recalled_fleets as 
+	/*with recalled_fleets as 
 	(select owner_id, 
 		sum(bomber) bomber ,
 		sum(fighter ) fighter  ,
@@ -469,9 +532,9 @@
 	a.main_fleet = false
 	and a.command_order = 5
 	and a.ticks_remaining = 0;
-	
+	*/
 	';
-
+	--raise notice '%', _sql;
 	execute _sql;
 	    
  
