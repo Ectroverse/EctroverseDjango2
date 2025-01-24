@@ -303,7 +303,8 @@
 		order by p.i
 	),	
 	sense as (
-		select empire_id, user_id, fleet_id, p_id, system_id, x, y from(
+		select empire_id, user_id, fleet_id, p_id, system_id, x, y		
+		from(
 		select op.id fleet_id, op.empire_id, op.owner_id user_id, op.p_id,
 			greatest((2*random(0.2,0.8)*log10(10 * s.attack)), 1) strength,
 			 sqrt(1+ pow(p.x-p2.x,2) + pow(p.y-p2.y,2) ) dist,
@@ -311,7 +312,7 @@
 			 p2.id system_id, p2.x, p2.y
 			from operation op
 			join prevent_neg n on n.id = op.id
-			join success s on s.s_id = op.id
+			join success s on s.s_id = op.id and s.success >= 1
 			join '|| _planets_table ||' p on p.id = op.p_id
 			join '|| _system_table ||' p2 on 1=1
 			where op.specop = ''Sense Artefact''
@@ -362,7 +363,10 @@
 		''GA'', current_timestamp, true, true, false, 
 		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
 		(case when e.specop = ''Survey System'' then (select string_agg(i.news_info, '''|| chr(10) || ''') from survey i where i.i_id = e.id)
-			  when e.specop = ''Sense Artefact'' then (select string_agg(i.news_info, '''|| chr(10) || ''') from sense_arti i where i.fleet_id = e.id)
+			  when e.specop = ''Sense Artefact'' and (select count(*) from sense_arti) > 0 
+					then (select string_agg(i.news_info, '''|| chr(10) || ''') from sense_arti i where i.fleet_id = e.id)
+			  when e.specop = ''Sense Artefact'' and (select count(*) from sense) > 0 then 
+					''Your ghost ships searched thoughrally through out the galaxy, but no presence of any artefacts was felt!''
 			  end
 			)
 		from operation e
