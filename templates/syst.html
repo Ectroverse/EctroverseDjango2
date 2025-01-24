@@ -5,8 +5,12 @@
 {% load mathfilters %}
 {% load tags %}
 
-{% if msg != '' %}
-    {{msg|linebreaksbr}}<br>
+{% if instant != None %}	
+	{% include "news.html" with news=fresh_news %}
+{% else %}  
+	{% if msg != '' %}
+		{{msg|linebreaksbr}}<br>
+	{% endif %}
 {% endif %}
 
 <table width="100%">

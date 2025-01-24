@@ -23,46 +23,47 @@ tr.border_bottom td {
 
 	{% if page_title == "High Infiltration" %}
 		<u>Faction info:</u><br> 
-		<div style="  margin-left: auto;   margin-right: auto;">
-		<table width="100%">
-		<tr><td><b>Resources</b></td></tr>
-		<tr><td>energy: {{target_player.energy}}</td></tr>
-		<tr><td>minerals: {{target_player.minerals}}</td></tr>
-		<tr><td>crystals: {{target_player.crystals}}</td></tr>
-		<tr><td>ectrolium: {{target_player.ectrolium}}</td></tr>
-		<tr><td>Fleet Readiness: {{target_player.fleet_readiness}}</td></tr>
-		<tr><td>Agent Readiness: {{target_player.agent_readiness}}</td></tr>
-		<tr><td>Psychic Readiness: {{target_player.psychic_readiness}}</td></tr>
-		<tr><td></td></tr>
-		<tr><td><b>Buildings</b></td></tr>
-		<tr><td>total solar collectors: {{target_player.total_solar_collectors}}</td></tr>
-		<tr><td>total fission reactors: {{target_player.total_fission_reactors}}</td></tr>
-		<tr><td>total mineral plants: {{target_player.total_mineral_plants}}</td></tr>
-		<tr><td>total crystal labs: {{target_player.total_crystal_labs}}</td></tr>
-		<tr><td>total refinement stations: {{target_player.total_refinement_stations}}</td></tr>
-		<tr><td>total cities: {{target_player.total_cities}}</td></tr>
-		<tr><td>total research centers: {{target_player.total_research_centers}}</td></tr>
-		<tr><td>total defense sats: {{target_player.total_defense_sats}}</td></tr>
-		<tr><td>total shield networks: {{target_player.total_shield_networks}}</td></tr>
-		<tr><td></td></tr>
-		<tr><td><b>Research</b></td></tr>
-		<tr><td>research percent military: {{target_player.research_percent_military}}%</td></tr>
-		<tr><td>research percent construction: {{target_player.research_percent_construction}}%</td></tr>
-		<tr><td>research percent tech: {{target_player.research_percent_tech}}%</td></tr>
-		<tr><td>research percent energy: {{target_player.research_percent_energy}}%</td></tr>
-		<tr><td>research percent population: {{target_player.research_percent_population}}%</td></tr>
-		<tr><td>research percent culture: {{target_player.research_percent_culture}}%</td></tr>
-		<tr><td>research percent operations: {{target_player.research_percent_operations}}%</td></tr>
-		<tr><td>research percent portals: {{target_player.research_percent_portals}}%</td></tr>
+		<div class="center_box" style="margin:0 auto; text-align: left;">
+		<table align="center">
+		<tr><td colspan=2><b>Resources</b></td></tr>
+		<tr><td>Energy:</td><td> {{target_player.energy}}</td></tr>
+		<tr><td>Minerals:</td><td> {{target_player.minerals}}</td></tr>
+		<tr><td>Crystals:</td><td> {{target_player.crystals}}</td></tr>
+		<tr><td>Ectrolium:</td><td> {{target_player.ectrolium}}</td></tr>
+		<tr><td>Fleet Readiness:</td><td> {{target_player.fleet_readiness}}</td></tr>
+		<tr><td>Agent Readiness:</td><td> {{target_player.agent_readiness}}</td></tr>
+		<tr><td>Psychic Readiness:</td><td> {{target_player.psychic_readiness}}</td></tr>
+		<tr><td colspan=2>&nbsp;</td></tr>
+		<tr><td colspan=2><b>Buildings</b></td></tr>
+		<tr><td>total solar collectors:</td><td> {{target_player.total_solar_collectors}}</td></tr>
+		<tr><td>total fission reactors:</td><td> {{target_player.total_fission_reactors}}</td></tr>
+		<tr><td>total mineral plants:</td><td> {{target_player.total_mineral_plants}}</td></tr>
+		<tr><td>total crystal labs:</td><td> {{target_player.total_crystal_labs}}</td></tr>
+		<tr><td>total refinement stations:</td><td> {{target_player.total_refinement_stations}}</td></tr>
+		<tr><td>total cities:</td><td> {{target_player.total_cities}}</td></tr>
+		<tr><td>total research centers:</td><td> {{target_player.total_research_centers}}</td></tr>
+		<tr><td>total defense sats:</td><td> {{target_player.total_defense_sats}}</td></tr>
+		<tr><td>total shield networks:</td><td> {{target_player.total_shield_networks}}</td></tr>
+		<tr><td colspan=2>&nbsp;</td></tr>
+		<tr><td colspan=2><b>Research</b></td></tr>
+		<tr><td>research percent military:</td><td> {{target_player.research_percent_military}}%</td></tr>
+		<tr><td>research percent construction:</td><td> {{target_player.research_percent_construction}}%</td></tr>
+		<tr><td>research percent tech:</td><td> {{target_player.research_percent_tech}}%</td></tr>
+		<tr><td>research percent energy:</td><td> {{target_player.research_percent_energy}}%</td></tr>
+		<tr><td>research percent population:</td><td> {{target_player.research_percent_population}}%</td></tr>
+		<tr><td>research percent culture:</td><td> {{target_player.research_percent_culture}}%</td></tr>
+		<tr><td>research percent operations:</td><td> {{target_player.research_percent_operations}}%</td></tr>
+		<tr><td>research percent portals:</td><td> {{target_player.research_percent_portals}}%</td></tr>
+		<tr><td colspan=2>&nbsp;</td></tr>
 		</table>
 		</div>
-		<br>
 	
 		{% if planets is not None %}
 		<u>Planets:</u>
-			<div class= "center">
+			<div style="width:100%;">
 			<table width="100%">
 			<tr>
+			<tr><td colspan="100%">&nbsp;</td></tr>
 			<td width="15%"><a href="?order_by=planet">Planet</a></td>
 			<td width="10%"><a href="?order_by=-size">Size</a> -
 			<td width="20%"><a href="?order_by=total_buildings">Buildings</a> - <a href="?order_by=overbuilt">Overbuilding</a></td>
@@ -142,11 +143,11 @@ tr.border_bottom td {
 			</div>
 		{% else %}
 		No information was gathered about planets.
-		{% endif %}
+		{% endif %}<br><br>
 		
 		{% if fleets is not None %}
 		<u>Fleets:</u>
-	<div class="center"> 
+	<div style="width:100%;"> 
 			<table width="100%">
 			<tr class="border_bottom">
 			<td>
@@ -256,15 +257,20 @@ tr.border_bottom td {
 			{% endfor %}
 			</table>
 			<br>
+			</div>
 		{% else %}
+		<br>
+		<div style="width:100%;">
 		No information was gathered about fleets.
+		</div>
 		{% endif %}
-	</div>
+	
 		
-<div style="width:100%;">		
+		
 	{% else %}
+		<div style="width:100%;">
 		{{specop_info|linebreaksbr }}
+		</div>
 	{% endif %}
-</div>
 
 {% endblock %}

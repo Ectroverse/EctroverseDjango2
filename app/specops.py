@@ -111,18 +111,23 @@ def perform_spell(spell, psychics, status, *args):
         if spell not in psychicop_specs:
             return "This spell is broken/doesnt exist!"
 
+        tech = Ops.objects.get(name=spell).tech
+        readiness = Ops.objects.get(name=spell).readiness
+        difficulty = Ops.objects.get(name=spell).difficulty
+        selfsp = Ops.objects.get(name=spell).selfsp
+        
+        robo = Artefacts.objects.get(name="Advanced Robotics")  
+        if robo.empire_holding == status.empire:
+            tech /= 2
+        
         fa = 0.4 + (1.2 / 255.0) * (np.random.randint(0, 2147483647) & 255)
 
         attack = fa * race_info_list[status.get_race_display()].get("psychics_coeff", 1.0) * \
                  psychics * (1.0 + 0.005 * status.research_percent_culture)
                  
-        attack /= psychicop_specs[spell][2]
+        attack /= float(difficulty)
         
-        arte = Artefacts.objects.get(name="Advanced Robotics")
-        if arte.empire_holding == status.empire:
-            penalty = get_op_penalty(status.research_percent_culture, (psychicop_specs[spell][0]/2))
-        else:
-            penalty = get_op_penalty(status.research_percent_culture, psychicop_specs[spell][0])
+        penalty = get_op_penalty(status.research_percent_culture, tech)
         
 
         if penalty == -1:
@@ -138,7 +143,7 @@ def perform_spell(spell, psychics, status, *args):
 
         if args[0]:
             user2 = args[0]
-            if user2 == status and psychicop_specs[spell][3] is False:
+            if user2 == status and selfsp is False:
                 message += "You cannot perform this spell on yourself!"
                 return message
             empire2 = user2.empire
@@ -179,7 +184,6 @@ def perform_spell(spell, psychics, status, *args):
             status.energy += energy
             news_message += str(cry_converted) + " crystals were converted into " + str(energy) + " energy!"
             message += "Your " + str(cry_converted) + " crystals were converted into " + str(energy) + " energy!"
-            prloss = specopReadiness(psychicop_specs[spell],"Spell", status)
         
         if spell == "Alchemist":
             nrg_converted = attack * 5
@@ -198,8 +202,7 @@ def perform_spell(spell, psychics, status, *args):
                 status.minerals += res
             status.save()
             news_message += str(nrg_converted) + " energy were converted into " + str(res) + " " + str(chosen) + "!"
-            message += "Your " + str(nrg_converted) + " energy were converted into " + str(res) + " " + str(chosen) + "!"
-            prloss = specopReadiness(psychicop_specs[spell],"Spell", status)        
+            message += "Your " + str(nrg_converted) + " energy were converted into " + str(res) + " " + str(chosen) + "!"      
         
         if spell == "Irradiate Ectrolium":
             destroyed_ectro = 0
@@ -220,9 +223,7 @@ def perform_spell(spell, psychics, status, *args):
             else:
                 news_message += "Your psychics failed!"
                 message += "Your psychics failed!"
-                news_message2 += "Your psychics overpowered the Enemy!"
-            prloss = specopReadiness(psychicop_specs[spell],"Spell", status, user2)
-            
+                news_message2 += "Your psychics overpowered the Enemy!"            
 
         if spell == 'Dark Web':
             web = 100 * (attack / status.networth)
@@ -237,7 +238,7 @@ def perform_spell(spell, psychics, status, *args):
 
             news_message += status.user_name + "'s' psychics have given them " + str(effect) + "% extra protection for " + str(time) + " weeks!"
             message += "Your psychics have given you " + str(effect) + "% extra protection for " + str (time) + " weeks!"
-            prloss = specopReadiness(psychicop_specs[spell],"Spell", status)
+
         if spell == "Black Mist":
             if success >= 1.0:
                 effect = 25
@@ -260,7 +261,7 @@ def perform_spell(spell, psychics, status, *args):
             else:
                 news_message += " solar power wasn't reduced!"
                 message += "Your psychic power wasn't enough to cast a black mist!"
-            prloss = specopReadiness(psychicop_specs[spell],"Spell", status, user2)
+
         if spell == 'War Illusions':
             Specops.objects.filter(user_to=status.user, name="War Illusions").delete()
             illusion = 100 * (attack / status.networth)
@@ -276,7 +277,7 @@ def perform_spell(spell, psychics, status, *args):
 
             news_message += status.user_name + "'s' psychics powerful illusions have given their forces " + str(effect) + "% extra strength for " + str(time) + " weeks!"
             message += "Your psychics have given your forces " + str(effect) + "% extra strength for " + str (time) + " weeks!"
-            prloss = specopReadiness(psychicop_specs[spell],"Spell", status)
+
         if spell == "Psychic Assault":
             refdef = pow(attack / (attack + defence), 1.1)
             refatt = pow(defence / (attack + defence), 1.1)
@@ -294,7 +295,7 @@ def perform_spell(spell, psychics, status, *args):
                            " and " + str(psychics_loss2) + " were lost by " + user2.user_name + "!"
             message += "You have assaulted " + str(psychics_loss2) + " enemy psychics of " + user2.user_name + \
                       " however " + str(psychics_loss1) + " of your psychics have also suffered critical brain damages!"
-            prloss = specopReadiness(psychicop_specs[spell],"Spell", status, user2)
+
         if spell =="Phantoms":
             phantom_cast = round(attack / 2)
             fleet1.phantom += phantom_cast
@@ -302,7 +303,6 @@ def perform_spell(spell, psychics, status, *args):
 
             news_message += status.user_name + " has summoned " + str(phantom_cast) + " Phantoms to fight in their army!"
             message += "You have summoned " + str(phantom_cast) + " Phantoms to join your army!"
-            prloss = specopReadiness(psychicop_specs[spell],"Spell", status)
         
         if spell =="Grow Planet's Size":
             plant = list(Planet.objects.filter(owner=status.user).order_by('size').reverse().values_list('id', flat=True))
@@ -327,7 +327,7 @@ def perform_spell(spell, psychics, status, *args):
 
             news_message += status.user_name + "'s planet " + str(planet.x) + "," + str(planet.y) + ":" + str(planet.i) + " has grown by " + str(growth)
             message += "Your planet  " + str(planet.x) + "," + str(planet.y) + ":" + str(planet.i) + " has grown by " + str(growth)
-            prloss = specopReadiness(psychicop_specs[spell],"Spell", status)
+
         if spell == "Enlightenment":
             Specops.objects.filter(user_to=status.user, name="Enlightenment").delete()
             time = 52
@@ -357,12 +357,12 @@ def perform_spell(spell, psychics, status, *args):
             news_message += status.user_name + "'s Psychics have blessed them with " + str(bonus) + "% extra " + str(
                 chosen) + " for 52 weeks!"
             message += "Your Psychics have blessed you with " + str(bonus) + "% extra " + str(chosen) + " for 52 weeks!"
-            prloss = specopReadiness(psychicop_specs[spell],"Spell", status)    
-
+        
+        prloss = specopReadiness(spell,"Spell", status)    
         status.psychic_readiness -= prloss
         status.save()
 
-        if psychicop_specs[spell][3] == True:
+        if selfsp == True:
             News.objects.create(user1=User.objects.get(id=status.id),
                                 user2=User.objects.get(id=status.id),
                                 empire1=status.empire,
@@ -407,413 +407,6 @@ def perform_spell(spell, psychics, status, *args):
         #
         #
         # if news_message2_empire2:
-
-
-def perform_operation(agent_fleet):
-    operation = agent_fleet.specop
-    agents = agent_fleet.agent
-    user = agent_fleet.owner
-    target_planet = agent_fleet.target_planet
-    user1 = UserStatus.objects.get(user=user)
-    if user1.agent_readiness < 0:
-        news_message = "Not enough Agents Readiness, Agents returning!"
-        user1.military_flag = 1
-        user1.save()
-        News.objects.create(user1=User.objects.get(id=user.id),
-                            user2=None,
-                            empire1=user1.empire,
-                            fleet1=operation,
-                            news_type='AA',
-                            date_and_time=datetime.now(),
-                            is_personal_news=True,
-                            is_empire_news=True,
-                            extra_info=news_message,
-                            tick_number=RoundStatus.objects.get().tick_number,
-                            planet=target_planet
-                            )
-    else:    
-    
-        user1.military_flag = 2
-        user1.save
-        if operation not in agentop_specs:
-            return "This operation is broken/doesnt exist!"
-
-        fa = 0.6 + (0.8/ 255.0) * (np.random.randint(0, 2147483647) & 255)
-
-        attack = fa * race_info_list[user1.get_race_display()].get("agents_coeff", 1.0) * \
-                 agents * (1.0 + 0.01 * user1.research_percent_operations)
-                 
-        attack /= agentop_specs[operation][2]
-
-        arte = Artefacts.objects.get(name="Advanced Robotics")
-        if arte.empire_holding == user1.empire:
-            penalty = get_op_penalty(user1.research_percent_operations, (agentop_specs[operation][0]/2))
-        else:
-            penalty = get_op_penalty(user1.research_percent_operations, agentop_specs[operation][0])
-        
-
-        if penalty == -1:
-            return "You don't have enough operations research to perform this covert operation!"
-
-        if penalty > 0:
-            attack /= 1.0 + 0.01 * penalty
-
-        defense = 50
-        user2 = None
-        stealth = True
-        empire2 = None
-
-        if target_planet.owner is not None:
-            user2 = UserStatus.objects.get(id=target_planet.owner.id)
-            empire2 = user2.empire
-            fleet2 = Fleet.objects.get(owner=user2.id, main_fleet=True)
-            agents2 = fleet2.agent
-            defense = agents2 * race_info_list[user2.get_race_display()].get("agents_coeff", 1.0) * \
-                      (1.0 + 0.01 * user2.research_percent_operations)
-            arte = Artefacts.objects.get(name="Double 0")
-            if arte.empire_holding == user2.empire:
-                defense *= 1.25
-
-        success = min(3.0, attack / (defense + 1))
-        news_message = ""
-        news_message2 = ""
-
-        ignore = ["Observe Planet", "Spy Target", "Infiltration", "Nuke Planet", "Diplomatic Espionage"]
-        
-        if success < 2.0 and target_planet.owner is not None and operation not in ignore:
-            stealth = False
-            refdef = 0.5 * pow((0.5 * success), 1.1)
-            refatt = 1.0 - refdef
-            tlosses = 1.0 - pow((0.5 * success), 0.2)
-            fc = 0.75 + (0.5 / 255.0) * (np.random.randint(0, 2147483647) & 255)
-            loss1 = min(agents, round(fc * refatt * tlosses *agents))
-            loss2 = min(agents2, round(fc * refdef * tlosses * agents2))
-            agent_fleet.agent -= loss1
-            agent_fleet.save()
-            fleet2.agent -= loss2
-            fleet2.save()
-            news_message += "Attacker lost " + str(loss1) + " agents. Defender lost: " + str(loss2) + " agents.\n"
-            news_message2 += "Attacker lost " + str(loss1) + " agents. Defender lost: " + str(loss2) + " agents.\n"
-
-
-        if operation == "Observe Planet":
-            with connection.cursor() as cursor:
-                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
-
-        if operation == "Spy Target":
-            with connection.cursor() as cursor:
-                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
-
-        if operation == "Network Infiltration":
-            lost_research_pct = 0
-            if success >= 1.0:
-                lost_research_pct = 3
-            else: 
-                lost_research_pct = min(3, round((3.0 / 0.6) * (success - 0.4), 2))
-            if lost_research_pct > 0:
-                fa = 0.3 + (0.7 / 255.0) * (np.random.randint(0, 2147483647) & 255)
-                gained_research_pct = round(lost_research_pct * fa, 2)
-                for research in researchNames:
-                    lost_research_points = int(getattr(user2, research) * (0.01 * lost_research_pct))
-                    research_points_new2 = getattr(user2, research) - lost_research_points
-                    setattr(user2, research, research_points_new2)
-                    research_points_new1 = getattr(user1, research) + int(lost_research_points * fa)
-                    setattr(user1, research, research_points_new1)
-                news_message += "\n" + str(lost_research_pct) + "% research was lost by the defender! " + \
-                                       str(gained_research_pct) + "% research was stolen for our faction!"
-                news_message2 += "\n" + str(lost_research_pct) + "% research was lost!"
-                user2.save()
-                user1.save()
-            else:
-                news_message += "\nNo research was stolen!"
-                news_message2 += "\nNo research was lost!"
-
-        if operation == "Diplomatic Espionage":
-            with connection.cursor() as cursor:
-                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
-
-        if operation == "Maps theft":
-            if success < 1:
-                news_message += "Your agents couldn't gather any information!"
-                news_message2 += "Your agents defended your maps information!"
-            else:
-                scouting1 = Scouting.objects.filter(empire=user1.empire)
-                scouting2 = Scouting.objects.filter(user=user2.user)
-
-                planets ={}
-                for s1 in scouting1:
-                    planets[s1.planet.id] = s1
-
-                fa = min(100, round(pow(success,3)*12.5))
-                news_message += "Your agents managed to gather scouting informaton about " +str(fa) \
-                                +'% planets of target faction!'
-
-                news_message2 += "Your scouting maps were stolen!"
-
-                for s2 in scouting2:
-                    r = random.randint(0, 100)
-                    if r > fa:
-                        continue
-                    if s2.planet.id in planets:
-                        tmp_scouting = planets[s2.planet.id]
-                        tmp_scouting.scout = max(tmp_scouting.scout, s2.scout)
-                        tmp_scouting.save()
-                    else:
-                        Scouting.objects.create(user=user1.user,
-                                                planet=s2.planet,
-                                                empire=user1.empire,
-                                                scout=s2.scout)
-
-        if operation == "Planetary Beacon":
-            if success >= 1:
-                Specops.objects.create(user_to=user2.user,
-                                       user_from=user1.user,
-                                       specop_type='O',
-                                       name="Planetary Beacon",
-                                       stealth=stealth,
-                                       ticks_left=24,
-                                       planet=target_planet)
-                news_message += "All dark web effects were removed from the planet, however the planet defenders gained +10% military bonus!"
-                news_message2 += "All dark web effects were removed from the planet, however the planet defenders gained +10% military bonus!"
-
-        
-        if operation == "Steal Resources":
-            if target_planet.owner is not None:
-                if success >= 1.0:
-                    element = ['Mineral', 'Crystal', 'Ectrolium']
-                    chosen = secrets.choice(element)
-                    res = ""
-                    if chosen == "Crystal":
-                        res = int(user2.crystals * (success/20))
-                        user1.crystals += res
-                        user2.crystals -= res
-                    if chosen == "Ectrolium":
-                        res = int(user2.ectrolium * (success/20))
-                        user1.ectrolium += res
-                        user2.ectrolium -= res
-                    if chosen == "Mineral":
-                        res = int(user2.minerals * (success/20))
-                        user1.minerals += res
-                        user2.minerals -= res
-                    user1.save()
-                    user2.save()
-                    news_message += "\nOur Agents managed to steal " + str(res) + " " + str(chosen) + "!"
-                    news_message2 += "\nTheir Agents managed to steal " + str(res) + " " + str(chosen) + "!"
-
-                else:
-                    news_message += "\nNo resources were stolen!"
-                    news_message2 += "\nNo resources were stolen!"
-            else:
-                news_message += "\nPlanet uninhabited"
-        
-        if operation == "Hack mainframe":
-            if success >= 1.0:
-                energy_pct1 = 20
-                energy_pct2 = 20
-            else:
-                energy_pct1 = round((20.0 / 0.6) * (success - 0.4))
-                energy_pct2 = round((20.0 / 0.6) * (success - 0.4))
-
-            if energy_pct1 > 0:
-                length = min(32, round(pow(6,success+0.6)))
-                if success >= 1.0:
-                    Specops.objects.create(user_to=user2.user,
-                                       user_from=user1.user,
-                                       specop_type='O',
-                                       specop_strength=energy_pct1,
-                                       specop_strength2=energy_pct2,
-                                       name="Hack mainframe",
-                                       stealth=stealth,
-                                       ticks_left=length,
-                                       date_and_time=datetime.now())
-                                       
-                news_message += "Mainframe computer network was successfully hacked, energy flows transferred to our empire!"
-                news_message += "\nTarget income lost: " + str(energy_pct1) +"%"
-                news_message += "\nOur income increase: " + str(energy_pct2)  +"%"
-                news_message2 += "Our mainframe computers were hacked, energy production channelled away from our grid!"
-                news_message2 += "\nOur income lost: " + str(energy_pct1) +"%"
-            else:
-                news_message += "\nYour agents didn't succeed!"
-                news_message2 += "\nYour agents managed to defend!"
-
-        if operation == "Infiltration":
-            with connection.cursor() as cursor:
-                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
-
-        if operation == "Bribe officials":
-            if success >= 0.6:
-                r = random.randint(0,1)
-                news_message += "Your agents managed to successfully bribe certain officials!\n"
-                news_message2 += "Your corrupt officials are slowing down our economy!\n"
-                if r == 1: #increase resource cost
-                    fa = min(100, round(success**2 * 33))
-                    news_message += "Building costs increased by " + str(fa) + "%!"
-                    news_message2 += "Building costs increased by " + str(fa) + "%!"
-                    extra = "resource_cost"
-                else: #increase building time
-                    fa = min(300, round(success ** 2 * 100))
-                    news_message += "Building time increased by " + str(fa) + "%!"
-                    news_message2 += "Building time increased by " + str(fa) + "%!"
-                    extra = "building_time"
-                length = min(72, round(success *24))
-                Specops.objects.create(user_to=user2.user,
-                                       user_from=user1.user,
-                                       specop_type='O',
-                                       specop_strength=fa,
-                                       extra_effect=extra,
-                                       stealth=stealth,
-                                       name="Bribe officials",
-                                       ticks_left=length)
-            else:
-                news_message += "Your agents didn't succeed!"
-                news_message2 += "Your politicians seem to live the life of saints!"
-
-        if operation == "Military Sabotage":
-            if success >= 1.0:
-                a = 8
-            else:
-                a = int((8.0 / 0.5) * (success - 0.5))
-            if a > 0:
-                news_message += "The following units from the main fleet were destroyed:\n"
-                news_message2 += "The following units from the main fleet were destroyed:\n"
-                main_fleet = Fleet.objects.get(owner=user2.user, main_fleet=True)
-                no_units = True
-                for unit in unit_info["unit_list"]:
-                    num = getattr(main_fleet, unit)
-                    if num:
-                        fa = 0.01 * (a + random.randint(0, 3))
-                        num_lost = int(num * fa)
-                        if num_lost > 0:
-                            no_units = False
-                            news_message += str(unit) + ":" + str(num_lost) +"\n"
-                            news_message2 += str(unit) + ":" + str(num_lost) + "\n"
-                            setattr(main_fleet, unit, max(0, num - num_lost))
-                main_fleet.save()
-                if no_units:
-                    news_message += "Your opponent has barely any fleet to destroy!"
-            else:
-                news_message += "Your agents didn't succeed!"
-                news_message2 += "Your agents managed to defend!"
-
-        if operation == "Nuke Planet":
-            with connection.cursor() as cursor:
-                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
-                
-
-        if operation == "Bio Infection":
-            if success >= 1.0:
-                fa = 0.6
-            else:
-                fa = (0.6 / 0.4) * (success - 0.6)
-            total_pop_lost = 0
-
-            if fa > 0:
-                planets = Planet.objects.filter(owner=user2.user)
-
-                for p in planets:
-                    dist = math.sqrt((p.x-target_planet.x)**2 + (p.y-target_planet.y)**2)
-                    if dist >= 23:
-                        continue
-                    fb = 1.0 - (dist / 23.0)
-                    pop_killed = int(p.current_population * fa * fb)
-                    total_pop_lost += pop_killed
-                    p.current_population -= pop_killed
-                    p.save()
-                user2.population -= total_pop_lost
-                user2.save()
-                news_message += "Your agents have spread a dangerous infection around target planets."
-                news_message += "A total of " + str(total_pop_lost) + " people were killed!"
-                news_message2 += "A pandemic is causing a lot of deaths around your planets!"
-                news_message2 += "A total of " + str(total_pop_lost) + " people were killed!"
-            else:
-                news_message += "Your agents didn't succeed!"
-                news_message2 += "Your agents managed to defend!"
-
-
-        if operation == "High Infiltration":
-            if success >= 1.0:
-                Specops.objects.create(user_to=user2.user,
-                                       user_from=user1.user,
-                                       specop_type='O',
-                                       specop_strength=success,
-                                       stealth=stealth,
-                                       extra_effect="show high infiltration",
-                                       name="High Infiltration",
-                                       ticks_left=104)
-
-                news_message += "You succesfully got faction information!"
-                news_message2 += "Our Information was stolen!"
-            else:
-                news_message += "Your agents didn't succeed!"
-                news_message2 += "Your agents managed to defend!"
-
-        if operation not in ignore:
-            if target_planet.owner is not None:
-                user1.agent_readiness -= specopReadiness(agentop_specs[operation],"Operation", user1, user2)
-            else: 
-                user1.agent_readiness -= agentop_specs[operation][1]
-            user1.save()
-        
-            if empire2 is None:
-                News.objects.create(user1=User.objects.get(id=user.id),
-                                user2=None,
-                                empire1=user1.empire,
-                                fleet1=operation,
-                                news_type='AA',
-                                date_and_time=datetime.now(),
-                                is_personal_news=True,
-                                is_empire_news=True,
-                                extra_info=news_message,
-                                tick_number=RoundStatus.objects.get().tick_number,
-                                planet=target_planet
-                                )
-            else:
-                News.objects.create(user1=User.objects.get(id=user.id),
-                                user2=User.objects.get(id=user2.id),
-                                empire1=user1.empire,
-                                empire2=empire2,
-                                fleet1=operation,
-                                news_type='AA',
-                                date_and_time=datetime.now(),
-                                is_personal_news=True,
-                                is_empire_news=True,
-                                extra_info=news_message,
-                                tick_number=RoundStatus.objects.get().tick_number,
-                                planet=target_planet
-                                )
-                if not stealth:
-                    user2.military_flag = 1
-                    user2.save()
-                    News.objects.create(user1=User.objects.get(id=user2.id),
-                                user2=User.objects.get(id=user.id),
-                                empire1=empire2,
-                                empire2=user1.empire,
-                                fleet1=operation,
-                                news_type='AD',
-                                date_and_time=datetime.now(),
-                                is_personal_news=True,
-                                is_empire_news=True,
-                                extra_info=news_message2,
-                                tick_number=RoundStatus.objects.get().tick_number,
-                                planet=target_planet)
-                
-                elif stealth and agentop_specs[operation][3] == False:
-                    user2.military_flag = 1
-                    user2.save()
-                    News.objects.create(user1=User.objects.get(id=user2.id),
-                                user2=None,
-                                empire1=empire2,
-                                empire2=None,
-                                fleet1=operation,
-                                news_type='AD',
-                                date_and_time=datetime.now(),
-                                is_personal_news=True,
-                                is_empire_news=True,
-                                extra_info=news_message2,
-                                tick_number=RoundStatus.objects.get().tick_number,
-                                planet=target_planet)
-
-        return news_message
 
 def perform_incantation(ghost_fleet):
     incantation = ghost_fleet.specop

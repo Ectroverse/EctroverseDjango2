@@ -1,7 +1,7 @@
 from django.db.models import Q, Sum
 from .models import *
 from app.constants import *
-from .helper_functions import generate_fleet_order, find_nearest_portal, join_main_fleet, travel_speed, actobelisk
+from .helper_functions import generate_fleet_order, find_nearest_portal, join_main_fleet, travel_speed
 import numpy as np
 from .models import *
 from .calculations import *

@@ -2090,8 +2090,16 @@ def syst(request, system_id, *args):
     status = get_object_or_404(UserStatus, user=request.user)
     system = get_object_or_404(System, pk=system_id)
     planet = Planet.objects.filter(x=system.x, y=system.y)
+    unexp = Planet.objects.filter(x=system.x, y=system.y, owner=None).count()
     mapgen = {}
     title = ''
+    
+    instant = None
+    fresh_news = News.objects.filter(user1=request.user, is_read=False, is_personal_news=True).order_by(
+        '-date_and_time')[:unexp]
+    if 'instant' in request.session:
+        instant = request.session['instant']
+    
     scouted_planets = Scouting.objects.filter(empire=status.empire, scout__gte=1.0).values_list("planet_id", flat=True)
     users = UserStatus.objects.filter(empire=status.empire).values_list("user", flat=True)
     fleets = Fleet.objects.filter(owner__in=users, x=system.x, y=system.y)
@@ -2143,7 +2151,7 @@ def syst(request, system_id, *args):
                     msg += "\nYou do not have enough Agents!"
                 else:
                     msg += "\nAgents sent! \n" 
-                    msg += send_agents_ghosts(status, int(agents), 0,
+                    instant = send_agents_ghosts(status, int(agents), 0,
                                              p.x, p.y, p.i, "Observe Planet")
     
     if request.method == 'POST' and 'survey_syst' in request.POST:
@@ -2155,7 +2163,7 @@ def syst(request, system_id, *args):
                 msg += "\nYou do not have enough Ghost Ships!"
             else:
                 msg += "\nGhost Ships sent! \n" 
-                msg += send_ghosts(status, 0, int(ghosts),
+                instant = send_ghosts(status, 0, int(ghosts),
                                          p.x, p.y, p.i, "Survey System")
             break
     
@@ -2361,6 +2369,8 @@ def syst(request, system_id, *args):
                "suvfl": suvfl,
                "hovfl": hovfl,
                "fleets": fleets,
+               "instant": instant,
+               "fresh_news": fresh_news,
                "page_title": title} 
     if args:
         if args[0] == "short":
@@ -4688,6 +4698,10 @@ def specops(request, *args):
     race_spells = race_display_list[status.get_race_display()]["spell_list"]
     race_inca = race_display_list[status.get_race_display()]["incantation_list"]
     
+    instant = None
+    fresh_news = News.objects.filter(user1=request.user, is_read=False, is_personal_news=True).order_by(
+        '-date_and_time')[:1]
+    
     user_to_template_specop = None
     planet_to_template_specop = None
     specop_planet_id = None
@@ -4696,6 +4710,9 @@ def specops(request, *args):
     if 'error' in request.session:
         error = request.session['error']
         request.session['error'] = None
+    if 'instant' in request.session:
+        instant = request.session['instant']
+        request.session['instant'] = None
     if 'specop_planet_id' in request.session:
         specop_planet_id = request.session['specop_planet_id']
         request.session['specop_planet_id'] = None
@@ -4861,11 +4878,15 @@ def specops(request, *args):
                 except Planet.DoesNotExist:
                     msg = "This planet doesn't exist"
                 if planet:
-                    request.session['error'] = "Agents sent! \n" + send_agents_ghosts(status, int(request.POST['unit_ammount']), 0,
-                                             request.POST['X'], request.POST['Y'], request.POST['I'],
-                                             request.POST['operation'])
-                    request.session['specop_planet_id'] = planet.id    
-                    return redirect(request.META['HTTP_REFERER'])
+                    if planet.home_planet == True and request.POST['operation'] == "Nuke Planet":
+                        msg = "You cannot Nuke a home planet!"
+                    else:
+                        request.session['error'] = "Agents sent! \n"
+                        request.session['instant'] = send_agents_ghosts(status, int(request.POST['unit_ammount']), 0,
+                                                 request.POST['X'], request.POST['Y'], request.POST['I'],
+                                                 request.POST['operation'])
+                        request.session['specop_planet_id'] = planet.id    
+                        return redirect(request.META['HTTP_REFERER'])
 
         if 'agent_select' in request.POST:
             agent_select = request.POST.getlist('agent_select')
@@ -4897,7 +4918,8 @@ def specops(request, *args):
                 except Planet.DoesNotExist:
                     msg = "This planet doesn't exist"
                 if planet:
-                    request.session['error'] = "Ghost Ships sent! \n" + send_ghosts(status, 0, int(request.POST['unit_ammount']),
+                    request.session['error'] = "Ghost Ships sent! \n"
+                    request.session['instant'] = send_ghosts(status, 0, int(request.POST['unit_ammount']),
                                              planet.x, planet.y, planet.i, request.POST['incantation'])
                     request.session['specop_planet_id'] = planet.id    
                     return redirect(request.META['HTTP_REFERER'])
@@ -4958,6 +4980,8 @@ def specops(request, *args):
                "inca_out": inca_out,
                "inca_in": inca_in,
                "bare": bare,
+               "instant": instant,
+               "fresh_news": fresh_news,
                "planet_to_template_specop": planet_to_template_specop,
                "user_to_template_specop": template_name,}
     

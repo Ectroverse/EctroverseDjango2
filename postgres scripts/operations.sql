@@ -837,7 +837,7 @@
 		  INSERT (planet_id, empire_id, user_id, scout)
 		  VALUES (o.p_id, (select empire_id from '|| _userstatus_table ||' u where u.user_id = o.owner_id), o.owner_id, o.success)
 	),
-	merge_bio as (
+	merge_theft as (
 		merge into '|| _scouting_table ||' a
 		using (select op.oid, op.pid, max(op.scout) success
 		from theft op

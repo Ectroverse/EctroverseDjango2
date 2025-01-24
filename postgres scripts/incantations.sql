@@ -128,7 +128,9 @@
 		select op.id s_id, p.id p_id, op.owner_id, op.specop, ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop) attack,
 		greatest((ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop) / 
 		--defence
-		(case when p.owner_id is null then 50 else
+		(case when op.specop in (''Survey System'', ''Sense Artefact'') then 
+			(select networth from '|| _userstatus_table ||' where id = op.owner_id) / op.ghosts
+		when p.owner_id is null then 50 else
 		1.0 + (select ((dc.num_val * (COALESCE(df.wizard,0)) * (1.0 + 0.005 * def.research_percent_culture)) / 7)
 		from '|| _userstatus_table ||' def
 		join classes d_c on d_c.name = def.race
@@ -154,7 +156,8 @@
 	),
 	--losses
 	attloss as (
-		select s.s_id al_id, (case when p.owner_id is null or op.specop in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') then 0 
+		select s.s_id al_id, (case when p.owner_id is null or op.specop in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') 
+		or p.owner_id = op.owner_id then 0 
 		else 
 			round(case when s.success < 2.0 
 			then greatest(0, least(coalesce(op.ghosts,0), (1.0 - (0.5 * power((0.5 * s.success ), 1.1))) *
@@ -301,7 +304,80 @@
 		join prevent_neg n on n.id = op.id
 		where op.specop = ''Survey System''
 		order by p.i
-	),	
+	),
+	-- pff, ps and vp
+	
+	ticks as (
+		select op.p_id pid, op.id,
+			(case when op.specop = ''Planetary Shielding'' then cast(random()*(100-10)+10 as int)
+			when op.specop = ''Portal Force Field'' then cast(random()*(47-16)+16 as int)
+			when op.specop = ''Vortex Portal'' then 
+				round(least(144, (3 + (120 * ((ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop) * 7) / 
+					(select networth from '|| _userstatus_table ||' where id = op.owner_id))))))
+			else 0 end) ticks
+		from operation op 
+		where specop in (''Planetary Shielding'', ''Portal Force Field'', ''Vortex Portal'')
+	),
+	strength as (
+		select op.p_id pid, op.id,
+			(case when op.specop = ''Planetary Shielding'' then
+			round(ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop) * cast(random()*(500-250)+250 as int))
+			when op.specop = ''Portal Force Field'' then round(200 * ((select success from success where s_id = op.id) - 0.5))
+			else (select success from success where s_id = op.id) end) strength
+		from operation op 
+		where specop in (''Planetary Shielding'', ''Portal Force Field'', ''Vortex Portal'')
+	),
+	create_op as(
+		insert into '|| _specops_table ||' 
+		(user_to_id, user_from_id, specop_type, stealth, name, ticks_left, specop_strength, specop_strength2, planet_id)
+		select (case when op.specop = ''Vortex Portal'' then s.owner_id ELSE
+		(select owner_id from '|| _planets_table ||' where id = op.p_id) end), s.owner_id, ''G'', 
+		(case when s.success >= 2.0 then true else false end), s.specop, t.ticks, 
+		(select strength from strength where id = op.id), 0, op.p_id
+		from operation op
+		join success s on s.s_id = op.id
+		join ticks t on t.id = s.s_id
+		join prevent_neg n on n.id = op.id
+		where (select strength from strength where id = op.id) > 0 and t.ticks > 0
+		and op.specop in (''Planetary Shielding'', ''Portal Force Field'', ''Vortex Portal'')
+	),
+	-- other incas
+	call as (
+		select op.id cid, ((case when s.success >= 1.0 then 
+			0.8 else 2 * (s.success - 0.6) end)  * cast(random()*(110-90)+90 as int) / 100) fa,
+			sqrt(power(abs(p.x-(select x from '|| _planets_table ||' where id = op.p_id)), 2) + 
+			power(abs(p.y-(select y from '|| _planets_table ||' where id = op.p_id)), 2)) dist, p.id pid, op.defid
+		from operation op
+		join '|| _planets_table ||' p on p.owner_id = op.defid
+		join success s on s.s_id = op.id
+		where op.specop = ''Call to Arms''
+	),
+	kill_pop as (
+		select c.cid, least(p.current_population,round(p.current_population * c.fa * (1.0 - (c.dist / 16.0)))) pop_killed, c.pid, c.defid
+		from call c
+		join '|| _planets_table ||' p on p.id = c.pid
+		where c.dist < 16.0
+	),
+	gained_sols as (
+		select round((c.pop_killed/100 * (1.0 + 0.01 * (select research_percent_military from '|| _userstatus_table ||' where id = c.defid))) /
+		(select ((case when dc.num_val is not null then dc.num_val else 200 end)/ 100) 
+		from '|| _userstatus_table ||' def
+		join classes d_c on d_c.name = def.race
+		join constants dc on dc.class = d_c.id and dc.name = ''research_max_military''
+		where def.id = c.defid)) sols_gained, c.cid, c.defid
+		from kill_pop c
+	),
+	upd_call as (
+		update '|| _planets_table ||' p
+		set current_population = current_population - b.pop_killed
+		from kill_pop b where pid = p.id 
+	),
+	add_sols as (
+		update '|| _planets_table ||' p
+		set current_population = current_population - b.pop_killed
+		from kill_pop b where pid = p.id 
+	),
+	--sense
 	sense as (
 		select empire_id, user_id, fleet_id, p_id, system_id, x, y		
 		from(
@@ -336,7 +412,7 @@
 	sense_arti as 
 	(
 		select a.id arti_id, p.id planet_id, s.fleet_id, s.empire_id, s.user_id,
-		''Your Ghost Ships have located an Artefact at Planet:'' || p.x ||'',''|| p.y || '','' || p.i news_info
+		''Your Ghost Ships have located an Artefact at Planet:'' || p.x ||'',''|| p.y || '':'' || p.i news_info
 		from '|| _artefacts_table ||'  a
 		join '|| _planets_table ||' p on p.id = a.on_planet_id
 		join sense s on s.x = p.x and s.y = p.y
@@ -354,7 +430,9 @@
 		  INSERT (scout, empire_id, user_id, planet_id)
 		  VALUES (1, s.empire_id, s.user_id, s.planet_id)
 	),
-	ins_news_success as (
+	
+	-- news
+		ins_news_success as (
 		insert into '|| _news_table||' 
 		( user1_id, user2_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
 		is_read, tick_number, planet_id, fleet1, extra_info)
@@ -362,15 +440,45 @@
 		(select empire_id from '|| _userstatus_table ||' u where u.user_id = e.owner_id), 
 		''GA'', current_timestamp, true, true, false, 
 		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
-		(case when e.specop = ''Survey System'' then (select string_agg(i.news_info, '''|| chr(10) || ''') from survey i where i.i_id = e.id)
-			  when e.specop = ''Sense Artefact'' and (select count(*) from sense_arti) > 0 
-					then (select string_agg(i.news_info, '''|| chr(10) || ''') from sense_arti i where i.fleet_id = e.id)
-			  when e.specop = ''Sense Artefact'' and (select count(*) from sense) > 0 then 
-					''Your ghost ships searched thoughrally through out the galaxy, but no presence of any artefacts was felt!''
-			  end
-			)
+		(case when al.losses > 0 then ''Attacker Lost: '' || al.losses || '' ghost ships'' || chr(10) || '''' 
+		else '''' end || 
+		case when dl.losses > 0 then ''Defender Lost: '' || dl.losses || '' ghost ships'' || chr(10) || '''' 
+		else '''' end ||
+		case when dl.g_losses > 0 then ''Defender Lost: '' || dl.g_losses || '' psychics'' || chr(10) || '''' 
+		else '''' end ||
+		case when e.specop = ''Observe Planet'' then (select string_agg(i.news_info, ''
+        '') from survey i where i.i_id = e.id)
+		when e.specop = ''Vortex Portal'' then
+			''Vortex Portal created at '' || (select x from '|| _planets_table ||' where id = e.p_id) || '','' 
+			|| (select y from '|| _planets_table ||' where id = e.p_id) || '' for a duration of '' || 
+			(select ticks from ticks where id = e.id) || '' weeks!''
+		when e.specop = ''Planetary Shielding'' then
+			case when (select strength from strength where id = e.id) > 0 and (select ticks from ticks where id = e.id) > 0 then 
+				''Your Ghost Ships managed to create a shield lasting '' || (select ticks from ticks where id = e.id) ||
+				'' weeks, able to withstand '' || (select strength from strength where id = e.id) ||  '' damage!''
+			else ''Your Ghost Ships failed!'' end
+		when e.specop = ''Portal Force Field'' then
+			case when (select strength from strength where id = e.id) > 0 and (select ticks from ticks where id = e.id) > 0 then 
+				''Your Ghost Ships managed to create a force field lasting '' || (select ticks from ticks where id = e.id) ||
+				'' weeks, reducing portal capability by '' || (select strength from strength where id = e.id) ||  ''%!''
+			else ''Your Ghost Ships failed!'' end
+		when e.specop = ''Sense Artefact'' then 
+			case when (select count(*) from sense_arti) > 0 then
+			(select string_agg(i.news_info, '''|| chr(10) || ''') from sense_arti i where i.fleet_id = e.id)
+			else ''Your ghost ships searched thoughrally through out the galaxy, but no presence of any artefacts was felt!''
+			end
+		when e.specop = ''Call to Arms'' then
+			case when (select sum(pop_killed) from kill_pop where cid = e.id) > 0 then 
+				(select sum(pop_killed) from kill_pop where cid = e.id) || '' population has been recruited, training '' ||
+				(select sum(sols_gained) from gained_sols where cid = e.id)	 || '' soldiers!''
+			else
+				''Your Ghost Ships failed!''
+			end
+		end )
 		from operation e
 		join prevent_neg n on n.id = e.id
+		join attloss al on al.al_id = e.id
+		join defloss dl on dl.dl_id = e.id
 		where n.id = e.id
 	),
 	ins_no_pr_news as (
@@ -424,13 +532,36 @@
 		''GD'', 
 		current_timestamp, true, true, false, 
 		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
-		(''TESTING'')
+		(case when al.losses > 0 then ''Attacker Lost: '' || al.losses || '' ghost ships'' || chr(10) || '''' 
+		else '''' end || 
+		case when dl.losses > 0 then ''Defender Lost: '' || dl.losses || '' ghost ships'' || chr(10) || '''' 
+		else '''' end ||
+		case when dl.g_losses > 0 then ''Defender Lost: '' || dl.g_losses || '' psychics'' || chr(10) || '''' 
+		else '''' end ||
+		case when e.specop = ''Planetary Shielding'' then
+			case when (select strength from strength where id = e.id) > 0 and (select ticks from ticks where id = e.id) > 0 then 
+				''Enemy Ghost Ships managed to create a shield lasting '' || (select ticks from ticks where id = e.id) ||
+				'' weeks, able to withstand '' || (select strength from strength where id = e.id) ||  '' damage!''
+			else ''Your Psychics managed to defend!'' end
+		when e.specop = ''Portal Force Field'' then
+			case when (select strength from strength where id = e.id) > 0 and (select ticks from ticks where id = e.id) > 0 then 
+				''Enemy Ghost Ships managed to create a force field lasting '' || (select ticks from ticks where id = e.id) ||
+				'' weeks, reducing portal capability by '' || (select strength from strength where id = e.id) ||  ''%!''
+			else ''Your Psychics managed to defend!'' end
+		when e.specop = ''Call to Arms'' then
+			case when (select sum(pop_killed) from kill_pop where cid = e.id) > 0 then 
+				(select sum(pop_killed) from kill_pop where cid = e.id) || '' population has been recruited, training '' ||
+				(select sum(sols_gained) from gained_sols where cid = e.id)	 || '' soldiers!''
+			else
+				''Your Psychics managed to defend!''
+			end
+		end )
 		from operation e 
 		join success s on s.s_id = e.id
 		join attloss al on al.al_id = e.id
 		join defloss dl on dl.dl_id = e.id
 		join prevent_neg n on n.id = e.id
-		where e.defid is not null
+		where e.defid is not null and e.defid != e.owner_id
 		and (s.success < 2.0 or e.stealth = false) and e.specop not in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'')
 	),
 	--scouting
@@ -449,7 +580,6 @@
 		  INSERT (planet_id, empire_id, user_id, scout)
 		  VALUES (o.p_id, (select empire_id from '|| _userstatus_table ||' u where u.user_id = o.owner_id), o.owner_id, o.success)
 	),
-	/*
 	send_home as (
 		update '|| _fleet_table ||' a
 		set i = s.i,
@@ -476,11 +606,12 @@
 	join operation op on op.id= s.a_id
 	where a.id = s.a_id
 	and a.command_order = 7 and a.ticks_remaining = 0
-	),*/
+	),
 	deflosses as (
 		update '|| _fleet_table ||' f
 		set wizard = wizard - COALESCE((select sum(losses) from defloss where defid = f.owner_id),0),
-		ghost = ghost - COALESCE((select sum(g_losses) from defloss where defid = f.owner_id),0)
+		ghost = ghost - COALESCE((select sum(g_losses) from defloss where defid = f.owner_id),0),
+		soldier = soldier + COALESCE((select sum(sols_gained) from gained_sols where defid = f.owner_id),0) -- call
 		from (select defid from operation group by defid) o
 		where f.owner_id=o.defid and f.main_fleet=true
 	)
@@ -491,7 +622,7 @@
 	where u.id = c.owner_id;
 	
 	-- join main fleet
-	/*with recalled_fleets as 
+	with recalled_fleets as 
 	(select owner_id, 
 		sum(bomber) bomber ,
 		sum(fighter ) fighter  ,
@@ -536,7 +667,6 @@
 	a.main_fleet = false
 	and a.command_order = 5
 	and a.ticks_remaining = 0;
-	*/
 	';
 	--raise notice '%', _sql;
 	execute _sql;
