@@ -335,21 +335,5 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
         dmsg = "<@&1201666532753547315> " + str(msg)
 
-        '''
-        webhook = Webhook.from_url("https://discord.com/api/webhooks/1225161748378681406/ModQRVgqG6teRQ0gi6_jWGKiguQgA0FBsRRWhDLUQcBNVfFxUb-sTQAkr6QsB7L8xSqE", adapter=RequestsWebhookAdapter())
-        webhook.send(dmsg)
-        webhk = Webhook.from_url("https://discord.com/api/webhooks/1227218151629000744/MeckPYnnT6hoiznfBz5oxm6pjWdgCXxVLOmLf7kFa78cYpimyDNK1BxgBdQOyZgD9qgu", adapter=RequestsWebhookAdapter())
-        webhk.send(dmsg)
-        
-        webhook_url = ""
-        session = requests.Session()
-
-        webhook = SyncWebhook.from_url(webhook_url, session=session)
-        
-        #webhook.send(msg)
-
-        send_mail(subject, message, "admin@ectroverse.co.uk", recievers)
-        '''
-
         print("Generating planets and resetting users took " + str(time.time() - start_t) + "seconds")
 
