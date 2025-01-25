@@ -130,7 +130,7 @@
 		--defence
 		(case when op.specop in (''Survey System'', ''Sense Artefact'') then 
 			(select networth from '|| _userstatus_table ||' where id = op.owner_id) / op.ghosts
-		when p.owner_id is null then 50 else
+		when p.owner_id is null or p.owner_id = op.owner_id then 50 else
 		1.0 + (select ((dc.num_val * (COALESCE(df.wizard,0)) * (1.0 + 0.005 * def.research_percent_culture)) / 7)
 		from '|| _userstatus_table ||' def
 		join classes d_c on d_c.name = def.race
@@ -359,12 +359,8 @@
 		where c.dist < 16.0
 	),
 	gained_sols as (
-		select round((c.pop_killed/100 * (1.0 + 0.01 * (select research_percent_military from '|| _userstatus_table ||' where id = c.defid))) /
-		(select ((case when dc.num_val is not null then dc.num_val else 200 end)/ 100) 
-		from '|| _userstatus_table ||' def
-		join classes d_c on d_c.name = def.race
-		join constants dc on dc.class = d_c.id and dc.name = ''research_max_military''
-		where def.id = c.defid)) sols_gained, c.cid, c.defid
+		select round((c.pop_killed/100 * (1.0 + 0.01 * (select research_percent_military from '|| _userstatus_table ||' where id = c.defid)))
+		/ 2 ) sols_gained, c.cid, c.defid
 		from kill_pop c
 	),
 	upd_call as (
@@ -376,6 +372,49 @@
 		update '|| _planets_table ||' p
 		set current_population = current_population - b.pop_killed
 		from kill_pop b where pid = p.id 
+	),
+	mind_c as (
+		update '|| _planets_table ||' p
+		set owner_id = op.owner_id,
+		current_population = p.size * 20,
+		protection = 0,
+		buildings_under_construction = 0,
+		portal = false,
+		portal_under_construction = false,
+		solar_collectors = (case when s.success >= 2.0 then p.solar_collectors else 0 end),
+		fission_reactors = (case when s.success >= 2.0 then p.fission_reactors else 0 end),
+		mineral_plants = (case when s.success >= 2.0 then p.mineral_plants else 0 end),
+		crystal_labs = (case when s.success >= 2.0 then p.crystal_labs else 0 end),
+		refinement_stations = (case when s.success >= 2.0 then p.refinement_stations else 0 end),
+		cities = (case when s.success >= 2.0 then p.cities else 0 end),
+		research_centers = (case when s.success >= 2.0 then p.research_centers else 0 end),
+		defense_sats = (case when s.success >= 2.0 then p.defense_sats else 0 end),
+		shield_networks = (case when s.success >= 2.0 then p.shield_networks else 0 end),
+		total_buildings = (case when s.success >= 2.0 then p.total_buildings else 0 end)
+		from operation op
+		join success s on s.s_id = op.id
+		where op.specop = ''Mind Control'' and s.success >= 1.0 and p.id = op.p_id
+	),
+	mind_arti as (
+		update '|| _artefacts_table ||' p
+		set empire_holding_id = op.empire_id
+		from operation op
+		join success s on s.s_id = op.id
+		where op.specop = ''Mind Control'' and s.success >= 1.0 and p.on_planet_id = op.p_id
+	),
+	merge_mind_scout as (
+		merge into '|| _scouting_table ||' a
+		using (select op.empire_id, op.owner_id, op.p_id
+		from operation op 
+		join success s on s.s_id = op.id
+		where op.specop = ''Mind Control'' and s.success >= 1.0 
+		) s
+		on a.empire_id = s.empire_id and a.user_id = s.owner_id and a.planet_id = s.p_id
+		WHEN MATCHED THEN
+			UPDATE SET scout = 1.0
+		WHEN NOT MATCHED THEN
+		  INSERT (scout, empire_id, user_id, planet_id)
+		  VALUES (1, s.empire_id, s.owner_id, s.p_id)
 	),
 	--sense
 	sense as (
@@ -474,6 +513,12 @@
 			else
 				''Your Ghost Ships failed!''
 			end
+		when e.specop = ''Mind Control'' then
+			case when (select success from success where s_id = e.id) >= 1.0 then 
+				''Your Ghost Ships took control of the planet!''
+			else
+				''Your Ghost Ships failed!''
+			end
 		end )
 		from operation e
 		join prevent_neg n on n.id = e.id
@@ -552,6 +597,12 @@
 			case when (select sum(pop_killed) from kill_pop where cid = e.id) > 0 then 
 				(select sum(pop_killed) from kill_pop where cid = e.id) || '' population has been recruited, training '' ||
 				(select sum(sols_gained) from gained_sols where cid = e.id)	 || '' soldiers!''
+			else
+				''Your Psychics managed to defend!''
+			end
+		when e.specop = ''Mind Control'' then
+			case when s.success >= 1.0 then 
+				''The planet was lost!''
 			else
 				''Your Psychics managed to defend!''
 			end

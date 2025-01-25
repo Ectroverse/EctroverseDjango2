@@ -330,7 +330,7 @@
 		where op.specop = ''Bio Infection''
 	),
 	kill_pop as (
-		select b.bid bid, round(p.current_population * b.fa * (1.0 - (b.dist / 23.0))) pop_killed, b.pid pid
+		select b.bid bid, least(p.current_population,round(p.current_population * b.fa * (1.0 - (b.dist / 23.0)))) pop_killed, b.pid pid
 		from bio b
 		join '|| _planets_table ||' p on p.id = b.pid
 		where b.dist < 23.0
