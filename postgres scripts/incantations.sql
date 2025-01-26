@@ -735,7 +735,7 @@
 		  INSERT (planet_id, empire_id, user_id, scout)
 		  VALUES (o.p_id, (select empire_id from '|| _userstatus_table ||' u where u.user_id = o.owner_id), o.owner_id, o.success)
 	),
-	/*send_home as (
+	send_home as (
 		update '|| _fleet_table ||' a
 		set i = s.i,
 		x = s.x,
@@ -761,7 +761,7 @@
 	join operation op on op.id= s.a_id
 	where a.id = s.a_id
 	and a.command_order = 7 and a.ticks_remaining = 0
-	),*/
+	),
 	deflosses as (
 		update '|| _fleet_table ||' f
 		set wizard = wizard - COALESCE((select sum(losses) from defloss where defid = f.owner_id),0),
@@ -795,7 +795,6 @@
 	left join esurge_losses b on u2.id = b.defid -- e-surge part
 	where u.id = u2.id;
 
-	/*
 	-- join main fleet
 	with recalled_fleets as 
 	(select owner_id, 
@@ -841,9 +840,9 @@
 	where 
 	a.main_fleet = false
 	and a.command_order = 5
-	and a.ticks_remaining = 0;*/
+	and a.ticks_remaining = 0;
 	';
-	raise notice '%', _sql;
+	--raise notice '%', _sql;
 	execute _sql;
 	    
  
