@@ -25,7 +25,7 @@ from app.helper_functions import *
 from app.specops import *
 from app.battle import *
 from galtwo.views import choose_empire
-from galtwo.models import RoundStatus as StatusRound, Artefacts as Fastartes, Planets, Empire as Empires, System as Systems, UserStatus as TwoStatus, Fleet as Fleets
+from galtwo.models import RoundStatus as StatusRound, Artefacts as Fastartes, Planets, Empire as Empires, System as Systems, UserStatus as TwoStatus, Fleet as Fleets, Ops as Op
 from django.views.decorators.clickjacking import xframe_options_exempt
 from app.round_functions import arti_list
 
@@ -3405,6 +3405,10 @@ def fleets_orders_process(request, *args):
         portal_planets = Planet.objects.filter(owner=request.user,
                                                portal=True)  # should always have at least the home planet, unless razed!!!
         # print(portal_planets)
+        if Specops.objects.filter(user_to=status.user, name='Vortex Portal').exists():
+            for vort in Specops.objects.filter(user_to=status.user, name='Vortex Portal'):
+                vort_por = Planet.objects.filter(id=vort.planet.id)
+                portal_planets = portal_planets | vort_por
         if not portal_planets:
             request.session['error'] = "You need at least one portal for fleet to returnto main fleet!"
             if args:
@@ -4461,6 +4465,7 @@ def research(request):
     race_info = race_info_list[status.get_race_display()]
     calcs = {"calc": 'None', "milpoints":'', "rpmil": '', "conpoints":'', "rpcon":'', "techpoints":'', "rptech":'', "nrgpoints":'', "rpnrg":'', "poppoints":'', "rppop":'', "culpoints":'', "rpcul":'', "opspoints":'', "rpops":'', "portpoints":'', "rpport":''}
     wks = 0
+    tree = Artefacts.objects.get(name="Resource Tree")
     print(request.POST)
     if request.method == 'POST':
         if 'fund_form' in request.POST:
@@ -4686,6 +4691,7 @@ def research(request):
                "page_title": "Research",
                "calcs": calcs,
                "wks": wks,
+               "tree": tree,
                "message": message}
     return render(request, "research.html", context)
 
@@ -5003,10 +5009,16 @@ def ops(request):
     spells = {}
     for o in Ops.objects.filter(specop_type="S"):
         spells[o.name] = [o.tech,o.readiness,o.difficulty,o.selfsp,o.description]
+        op = Op.objects.get(name=o.name)
+        if op.readiness != o.readiness:
+            spells[o.name][1] = str(o.readiness) + "\nRegular/Fast\n" + str(op.readiness)
 
     inca = {}
     for o in Ops.objects.filter(specop_type="G"):
         inca[o.name] = [o.tech,o.readiness,o.difficulty,o.stealth,o.description]
+        op = Op.objects.get(name=o.name)
+        if op.readiness != o.readiness:
+            inca[o.name][1] = str(o.readiness) + "\nRegular/Fast\n" + str(op.readiness)
     context = {"operations": ops,
                "spells": spells,
                "incantations": inca,

@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat;
 import static org.ectroverse.processtick.Constants.*;
 
 
-public class ProcessTickFast
+public class Vacuum
 {
     public static void main(String[] args) {
 		long startTime = System.nanoTime();
@@ -32,7 +32,7 @@ public class ProcessTickFast
 		
 		ScheduledExecutorService s = Executors.newSingleThreadScheduledExecutor();
 		Calendar calendar = Calendar.getInstance();
-		ProcessTickFast pt = new ProcessTickFast();
+		Vacuum pt = new Vacuum();
 		Runnable scheduledTask = new Runnable() {
 			public void run() {
 				pt.processTick(con);
@@ -41,7 +41,7 @@ public class ProcessTickFast
 		
 		//use this for 10 second tick
 
-		long millistoNext = HelperFunctions.startDelay(calendar, Settings.tickTime);	
+		long millistoNext = HelperFunctions.startDelay(calendar, 3600);	
 		long currentTime = System.currentTimeMillis();
 		long tickScheduleTime = currentTime + millistoNext;
 		
@@ -50,13 +50,8 @@ public class ProcessTickFast
 		java.util.Date resultdate = new java.util.Date(tickScheduleTime);
 
 		System.out.println("Current time: " + sdf.format(current));
-		System.out.println("Tick start scheduled at " + sdf.format(resultdate));
-		s.scheduleAtFixedRate(scheduledTask, millistoNext, Settings.tickTime*1000, TimeUnit.MILLISECONDS);
-		
-		
-		//use this for 10 minute tick
-		// long millistoNext = HelperFunctions.secondsToFirstOccurence600(calendar);	
-		// s.scheduleAtFixedRate(scheduledTask, millistoNext, 600*1000, TimeUnit.MILLISECONDS);
+		System.out.println("Vacuum scheduled at " + sdf.format(resultdate));
+		s.scheduleAtFixedRate(scheduledTask, millistoNext, 3600*1000, TimeUnit.MILLISECONDS);
 	}
 
 	private void processTick(Connection con){
@@ -67,29 +62,8 @@ public class ProcessTickFast
 		try {
 
 			statement = con.createStatement();
-			statement.executeUpdate("call calc_tick('fast');"); 
-		}
-		catch (SQLException ex){
-			ex.printStackTrace();
-		}
-		
-		long ops_time = System.nanoTime();
-		try {
-
-			statement = con.createStatement();
-			statement.executeUpdate("call operations(2);");
-			 
-		}
-		catch (SQLException ex){
-			ex.printStackTrace();
-		}
-		
-		long inca_time = System.nanoTime();
-		try {
-
-			statement = con.createStatement();
-			statement.executeUpdate("call incantations(2);");
-			 
+			statement.executeUpdate("vacuum;");
+			
 		}
 		catch (SQLException ex){
 			ex.printStackTrace();
@@ -97,9 +71,7 @@ public class ProcessTickFast
 
 		long endTime = System.nanoTime();
 		
-		System.out.println("Execute postgres fast tick: " + (double)(ops_time-beginTime)/1_000_000_000.0 + " sec.");
-		System.out.println("Operations time: " + (double)(inca_time-ops_time)/1_000_000_000.0 + " sec.");
-		System.out.println("Incantations time: " + (double)(endTime-inca_time)/1_000_000_000.0 + " sec.");
+		System.out.println("Vacuum: " + (double)(endTime-beginTime)/1_000_000_000.0 + " sec.");
 		
 	}
 }

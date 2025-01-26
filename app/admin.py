@@ -43,7 +43,7 @@ class SpecopsAdmin(admin.ModelAdmin):
 admin.site.register(Specops, SpecopsAdmin)
 
 class TicksLogAdmin(admin.ModelAdmin):
-    list_display = ["calc_time_ms", "error"]
+    list_display = ["calc_time_ms", "logtype", "error"]
 admin.site.register(Ticks_log, TicksLogAdmin)
 
 class UserStatusAdmin(admin.ModelAdmin):

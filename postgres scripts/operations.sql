@@ -101,7 +101,6 @@
 		where a.main_fleet = FALSE
 		and a.command_order = 6 --perform 
 		and a.ticks_remaining = 0
-		and u.agent_readiness >= 0
 		and a.id = case when '|| fleet_id ||' = 0 then a.id else '|| fleet_id ||' end
 		and (a.specop in (''Observe Planet'', ''Nuke Planet'') or (select owner_id from '|| _planets_table ||' where id = target_planet_id) is not null)
 	),
@@ -745,7 +744,7 @@
 			end
 		when e.specop = ''Steal Resources'' then
 			case when s.success >= 1.0 then 
-				''Their agents manged to steal '' || (select res from steal where sr_id = e.id) ||
+				''Their agents managed to steal '' || (select res from steal where sr_id = e.id) ||
 				case when (select choice from steal where sr_id = e.id) = 1 then '' minerals!'' 
 				when (select choice from steal where sr_id = e.id) = 2 then '' crystals!''
 				else '' ectrolium!'' end
@@ -966,7 +965,29 @@
 	';
 
 	execute _sql; 
-	 
+	
+	_end_ts   := clock_timestamp();
+  
+select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
+
+--RAISE NOTICE 'Execution time in ms = %' , _retstr;
+
+_sql := 
+'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt, logtype)
+values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, ''o'');
+';
+
+execute _sql;
+
+EXCEPTION WHEN OTHERS THEN
+_end_ts   := clock_timestamp();
+select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
+--RAISE NOTICE 'error msg is %', SQLERRM;
+_sql := 
+'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt, error, logtype)
+values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, '''|| 'SQLSTATE: ' || SQLSTATE || ' SQLERRM: ' || SQLERRM ||''', ''o'');
+';
+execute _sql;
 	 
 	END
 	$$;

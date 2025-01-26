@@ -73,30 +73,33 @@ public class ProcessTickSlow
 			ex.printStackTrace();
 		}
 		
+		long ops_time = System.nanoTime();
 		try {
 
 			statement = con.createStatement();
-			statement.executeUpdate("call operations(1,0);");
+			statement.executeUpdate("call operations(1);");
 			 
 		}
 		catch (SQLException ex){
 			ex.printStackTrace();
 		}
 		
-		long python_script1 = System.nanoTime();
-		try{
-			ProcessBuilder pb = new ProcessBuilder("python", "/code/manage.py", "process_ops");
-			Process p = pb.start();
+		long inca_time = System.nanoTime();
+		try {
 
+			statement = con.createStatement();
+			statement.executeUpdate("call incantations(1);");
+			 
 		}
-		catch (Exception e){
-			System.out.println("Exception: " +  e.getMessage());
+		catch (SQLException ex){
+			ex.printStackTrace();
 		}
 
 		long endTime = System.nanoTime();
 		
-		System.out.println("Execute postgres regular tick: " + (double)(python_script1-beginTime)/1_000_000_000.0 + " sec.");
-		System.out.println("Python script process_ops time: " + (double)(endTime-python_script1)/1_000_000_000.0 + " sec.");
+		System.out.println("Execute postgres regular tick: " + (double)(ops_time-beginTime)/1_000_000_000.0 + " sec.");
+		System.out.println("Operations time: " + (double)(inca_time-ops_time)/1_000_000_000.0 + " sec.");
+		System.out.println("Incantations time: " + (double)(endTime-inca_time)/1_000_000_000.0 + " sec.");
 		
 	}
 }

@@ -969,7 +969,7 @@ a1.owner_id = b.owner_id
 ins_news_success as (
 	insert into '|| _news_table||' ( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news, is_read, tick_number, extra_info)
 	select e.owner_id, u.empire_id, ''FJ'', current_timestamp, true, true, false, (select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'),
-        ''These fleets have returned: '' ||
+        ''These fleets have returned: '' || chr(10) ||
        	 case when bomber = 0 then '''' when bomber = 1 then bomber || '' bomber'' || chr(10) else bomber || '' bombers'' || chr(10) END ||
          case when fighter = 0 then '''' when fighter = 1 then fighter ||  '' fighter'' || chr(10) else fighter ||  '' fighters'' ||chr(10) END ||
          case when transport = 0 then '''' when transport = 1 then transport || '' transport'' || chr(10) else transport || '' transports'' ||chr(10) END ||
@@ -1203,7 +1203,7 @@ ins_news_success as (insert into '|| _news_table||'
 flag as (
 	update '|| _userstatus_table ||' u
 	set military_flag = case when military_flag != 1 then 2 else 1 end
-	from bonus where eid = u.empire_id
+	from bonus where eid = u.empire_id and pid is not null
 	)
 update '|| _artefacts_table||' a
 	set ticks_left = cast(random()*((((60.0/r.tick_time) * 
@@ -1317,7 +1317,7 @@ set size = size + ' ||
 
 || '
 where id = (select on_planet_id from '|| _artefacts_table||' where name = ''You Grow, Girl!'');
---1120
+--
 -- tree arti
 update '|| _artefacts_table||' a
 set effect1  = effect1 + (((1.2 * ((select sum(total_research_centers) from '|| _userstatus_table ||' where empire_id = a.empire_holding_id)*6)) +
@@ -1393,8 +1393,8 @@ select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.9999
 --RAISE NOTICE 'Execution time in ms = %' , _retstr;
 
 _sql := 
-'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt)
-values ('|| _round_number||' , '|| _retstr|| ', current_timestamp);
+'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt, logtype)
+values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, ''t'');
 ';
 
 execute _sql;
@@ -1404,8 +1404,8 @@ _end_ts   := clock_timestamp();
 select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
 --RAISE NOTICE 'error msg is %', SQLERRM;
 _sql := 
-'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt, error)
-values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, '''|| 'SQLSTATE: ' || SQLSTATE || ' SQLERRM: ' || SQLERRM ||''');
+'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt, error, logtype)
+values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, '''|| 'SQLSTATE: ' || SQLSTATE || ' SQLERRM: ' || SQLERRM ||''', ''t'');
 ';
 execute _sql;
   
