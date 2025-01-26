@@ -96,7 +96,7 @@
 		and ticks_remaining = 0;
 
 	--operations
-	with operation as (
+	with recursive operation as (
 		select a.id id, owner_id, a.ghost ghosts, specop, target_planet_id p_id, random, command_order c_o, 
 		(select readiness from '|| _ops_table||' o where o.name = specop) base_cost,
 		ops_penalty('||gal_nr||', specop, owner_id) penalty,
@@ -114,7 +114,7 @@
 	),
 	-- cant op empty planets
 	
-	not_empty as (
+	empty_planets as (
 		select a.id id, target_planet_id p_id, specop, owner_id oid
 		from '|| _fleet_table ||' a 
 		where a.specop not in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') 
@@ -469,6 +469,109 @@
 		  INSERT (scout, empire_id, user_id, planet_id)
 		  VALUES (1, s.empire_id, s.user_id, s.planet_id)
 	),
+	energy_surges as (
+				select op.id as op_id, op.defid 
+				from operation op
+				join prevent_neg n on n.id = op.id
+				join success s on s.s_id = op.id and s.success >= 1
+				join '|| _userstatus_table ||' u on u.id = op.defid
+				where op.specop = ''Energy Surge''
+	),
+	energy_surge_recursive AS (
+	
+	--1/2 of energy loss damages rc, 1 rc point per 1 energy, max 20% of total
+	--1/10 of energy loss damages minerals, 1 mineral per 3 energy, max 30% of total
+	--1/10 of energy loss damages crystals, 1 crystal per 6 energy, max 30% of total
+	--1/10 of energy loss damages ectrolium, 1 ectrolium per 5 energy, max 30% of total
+	--1/10 of energy loss damages solars, 1 solar per 300 energy, max 25% of total
+	--1/10 of energy loss damages fissions, 1 fission per 400 energy, max 25% of total
+
+	    select 
+				max(u.energy) energy,
+				max(u.minerals) minerals,
+				max(u.crystals) crystals, 
+				max(u.ectrolium) ectrolium, 
+				max(u.total_solar_collectors) total_solar_collectors, 
+				max(u.total_fission_reactors) total_fission_reactors,
+				max(u.research_percent_operations +	
+				u.research_points_military +		
+				u.research_points_construction +	
+				u.research_points_tech +		
+				u.research_points_energy +	
+				u.research_points_population +	
+				u.research_points_culture +	
+				u.research_points_operations +
+				u.research_points_portals) total_rc_points,
+				0 n,
+				count(*) total_ops,
+				greatest(max(u.networth), max(u.energy)) as total_damage,  
+				max(u.networth) networth,
+				min(op.id) min_op_id,
+				0 last_op_id,
+				'' '' as news,
+				0 as attid,
+				op.defid as defid
+				from operation op 
+				join prevent_neg n on n.id = op.id
+				join success s on s.s_id = op.id and s.success >= 1
+				join '|| _userstatus_table ||' u on u.id = op.defid
+				where op.specop = ''Energy Surge''
+				and (op.defid, op.id) in (select defid, min(op_id) from energy_surges group by defid)
+				group by op.defid
+  			UNION ALL
+		    SELECT 
+			0 as energy ,
+			e.minerals - cast(least(e.minerals*0.3, e.total_damage/30) as bigint) as minerals, 
+			e.crystals - cast(least(e.crystals*0.3, e.total_damage/60) as bigint) as crystals, 
+			e.ectrolium - cast(least(e.ectrolium*0.3, e.total_damage/50) as bigint) as ectrolium, 
+			e.total_solar_collectors - cast(least(total_solar_collectors*0.25, total_damage/3000) as int) as total_solar_collectors,
+			e.total_fission_reactors - cast(least(total_fission_reactors*0.25, total_damage/4000) as int) as total_fission_reactors,
+			e.total_rc_points - cast(least(total_rc_points*0.2, total_damage/2) as bigint) as total_rc_points,
+			 n+1, total_ops,
+			greatest(e.networth, 0) as total_damage, networth,
+			(select min(op.id)
+				from operation op
+				join prevent_neg n on n.id = op.id
+				join success s on s.s_id = op.id and s.success >= 1
+				where op.specop = ''Energy Surge''
+				and op.id > e.min_op_id
+				and op.defid = e.defid
+			) min_op_id,
+			e.min_op_id last_op_id,
+			''Energy lost: '' || e.energy || '' ''
+			|| ''Minerals lost: '' || cast(least(e.minerals*0.3, e.total_damage/30) as bigint) || '' ''
+			|| ''Crystals lost: '' || cast(least(e.crystals*0.3, e.total_damage/60) as bigint) || '' ''
+			|| ''Ectrolium lost: '' || cast(least(e.ectrolium*0.3, e.total_damage/50) as bigint) || '' ''
+			|| ''Solars lost: '' || cast(least(total_solar_collectors*0.25, total_damage/3000) as bigint) || '' ''
+			|| ''Fissions lost: '' || cast(least(total_fission_reactors*0.25, total_damage/4000) as bigint) || '' ''
+			|| ''Research lost: '' || cast(least(total_rc_points*0.2, total_damage/2) as bigint) || '' ''
+			as news,
+			o.owner_id attid,
+			o.defid defid 
+			FROM energy_surge_recursive e
+			join operation o on e.min_op_id = o.id
+			WHERE min_op_id is not null
+		),
+	esurge_losses as (
+		select defid,
+		greatest(0, min(r.energy)) energy,
+		greatest(0, min(r.minerals)) minerals,
+		greatest(0, min(r.crystals)) crystals,
+		greatest(0, min(r.ectrolium)) ectrolium,
+		least(1.0, (1 - (max(total_solar_collectors::float)-min(total_solar_collectors::float))/(max(total_solar_collectors::float)+1))) solars_loss,
+		least(1.0, (1 - (max(total_fission_reactors::float)-min(total_fission_reactors::float))/(max(total_fission_reactors::float)+1))) fissions_loss,
+		least(1.0, (1 - (max(total_rc_points::float)-min(total_rc_points::float))/(max(total_rc_points::float)+1))) rc_points_loss
+		from energy_surge_recursive r 
+		where n = 0 or (defid,n) in (select defid, max(n) from energy_surge_recursive group by defid)
+		group by defid
+	),
+	esurge_update2 as (
+		update '|| _planets_table ||' p
+		set fission_reactors = fission_reactors * fissions_loss,
+		solar_collectors = solar_collectors * solars_loss
+		from esurge_losses e
+		where p.owner_id = e.defid
+	),
 	
 	-- news
 		ins_news_success as (
@@ -519,6 +622,13 @@
 			else
 				''Your Ghost Ships failed!''
 			end
+		when e.specop = ''Energy Surge'' then
+			case when (select success from success where s_id = e.id) >= 1.0 then 
+				''Your Ghost Ships managed to launch a destructive wave of energy killing everything on its path! ''|| chr(10) || '' '' 
+				''Results: '' || (select news from energy_surge_recursive r where r.last_op_id = e.id)
+			else
+				''Your Ghost Ships failed!''
+			end
 		end )
 		from operation e
 		join prevent_neg n on n.id = e.id
@@ -551,13 +661,7 @@
 		from operation e
 		where penalty >= 150
 	),
-	flag_failed_empty as (
-		update '|| _userstatus_table ||' u
-		set military_flag = 1
-		from (select oid id from not_empty group by oid) f 
-		where u.id = f.id
-	),
-	not_empty_news as (
+	empty_planets_news as (
 		insert into '|| _news_table||' 
 		( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
 		is_read, tick_number, planet_id, fleet1, extra_info)
@@ -565,7 +669,7 @@
 		''GA'', current_timestamp, true, false, false, 
 		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
 		''Your Ghost Ships cannot perform '' || e.specop || '' on an empty planet!'' || chr(10) || ''Ghost Ships returning!''
-		from not_empty e
+		from empty_planets e
 	),
 	ins_news_defence as (
 		insert into '|| _news_table||' 
@@ -631,7 +735,7 @@
 		  INSERT (planet_id, empire_id, user_id, scout)
 		  VALUES (o.p_id, (select empire_id from '|| _userstatus_table ||' u where u.user_id = o.owner_id), o.owner_id, o.success)
 	),
-	send_home as (
+	/*send_home as (
 		update '|| _fleet_table ||' a
 		set i = s.i,
 		x = s.x,
@@ -657,7 +761,7 @@
 	join operation op on op.id= s.a_id
 	where a.id = s.a_id
 	and a.command_order = 7 and a.ticks_remaining = 0
-	),
+	),*/
 	deflosses as (
 		update '|| _fleet_table ||' f
 		set wizard = wizard - COALESCE((select sum(losses) from defloss where defid = f.owner_id),0),
@@ -667,11 +771,31 @@
 		where f.owner_id=o.defid and f.main_fleet=true
 	)
 	update '|| _userstatus_table ||' u
-	set military_flag = case when military_flag != 1 then 2 else 1 end,
-	psychic_readiness = psychic_readiness - COALESCE((select sum(r.fa) from r_cost r join prevent_neg n on n.id = r.id where owner_id=u.id group by owner_id),0)
-	from (select owner_id from operation group by owner_id) c 
-	where u.id = c.owner_id;
-	
+	set military_flag = case when f.id is not null then 1 when c.owner_id is not null and u2.military_flag != 1 then 2 else 1 end,
+	psychic_readiness = u.psychic_readiness - case when d.owner_id is not null then d.sm else 0 end,
+	-- e-surge part, cant have multiple updates of the same table inside 1 CTE
+	    energy = case when b.defid is not null then b.energy else u.energy end,
+		minerals =case when b.defid is not null then b.minerals else u.minerals end,
+		crystals = case when b.defid is not null then b.crystals else u.crystals end,
+		ectrolium = case when b.defid is not null then b.ectrolium else u.ectrolium end,
+		research_percent_operations = case when b.defid is not null then u.research_percent_operations * b.rc_points_loss else u.research_percent_operations end,
+		research_points_military = case when b.defid is not null then u.research_points_military * b.rc_points_loss else u.research_points_military end,
+		research_points_construction = case when b.defid is not null then u.research_points_construction * b.rc_points_loss else u.research_points_construction end,
+		research_points_tech = case when b.defid is not null then u.research_points_tech * b.rc_points_loss else u.research_points_tech end,
+		research_points_energy = case when b.defid is not null then u.research_points_energy * b.rc_points_loss else u.research_points_energy end,
+		research_points_population = case when b.defid is not null then u.research_points_population * b.rc_points_loss else u.research_points_population end,
+		research_points_culture = case when b.defid is not null then u.research_points_culture * b.rc_points_loss else u.research_points_culture end,
+		research_points_operations = case when b.defid is not null then u.research_points_operations * b.rc_points_loss else u.research_points_operations end,
+		research_points_portals = case when b.defid is not null then u.research_points_portals * b.rc_points_loss else u.research_points_portals end
+	-- e-surge part
+	from '|| _userstatus_table ||' u2
+	left join (select oid id from empty_planets group by oid) f on u2.id = f.id
+	left join (select owner_id from operation group by owner_id) c on c.owner_id = u2.id
+	left join (select owner_id, sum(r.fa) sm from r_cost r join prevent_neg n on n.id = r.id group by owner_id) d on d.owner_id = u2.id
+	left join esurge_losses b on u2.id = b.defid -- e-surge part
+	where u.id = u2.id;
+
+	/*
 	-- join main fleet
 	with recalled_fleets as 
 	(select owner_id, 
@@ -717,9 +841,9 @@
 	where 
 	a.main_fleet = false
 	and a.command_order = 5
-	and a.ticks_remaining = 0;
+	and a.ticks_remaining = 0;*/
 	';
-	--raise notice '%', _sql;
+	raise notice '%', _sql;
 	execute _sql;
 	    
  
