@@ -88,16 +88,9 @@
 	 lock table '|| _news_table||';
 	 lock table '|| _specops_table||';
 
-	--gen random
-		update '|| _fleet_table ||'
-		set random = random()*(2147483647-0)
-		where main_fleet = FALSE
-		and command_order = 7 --perform 
-		and ticks_remaining = 0;
-
 	--operations
 	with recursive operation as (
-		select a.id id, owner_id, a.ghost ghosts, specop, target_planet_id p_id, random, command_order c_o, 
+		select a.id id, owner_id, a.ghost ghosts, specop, target_planet_id p_id, cast(random()*(2147483647-0)+0 as int) random, command_order c_o, 
 		(select readiness from '|| _ops_table||' o where o.name = specop) base_cost,
 		ops_penalty('||gal_nr||', specop, owner_id) penalty,
 		(select owner_id from '|| _planets_table ||' where id = target_planet_id) defid,
@@ -147,9 +140,11 @@
 		where def.id = df.owner_id) end),0) g_def
 		
 		from operation op
-		join '|| _planets_table ||' p on (case when op.specop != ''Survey System'' then p.id = op.p_id else 
-		p.x = (select x from '|| _planets_table ||' where id = op.p_id) AND
-		p.y = (select y from '|| _planets_table ||' where id = op.p_id) end)
+        join '|| _planets_table ||' p on 
+       ((p.id =op.p_id and op.specop != ''Survey System'')
+        or (op.specop = ''Survey System''
+        and p.x = (select x from "PLANET" where id = op.p_id) and
+        p.y = (select y from "PLANET" where id = op.p_id)) )
 		where op.penalty < 150
 	),
 	--losses
@@ -237,7 +232,7 @@
 		ORDER BY r.id) c_sum
 		from r_cost r
 		join app_userstatus u on u.id = r.owner_id
-		where u.agent_readiness >= 0 --the the first op always completes
+		where u.psychic_readiness >= 0 --the the first op always completes
 		)b  
 		) c where lag_sum >= 0
 	),
@@ -296,8 +291,11 @@
 		 else ''No information was gathered about this planet!'' || '''' end
 		 ) news_info
 		from operation op
-		join '|| _planets_table ||' p on p.x = (select x from '|| _planets_table ||' where id = op.p_id) AND
-		p.y = (select y from '|| _planets_table ||' where id = op.p_id)
+        join '|| _planets_table ||' p on 
+       ((p.id =op.p_id and op.specop != ''Survey System'')
+        or (op.specop = ''Survey System''
+        and p.x = (select x from "PLANET" where id = op.p_id) and
+        p.y = (select y from "PLANET" where id = op.p_id)) )
 		join success s on s.s_id = op.id and s.p_id = p.id
 		join prevent_neg n on n.id = op.id
 		where op.specop = ''Survey System''
@@ -778,7 +776,7 @@
 		where f.owner_id=o.defid and f.main_fleet=true
 	)
 	update '|| _userstatus_table ||' u
-	set military_flag = case when f.id is not null then 1 when c.owner_id is not null and u2.military_flag != 1 then 2 else 1 end,
+	set military_flag = case when f.id is not null then 1 when c.owner_id is not null and u2.military_flag != 1 then 2 else u2.military_flag end,
 	psychic_readiness = u.psychic_readiness - case when d.owner_id is not null then d.sm else 0 end,
 	-- e-surge part, cant have multiple updates of the same table inside 1 CTE
 	    energy = case when b.defid is not null then b.energy else u.energy end,

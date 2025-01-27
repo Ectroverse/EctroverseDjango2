@@ -807,21 +807,31 @@ research_percent_operations = u.research_percent_operations + case when u.resear
 	else 0 end,	
 research_percent_portals = u.research_percent_portals + case when u.research_percent_portals < (
 	case when research_max_portals < 200 
-	then least(research_max_portals, floor(200 * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
+	then least(
+ (coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+ 200), floor(
+ (coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+ 200) * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
 	else least(
- coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
- research_max_portals, floor(
- coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
- research_max_portals * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
+ (coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+ research_max_portals), floor(
+ (coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+ research_max_portals) * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then 1 
 	when 
 	u.research_percent_portals > (
 	case when research_max_portals < 200 
-	then least(coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
-	research_max_portals, floor(200 * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
-	else least(coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
-	research_max_portals, floor(research_max_portals * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
+	then least(
+ (coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+ 200), floor(
+ (coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+ 200) * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
+	else least(
+ (coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+ research_max_portals), floor(
+ (coalesce((select effect2 from '|| _artefacts_table ||' f where name = ''Playboy Quantum'' and f.empire_holding_id = u.empire_id),0) +
+ research_max_portals) * (1 - exp((u.research_points_portals+0.0)/(-10 * u.networth+0.0)))))
 	end
 	) then -1 
 	else 0 end
@@ -1326,12 +1336,12 @@ COALESCE((select (sum(population)/10000) from '|| _userstatus_table ||' where em
 coalesce((select (1 + (sum(specop_strength)/100.0)) from '|| _specops_table ||' e where name = ''Enlightenment'' and e.user_to_id 
 in (select id from '|| _userstatus_table ||' where empire_id = a.empire_holding_id) and extra_effect = ''Research''),1)/10) * 
 coalesce((select (1 + effect1/100.0) from '|| _artefacts_table ||' f where name = ''Research Laboratory'' and f.empire_holding_id = a.empire_holding_id),1),
-effect2 = effect2 + case 
+effect2 = greatest(5, effect2 + case 
 when effect2 < least(200, floor(200 * (1 - exp((effect1+0.0)/(-10 * 
 (select sum(networth) from '|| _userstatus_table ||' where empire_id = a.empire_holding_id)+0.0))))) then 1 
 when effect2 > least(200, floor(200 * (1 - exp((effect1+0.0)/(-10 * 
 (select sum(networth) from '|| _userstatus_table ||' where empire_id = a.empire_holding_id)+0.0))))) then -1 
-else 0 end 
+else 0 end )
  where a.name = ''Resource Tree'' and empire_holding_id is not null;
 
 -- delete empty fleets

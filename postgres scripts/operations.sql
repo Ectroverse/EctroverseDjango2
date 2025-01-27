@@ -907,7 +907,7 @@
 		where u.id = c.defid
 	)
 	update '|| _userstatus_table ||' u
-	set military_flag = case when c.penalty >=150 then 1 else case when military_flag != 1 then 2 else 1 end end ,
+	set military_flag = case when c.penalty >=150 then 1 else case when military_flag != 1 then 2 else u.military_flag end end ,
 	agent_readiness = agent_readiness - COALESCE((select sum(r.fa) from r_cost r join prevent_neg n on n.id = r.id where owner_id=u.id group by owner_id),0),
 	minerals = minerals + coalesce((select sum(res) from steal where u_id = c.owner_id and choice = 1),0),
 	crystals = crystals + coalesce((select sum(res) from steal where u_id = c.owner_id and choice = 2),0),
