@@ -346,13 +346,13 @@ def send_agents_ghosts(status, agents, ghost, x, y, i, specop):
     main_fleet = Fleet.objects.get(owner=status.user.id, main_fleet=True)
     main_fleet.agent -= agents
     main_fleet.save()
-    msg = ""
+    msg = None
     rstatus = RoundStatus.objects.get(id=1)
     if fleet_time < 1 and rstatus.is_running == True:
         msg = "instant"
         if agents > 0:
             with connection.cursor() as cursor:
-                cursor.execute("call operations("+str('1')+str(agent_fleet.id)+");")
+                cursor.execute("call operations("+str('1,')+str(agent_fleet.id)+");")
 
     return msg
     
@@ -385,12 +385,12 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     main_fleet = Fleet.objects.get(owner=status.user.id, main_fleet=True)
     main_fleet.ghost -= ghost
     main_fleet.save()
-    msg = ""
+    msg = None
     if fleet_time < 1:
         if ghost > 0:
             msg = "instant"
             with connection.cursor() as cursor:
-                cursor.execute("call incantations("+str('1')+str(ghost_fleet.id)+");")
+                cursor.execute("call incantations("+str('1,')+str(ghost_fleet.id)+");")
 
     return msg
 
