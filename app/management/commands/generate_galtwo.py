@@ -64,6 +64,7 @@ def fill_system(x,y):
                                              x=x,
                                              y=y,
                                              i=i,
+                                             system=system,
                                              pos_in_system=positions[i],
                                              current_population=size*20,
                                              max_population=size*200,

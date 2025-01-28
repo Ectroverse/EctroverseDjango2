@@ -24,6 +24,11 @@ class Artefacts(models.Model):
     date_and_time = models.DateTimeField(blank=True, null=True, default=None)
     image = models.CharField(max_length=50, blank=True, null=True, default=None)
 
+class System(models.Model):
+    x = models.IntegerField()
+    y = models.IntegerField()
+    img = models.CharField(max_length=50, blank=True, null=True, default=None)
+    home = models.BooleanField(default=False)
 
 class Planet(models.Model):
     class Meta:
@@ -33,6 +38,11 @@ class Planet(models.Model):
     x = models.IntegerField()
     y = models.IntegerField()
     i = models.IntegerField() # index of planet in system, starting at 0
+    
+    system =  models.ForeignKey('System', on_delete=models.SET_NULL, blank=True, null=True, default=None)
+    
+    buildings_under_construction = models.IntegerField(default=0) 
+    
     # note that each user's status contains their home planet as a child object, the field below is more for quick checks
     home_planet = models.BooleanField(default=False) # players start with their home planet and it cannot be attacked
     pos_in_system = models.IntegerField(default=0) # used to spread out the planets around the circle better
@@ -70,6 +80,7 @@ class Planet(models.Model):
     buildings_under_construction = models.IntegerField(default=0) # number of total buildings under construction. NOTE- the C code doesnt have a field for this, it jsut calculates it each time, since it uses a single array for the buildings
 
     artefact = models.ForeignKey(Artefacts, on_delete=models.SET_NULL, blank=True, null=True, default=None)
+    
 
 
 class Empire(models.Model):
@@ -534,11 +545,7 @@ class Specops(models.Model):
     planet = models.ForeignKey(Planet, on_delete=models.SET_NULL, blank=True, null=True, default=None)
     date_and_time = models.DateTimeField(blank=True, null=True, default=None)
 
-class System(models.Model):
-    x = models.IntegerField()
-    y = models.IntegerField()
-    img = models.CharField(max_length=50, blank=True, null=True, default=None)
-    home = models.BooleanField(default=False)
+
     
 class Sensing(models.Model):
     scout = models.FloatField(default=0)

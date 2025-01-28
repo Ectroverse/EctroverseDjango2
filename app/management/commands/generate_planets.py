@@ -39,7 +39,7 @@ def fill_system(x,y):
         if sid == 5:
             simg = "/static/map/s5.png"
         
-        System.objects.create(x=x, y=y, img=simg)
+        system = System.objects.create(x=x, y=y, img=simg)
         
         bonus = random.choices(["SL","MN","CR","EC","NO"],[25,20,15,10,30])
         
@@ -63,6 +63,7 @@ def fill_system(x,y):
                                              x=x,
                                              y=y,
                                              i=i,
+                                             system=system,
                                              pos_in_system=positions[i],
                                              current_population=size*20,
                                              max_population=size*200,

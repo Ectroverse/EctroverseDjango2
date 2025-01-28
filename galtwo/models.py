@@ -32,6 +32,9 @@ class Planets(models.Model):
     x = models.IntegerField()
     y = models.IntegerField()
     i = models.IntegerField() # index of planet in system, starting at 0
+    
+    system =  models.ForeignKey('System', on_delete=models.SET_NULL, blank=True, null=True, default=None)
+    
     # note that each user's status contains their home planet as a child object, the field below is more for quick checks
     home_planet = models.BooleanField(default=False) # players start with their home planet and it cannot be attacked
     pos_in_system = models.IntegerField(default=0) # used to spread out the planets around the circle better

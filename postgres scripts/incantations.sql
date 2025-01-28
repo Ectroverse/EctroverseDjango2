@@ -97,20 +97,21 @@
 
 	--operations
 	with recursive operation as (
-		select a.id id, owner_id, a.ghost ghosts, specop, target_planet_id p_id, random, command_order c_o, 
+		select a.id id, a.owner_id, a.ghost ghosts, specop, target_planet_id p_id, p.system_id, random, command_order c_o, 
 		(select readiness from '|| _ops_table||' o where o.name = specop) base_cost,
-		ops_penalty('||gal_nr||', specop, owner_id) penalty,
+		ops_penalty('||gal_nr||', specop, a.owner_id) penalty,
 		(select owner_id from '|| _planets_table ||' where id = target_planet_id) defid,
 		(select stealth from '|| _ops_table||' o where o.name = a.specop) stealth,
 		u.empire_id
 		from '|| _fleet_table ||' a 
 		join '|| _userstatus_table ||' u on u.user_id = a.owner_id
+		join '|| _planets_table ||' p on p.id = target_planet_id
 		where a.main_fleet = FALSE
 		and a.command_order = 7 --perform 
 		and a.ticks_remaining = 0
 		and u.psychic_readiness >= 0
 		and a.id = case when '|| fleet_id ||' = 0 then a.id else '|| fleet_id ||' end
-		and (a.specop in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') or (select owner_id from '|| _planets_table ||' where id = target_planet_id) is not null)
+		and (a.specop in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') or p.owner_id is not null)
 	),
 	-- cant op empty planets
 	
@@ -149,10 +150,9 @@
 		where def.id = df.owner_id) end)),3.0),0) g_def
 		
 		from operation op
-		join '|| _planets_table ||' p on (case when op.specop != ''Survey System'' then p.id = op.p_id else 
-		p.x = (select x from '|| _planets_table ||' where id = op.p_id) AND
-		p.y = (select y from '|| _planets_table ||' where id = op.p_id) end)
-		where op.penalty < 150
+        join '|| _planets_table ||' p on 
+	   ((p.id =op.p_id and op.specop != ''Survey System'')
+        or (p.system_id = op.system_id and op.specop = ''Survey System'') )
 	),
 	--losses
 	attloss as (
