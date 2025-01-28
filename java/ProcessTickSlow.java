@@ -64,8 +64,10 @@ public class ProcessTickSlow
 		long beginTime = System.nanoTime();
 		
 		Statement statement;
+		
+		ResultSet opcount = null;
+		ResultSet inccount = null;
 		try {
-
 			statement = con.createStatement();
 			statement.executeUpdate("call calc_tick('slow');"); 
 		}
@@ -73,30 +75,38 @@ public class ProcessTickSlow
 			ex.printStackTrace();
 		}
 		
+		long ops_time = System.nanoTime();
+		System.out.println("Execute postgres regular tick: " + (double)(ops_time-beginTime)/1_000_000_000.0 + " sec.");
 		try {
 
 			statement = con.createStatement();
-			statement.executeUpdate("call operations(1,0);");
+			opcount = statement.executeQuery("SELECT count(*) as count FROM app_fleet where command_order = 6 and ticks_remaining = 0");
+			opcount.next();
+			int opc = opcount.getInt("count");
+			if (opc > 0 ){
+				statement.executeUpdate("call operations(1);");
+				long ops_end = System.nanoTime();
+				System.out.println("Operations time: " + (double)(ops_end-ops_time)/1_000_000_000.0 + " sec.");
+			}
+		
+			long inca_time = System.nanoTime();
+			inccount = statement.executeQuery("SELECT count(*) as count FROM app_fleet where command_order = 7 and ticks_remaining = 0");
+			inccount.next();
+			int inca = inccount.getInt("count");
+			if (inca > 0 ){
+				statement.executeUpdate("call incantations(1);");
+				long inca_end = System.nanoTime();
+				System.out.println("Incantations time: " + (double)(inca_end-inca_time)/1_000_000_000.0 + " sec.");
+			}
 			 
 		}
 		catch (SQLException ex){
 			ex.printStackTrace();
 		}
-		
-		long python_script1 = System.nanoTime();
-		try{
-			ProcessBuilder pb = new ProcessBuilder("python", "/code/manage.py", "process_ops");
-			Process p = pb.start();
-
-		}
-		catch (Exception e){
-			System.out.println("Exception: " +  e.getMessage());
-		}
 
 		long endTime = System.nanoTime();
 		
-		System.out.println("Execute postgres regular tick: " + (double)(python_script1-beginTime)/1_000_000_000.0 + " sec.");
-		System.out.println("Python script process_ops time: " + (double)(endTime-python_script1)/1_000_000_000.0 + " sec.");
+		System.out.println("Total time: " + (double)(endTime-beginTime)/1_000_000_000.0 + " sec.");
 		
 	}
 }

@@ -346,7 +346,7 @@ def send_agents_ghosts(status, agents, ghost, x, y, i, specop):
     main_fleet = Fleet.objects.get(owner=status.user.id, main_fleet=True)
     main_fleet.agent -= agents
     main_fleet.save()
-    msg = ""
+    msg = None
     rstatus = RoundStatus.objects.get(id=1)
     if fleet_time < 1 and rstatus.is_running == True:
         msg = "instant"
@@ -385,7 +385,7 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     main_fleet = Fleet.objects.get(owner=status.user.id, main_fleet=True)
     main_fleet.ghost -= ghost
     main_fleet.save()
-    msg = ""
+    msg = None
     if fleet_time < 1:
         if ghost > 0:
             msg = "instant"

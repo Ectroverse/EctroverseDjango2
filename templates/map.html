@@ -198,33 +198,7 @@ syst {
 			.attr("y", {{o.y}}-0.25)
 			.attr("width", circle_radius *0.6)
 			.attr("height", circle_radius *0.6)
-	{% endif %}
-	if(window.innerWidth >= 800){	
-	g.append("circle")
-		.attr("cx", "{{o.x}}")
-		.attr("cy", "{{o.y}}")
-		.attr("r", circle_radius * 0.5)
-		.style("fill", "black")
-		.style("opacity", 0)
-		{% if status.galsel == 1 %}
-		.on("click", function(){document.getElementById("clsyst").style.display="flex"; document.getElementById('syst').setAttribute('src', '/syst{{o.id}}');} );
-		{% elif status.galsel == 2 %}
-		.on("click", function(){document.getElementById("clsyst").style.display="flex"; document.getElementById('syst').setAttribute('src', '/galtwo/syst{{o.id}}');} );
-		{% endif %}
-		}
-	else{
-		g.append("circle")
-		.attr("cx", "{{o.x}}")
-		.attr("cy", "{{o.y}}")
-		.attr("r", circle_radius * 0.5)
-		.style("fill", "black")
-		.style("opacity", 0)
-		{% if status.galsel == 1 %}
-		.on("click", function(){document.getElementById("clmsyst").style.display="contents"; document.getElementById('msyst').setAttribute('src', '/msyst{{o.id}}');});
-		{% elif status.galsel == 2 %}
-		.on("click", function(){document.getElementById("clmsyst").style.display="contents"; document.getElementById('msyst').setAttribute('src', '/galtwo/msyst{{o.id}}');});
-		{% endif %}
-		}		
+	{% endif %}		
 	{% if narti.empire_holding == status.empire and narti.effect1 == o.id %}
 		g.append("circle")
 			.attr("cx", {{o.x}}+0.32)
@@ -304,7 +278,33 @@ syst {
         .attr("text-anchor", "middle")
 		.attr("allignment-baseline", "after-edge")
         .text("{{o.cover}}");
-	{% endif %}             
+	{% endif %}
+if(window.innerWidth >= 800){	
+	g.append("circle")
+		.attr("cx", "{{o.x}}")
+		.attr("cy", "{{o.y}}")
+		.attr("r", circle_radius * 0.5)
+		.style("fill", "black")
+		.style("opacity", 0)
+		{% if status.galsel == 1 %}
+		.on("click", function(){document.getElementById("clsyst").style.display="flex"; document.getElementById('syst').setAttribute('src', '/syst{{o.id}}');} );
+		{% elif status.galsel == 2 %}
+		.on("click", function(){document.getElementById("clsyst").style.display="flex"; document.getElementById('syst').setAttribute('src', '/galtwo/syst{{o.id}}');} );
+		{% endif %}
+		}
+	else{
+		g.append("circle")
+		.attr("cx", "{{o.x}}")
+		.attr("cy", "{{o.y}}")
+		.attr("r", circle_radius * 0.5)
+		.style("fill", "black")
+		.style("opacity", 0)
+		{% if status.galsel == 1 %}
+		.on("click", function(){document.getElementById("clmsyst").style.display="contents"; document.getElementById('msyst').setAttribute('src', '/msyst{{o.id}}');});
+		{% elif status.galsel == 2 %}
+		.on("click", function(){document.getElementById("clmsyst").style.display="contents"; document.getElementById('msyst').setAttribute('src', '/galtwo/msyst{{o.id}}');});
+		{% endif %}
+		}	
 	{% endwith %}
 	{% endfor %}	
 	svg.call(zoom);

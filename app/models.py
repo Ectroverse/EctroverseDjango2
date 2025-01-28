@@ -557,6 +557,11 @@ class Ticks_log(models.Model):
     calc_time_ms = models.DecimalField(max_digits=12, decimal_places=6)
     dt = models.DateTimeField()
     error = models.TextField(null=True)
+    class LogType(models.TextChoices):
+        t = 't', _('Tick')
+        o = 'o', _('Operations')
+        i = 'i', _('Incantations')
+    logtype = models.CharField(max_length=1, choices=LogType.choices, default='t')
     
 class Ops(models.Model):
     class SpecopType(models.TextChoices):

@@ -87,21 +87,16 @@
 	 lock table '|| _scouting_table||';
 	 lock table '|| _news_table||';
 	 lock table '|| _specops_table||';
-
-	--gen random
-		update '|| _fleet_table ||'
-		set random = random()*(2147483647-0)
-		where main_fleet = FALSE
-		and command_order = 7 --perform 
-		and ticks_remaining = 0;
+	 lock table '|| _artefacts_table ||';
 
 	--operations
 	with recursive operation as (
-		select a.id id, a.owner_id, a.ghost ghosts, specop, target_planet_id p_id, p.system_id, random, command_order c_o, 
+		select a.id id, a.owner_id, a.ghost ghosts, specop, target_planet_id p_id, p.system_id, cast(random()*(2147483647-0)+0 as int) random, command_order c_o, 
 		(select readiness from '|| _ops_table||' o where o.name = specop) base_cost,
 		ops_penalty('||gal_nr||', specop, a.owner_id) penalty,
 		(select owner_id from '|| _planets_table ||' where id = target_planet_id) defid,
 		(select stealth from '|| _ops_table||' o where o.name = a.specop) stealth,
+		ops_Attack('||gal_nr||', a.id, a.owner_id, a.specop) attack,
 		u.empire_id
 		from '|| _fleet_table ||' a 
 		join '|| _userstatus_table ||' u on u.user_id = a.owner_id
@@ -109,7 +104,6 @@
 		where a.main_fleet = FALSE
 		and a.command_order = 7 --perform 
 		and a.ticks_remaining = 0
-		and u.psychic_readiness >= 0
 		and a.id = case when '|| fleet_id ||' = 0 then a.id else '|| fleet_id ||' end
 		and (a.specop in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') or p.owner_id is not null)
 	),
@@ -126,33 +120,34 @@
 	),
 	success as (
 		-- success
-		select op.id s_id, p.id p_id, op.owner_id, op.specop, ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop) attack,
-		greatest((ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop) / 
-		--defence
-		(case when op.specop in (''Survey System'', ''Sense Artefact'') then 
-			(select networth from '|| _userstatus_table ||' where id = op.owner_id) / op.ghosts
-		when p.owner_id is null or p.owner_id = op.owner_id then 50 else
-		1.0 + (select ((dc.num_val * (COALESCE(df.wizard,0)) * (1.0 + 0.005 * def.research_percent_culture)) / 7)
-		from '|| _userstatus_table ||' def
-		join classes d_c on d_c.name = def.race
-		join constants dc on dc.class = d_c.id and dc.name = ''psychic_coeff''
-		join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = op.defid
-		where def.id = df.owner_id) end)),0) success,
+		select op.id s_id, p.id p_id, op.owner_id, op.specop,
+		
+		greatest(op.attack / 
+				 (case when op.specop in (''Survey System'', ''Sense Artefact'') 
+				  then greatest(1, u.networth / op.ghosts)
+				  when p.owner_id is null or p.owner_id = op.owner_id then 
+				  50 else 1.0 + (dc1.num_val * (COALESCE(df.wizard,0)) * (1.0 + 0.005 * def.research_percent_culture) / 7) end)
+				,0) success,
+		
 		-- ghost defence
-		greatest(least((ops_Attack('||gal_nr||', op.id, op.owner_id, op.specop) / 
-		--defence
-		(case when p.owner_id is null then 50 else
-		1.0 + (select dc.num_val * (COALESCE(df.ghost,0)) * (1.0 + 0.005 * def.research_percent_culture)
-		from '|| _userstatus_table ||' def
-		join classes d_c on d_c.name = def.race
-		join constants dc on dc.class = d_c.id and dc.name = ''ghost_coeff''
-		join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = op.defid
-		where def.id = df.owner_id) end)),3.0),0) g_def
+		greatest(op.attack / 
+				(case when p.owner_id is null 
+			     then 50
+			     else 1.0 + (dc2.num_val * (COALESCE(df.ghost,0)) * (1.0 + 0.005 * def.research_percent_culture)) end)
+				,0) g_def
 		
 		from operation op
-        join '|| _planets_table ||' p on 
+		join '|| _userstatus_table ||' u on u.id = op.owner_id
+		join '|| _planets_table ||' p on 
 	   ((p.id =op.p_id and op.specop != ''Survey System'')
         or (p.system_id = op.system_id and op.specop = ''Survey System'') )
+		left join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = op.defid
+		left join  '|| _userstatus_table ||' def on def.id = df.owner_id
+		left join classes d_c on d_c.name = def.race
+		left join constants dc1 on dc1.class = d_c.id and dc1.name = ''psychic_coeff''
+		left join constants dc2 on dc2.class = d_c.id and dc2.name = ''ghost_coeff''
+		where op.penalty < 150
+
 	),
 	--losses
 	attloss as (
@@ -239,7 +234,7 @@
 		ORDER BY r.id) c_sum
 		from r_cost r
 		join app_userstatus u on u.id = r.owner_id
-		where u.agent_readiness >= 0 --the the first op always completes
+		where u.psychic_readiness >= 0 --the the first op always completes
 		)b  
 		) c where lag_sum >= 0
 	),
@@ -298,8 +293,11 @@
 		 else ''No information was gathered about this planet!'' || '''' end
 		 ) news_info
 		from operation op
-		join '|| _planets_table ||' p on p.x = (select x from '|| _planets_table ||' where id = op.p_id) AND
-		p.y = (select y from '|| _planets_table ||' where id = op.p_id)
+        join '|| _planets_table ||' p on 
+       ((p.id =op.p_id and op.specop != ''Survey System'')
+        or (op.specop = ''Survey System''
+        and p.x = (select x from "PLANET" where id = op.p_id) and
+        p.y = (select y from "PLANET" where id = op.p_id)) )
 		join success s on s.s_id = op.id and s.p_id = p.id
 		join prevent_neg n on n.id = op.id
 		where op.specop = ''Survey System''
@@ -368,11 +366,6 @@
 		set current_population = current_population - b.pop_killed
 		from kill_pop b where pid = p.id 
 	),
-	add_sols as (
-		update '|| _planets_table ||' p
-		set current_population = current_population - b.pop_killed
-		from kill_pop b where pid = p.id 
-	),
 	mind_c as (
 		update '|| _planets_table ||' p
 		set owner_id = op.owner_id,
@@ -416,12 +409,20 @@
 		  INSERT (scout, empire_id, user_id, planet_id)
 		  VALUES (1, s.empire_id, s.owner_id, s.p_id)
 	),
+	mind_constr as (
+		delete from '|| _construction_table ||' 
+		where planet_id in ( 
+		select op.p_id from operation op
+		join success s on s.s_id = op.id
+		join prevent_neg n on n.id = op.id
+		where op.specop = ''Mind Control'' and s.success >= 1.0)
+	),
 	--sense
 	sense as (
 		select empire_id, user_id, fleet_id, p_id, system_id, x, y		
 		from(
 		select op.id fleet_id, op.empire_id, op.owner_id user_id, op.p_id,
-			greatest((2*random(0.2,0.8)*log10(10 * s.attack)), 1) strength,
+			greatest((2*random(0.2,0.8)*log10(10 * op.attack)), 1) strength,
 			 sqrt(1+ pow(p.x-p2.x,2) + pow(p.y-p2.y,2) ) dist,
 			 s.success,
 			 p2.id system_id, p2.x, p2.y
@@ -572,9 +573,9 @@
 		from esurge_losses e
 		where p.owner_id = e.defid
 	),
-	
+
 	-- news
-		ins_news_success as (
+	ins_news_success as (
 		insert into '|| _news_table||' 
 		( user1_id, user2_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
 		is_read, tick_number, planet_id, fleet1, extra_info)
@@ -588,7 +589,7 @@
 		else '''' end ||
 		case when dl.g_losses > 0 then ''Defender Lost: '' || dl.g_losses || '' psychics'' || chr(10) || '''' 
 		else '''' end ||
-		case when e.specop = ''Observe Planet'' then (select string_agg(i.news_info, ''
+		case when e.specop = ''Survey System'' then (select string_agg(i.news_info, ''
         '') from survey i where i.i_id = e.id)
 		when e.specop = ''Vortex Portal'' then
 			''Vortex Portal created at '' || (select x from '|| _planets_table ||' where id = e.p_id) || '','' 
@@ -710,6 +711,13 @@
 			else
 				''Your Psychics managed to defend!''
 			end
+		when e.specop = ''Energy Surge'' then
+			case when (select success from success where s_id = e.id) >= 1.0 then 
+				''Enemy Ghost Ships managed to launch a destructive wave of energy killing everything on its path! ''|| chr(10) || '' '' 
+				''Results: '' || (select news from energy_surge_recursive r where r.last_op_id = e.id)
+			else
+				''Your Psychics managed to defend!''
+			end
 		end )
 		from operation e 
 		join success s on s.s_id = e.id
@@ -771,7 +779,7 @@
 		where f.owner_id=o.defid and f.main_fleet=true
 	)
 	update '|| _userstatus_table ||' u
-	set military_flag = case when f.id is not null then 1 when c.owner_id is not null and u2.military_flag != 1 then 2 else 1 end,
+	set military_flag = case when f.id is not null then 1 when c.owner_id is not null and u2.military_flag != 1 then 2 else u2.military_flag end,
 	psychic_readiness = u.psychic_readiness - case when d.owner_id is not null then d.sm else 0 end,
 	-- e-surge part, cant have multiple updates of the same table inside 1 CTE
 	    energy = case when b.defid is not null then b.energy else u.energy end,
@@ -844,7 +852,31 @@
 	';
 	--raise notice '%', _sql;
 	execute _sql;
-	    
+	
+_end_ts   := clock_timestamp();
+  
+select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
+
+--RAISE NOTICE '%' , _sql;
+
+--RAISE NOTICE 'Execution time in ms = %' , _retstr;
+
+_sql := 
+'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt, logtype)
+values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, ''i'');
+';
+
+execute _sql;
+
+EXCEPTION WHEN OTHERS THEN
+_end_ts   := clock_timestamp();
+select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
+--RAISE NOTICE 'error msg is %', SQLERRM;
+_sql := 
+'insert into '|| _ticks_log_table||' (round, calc_time_ms, dt, error, logtype)
+values ('|| _round_number||' , '|| _retstr|| ', current_timestamp, '''|| 'SQLSTATE: ' || SQLSTATE || ' SQLERRM: ' || SQLERRM ||''', ''i'');
+';
+execute _sql;    
  
 	END
 	$$;
