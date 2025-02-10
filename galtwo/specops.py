@@ -914,10 +914,10 @@ def perform_incantation(ghost_fleet):
         empire2 = None
 
 
-        n_check1 = ["Survey System", "Sense Artefact", "Vortex Portal", "Planetary Shielding"] #no defense
+        n_check1 = ["Survey System", "Sense Artefact", "Vortex Portal", "Planetary Shielding", "Big Bang"] #no defense
         n_check2 = ["Call to Arms"] #defense if not self op
 
-        if target_planet.owner is not None and incantation not in n_check1 and not (incantation in n_check2 and target_planet.owner == user1.user):
+        if incantation not in n_check1 and target_planet.owner is not None and not (incantation in n_check2 and target_planet.owner == user1.user):
             user2 = UserStatus.objects.get(id=target_planet.owner.id)
             empire2 = user2.empire
             fleet2 = Fleet.objects.get(owner=user2.id, main_fleet=True)

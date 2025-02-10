@@ -10,6 +10,7 @@ from django.template import RequestContext
 from .helper_classes import *
 from .calculations import *
 import random
+from django.db import connection
 
 
 def give_first_planet(user, status, planet):
@@ -359,13 +360,14 @@ def send_agents_ghosts(status, agents, ghost, x, y, i, specop):
                 agent_fleet.delete()
     return msg
     
+
 def send_ghosts(status, agents, ghost, x, y, i, specop):
     x = int(x)
     y = int(y)
     i = int(i)
 
     planet = Planets.objects.filter(x=x, y=y, i=i).first()
-    if planet is None:
+    if planet is None and specop != 'Big Bang':
         return "This planet doesn't exist!"
     portal_planets = Planets.objects.filter(owner=status.user, portal=True)
     if not portal_planets:
@@ -373,7 +375,7 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     best_portal_planet = find_nearest_portal(x, y, portal_planets, status)
     min_dist = np.sqrt((best_portal_planet.x - x) ** 2 + (best_portal_planet.y - y) ** 2)
     speed = travel_speed(status)
-    fleet_time = max(0,int(np.floor(min_dist / speed)))
+    fleet_time = max(0,int(np.floor((min_dist / speed))))
     ghost_fleet = Fleet.objects.create(owner=status.user,
                          command_order=7,
                          target_planet=planet,
@@ -388,18 +390,15 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     main_fleet = Fleet.objects.get(owner=status.user.id, main_fleet=True)
     main_fleet.ghost -= ghost
     main_fleet.save()
-    msg = ""
+    msg = None
     if fleet_time < 1:
         if ghost > 0:
-            msg = perform_incantation(ghost_fleet)
-            if specop != "Call to Arms" and planet.owner.id != status.id:
-                ignore = ["Survey System"]
-                if specop not in ignore:
-                    main_fleet.ghost += ghost_fleet.ghost
-                    main_fleet.save()
-                    ghost_fleet.delete()
-    return msg
+            msg = "instant"
+            print(ghost_fleet)
+            with connection.cursor() as cursor:
+                cursor.execute("call incantations("+str('2,')+str(ghost_fleet.id)+");")
 
+    return msg
 def build_on_planet(status, planet, building_list_dict):
     # Make sure its owned by user
 

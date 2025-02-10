@@ -20,8 +20,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.template import RequestContext
 from django.db.models import Q, Max, Sum, Count
 from django.contrib.auth.decorators import user_passes_test
-from .map_settings import *
-from .helper_functions import *
+from galtwo.map_settings import *
+from galtwo.map_settings import map_size as ms2 
+from galtwo.helper_functions import *
 from .specops import *
 from .battle import *
 from app.views import NewsFeed as FeedNews
@@ -1713,28 +1714,51 @@ def syst(request, system_id, *args):
             owner = UserStatus.objects.get(user=p.owner)
             mapgen[p.id*10000]["owner"] = owner.user_name
             
-        if p.id % 10 == 1:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p00.png"
-        if p.id % 10 == 2:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p11.png"
-        if p.id % 10 == 3:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p01.png"
-        if p.id % 10 == 4:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p10.png"
-        if p.id % 10 == 5:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p03.png"
-        if p.id % 10 == 6:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p04.png"
-        if p.id % 10 == 7:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p05.png"
-        if p.id % 10 == 8:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p06.png"
-        if p.id % 10 == 9:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p07.png"
-        if p.id % 10 == 0:
-            mapgen[p.id*10000]["imgp"] = "/static/map/p08.png"
-        if p.artefact != None and p.id in scouted_planets or p.artefact != None and status.id == 1:
-            mapgen[p.id*10000]["imgp"] = p.artefact.image
+       
+        if system.img == "/static/map/DeathStar2.jpg":
+            if p.id % 10 == 1:
+                mapgen[p.id*10000]["imgp"] = "/static/map/mech_p1.jpg"
+            if p.id % 10 == 2:
+                mapgen[p.id*10000]["imgp"] = "/static/map/mech_p2.jpg"
+            if p.id % 10 == 3:
+                mapgen[p.id*10000]["imgp"] = "/static/map/mech_p3.jpg"
+            if p.id % 10 == 4:
+                mapgen[p.id*10000]["imgp"] = "/static/map/mech_p4.jpg"
+            if p.id % 10 == 5:
+                mapgen[p.id*10000]["imgp"] = "/static/map/mech_p5.jpg"
+            if p.id % 10 == 6:
+                mapgen[p.id*10000]["imgp"] = "/static/map/mech_p6.jpg"
+            if p.id % 10 == 7:
+                mapgen[p.id*10000]["imgp"] = "/static/map/mech_p7.jpg"
+            if p.id % 10 == 8:
+                mapgen[p.id*10000]["imgp"] = "/static/map/mech_p8.jpg"
+            if p.id % 10 == 9:
+                mapgen[p.id*10000]["imgp"] = "/static/map/mech_p9.jpg"
+            if p.id % 10 == 0:
+                mapgen[p.id*10000]["imgp"] = "/static/map/mech_p10.jpg"
+        else:
+            if p.id % 10 == 1:
+                mapgen[p.id*10000]["imgp"] = "/static/map/p00.png"
+            if p.id % 10 == 2:
+                mapgen[p.id*10000]["imgp"] = "/static/map/p11.png"
+            if p.id % 10 == 3:
+                mapgen[p.id*10000]["imgp"] = "/static/map/p01.png"
+            if p.id % 10 == 4:
+                mapgen[p.id*10000]["imgp"] = "/static/map/p10.png"
+            if p.id % 10 == 5:
+                mapgen[p.id*10000]["imgp"] = "/static/map/p03.png"
+            if p.id % 10 == 6:
+                mapgen[p.id*10000]["imgp"] = "/static/map/p04.png"
+            if p.id % 10 == 7:
+                mapgen[p.id*10000]["imgp"] = "/static/map/p05.png"
+            if p.id % 10 == 8:
+                mapgen[p.id*10000]["imgp"] = "/static/map/p06.png"
+            if p.id % 10 == 9:
+                mapgen[p.id*10000]["imgp"] = "/static/map/p07.png"
+            if p.id % 10 == 0:
+                mapgen[p.id*10000]["imgp"] = "/static/map/p08.png"
+            if p.artefact != None and p.id in scouted_planets or p.artefact != None and status.id == 1:
+                mapgen[p.id*10000]["imgp"] = p.artefact.image
             
         if p.i == 0:                                
             mapgen[p.id*10000]["x"] = 4
@@ -4320,6 +4344,11 @@ def specops(request, *args):
     else:
         inca_ops = race_inca
     inca = {}
+    
+    big_bang = Artefacts.objects.get(name="Unified Field Theory")
+    if big_bang.empire_holding == status.empire:
+        race_inca.append("Big Bang")
+    
     for g in Ops.objects.filter(specop_type="G"):
         if g.name in inca_ops:
             if g.name == "Sense Artefact" and Artefacts.objects.filter(on_planet__isnull=False).count() == 0:
@@ -4401,23 +4430,38 @@ def specops(request, *args):
         print(request.POST)        
         if 'incantation' in request.POST and 'unit_ammount' in request.POST:
             op = Ops.objects.get(name=request.POST['incantation'])
+            print('post x: ', request.POST['X'])
             if int(request.POST['unit_ammount']) > main_fleet.ghost:
                 msg = "You don't have that many ghost ships!"
-            elif request.POST['X'] == "" or request.POST['Y'] == "" and request.POST['I'] == "":
+            elif request.POST['X'] == "" or request.POST['Y'] == "" or (request.POST['I'] == "" and request.POST['incantation'] !=  'Big Bang') :
                 msg = "You must specify a planet!"
+            elif int(request.POST['X']) > 0 + ms2 or int(request.POST['Y']) > 0 + ms2 or int(request.POST['X']) < 0 or int(request.POST['Y']) < 0:
+                msg = "You specified coordinates out of map boundaries!" + str(ms2)
             elif get_op_penalty(status.research_percent_culture, op.tech) == -1:
                 msg = "You don't have enough culture research to perform this incantation!"
             else:
                 planet = None
-                try:
-                    planet = Planets.objects.get(x=request.POST['X'], y=request.POST['Y'], i=request.POST['I'])
-                except Planet.DoesNotExist:
-                    msg = "This planet doesn't exist"
+                if request.POST['incantation'] ==  'Big Bang':   
+                    if System.objects.filter(x=request.POST['X'], y=request.POST['Y']).exists():
+                        msg = "Thiere is allready a system present at this location!"
+                    else:
+                        request.session['error'] = "Ghost Ships sent! \n"
+                        request.session['instant'] = send_ghosts(status, 0, int(request.POST['unit_ammount']),
+                                             request.POST['X'], request.POST['Y'], '0', request.POST['incantation']) 
+                        return redirect(request.META['HTTP_REFERER'])
+                else: 
+                    try:
+                        planet = Planet.objects.get(x=request.POST['X'], y=request.POST['Y'], i = request.POST['I'])
+                    except Planet.DoesNotExist:
+                        msg = "This planet doesn't exist"
+                    
                 if planet:
-                    request.session['error'] = "Ghost Ships sent! \n" + send_ghosts(status, 0, int(request.POST['unit_ammount']),
+                    request.session['error'] = "Ghost Ships sent! \n"
+                    request.session['instant'] = send_ghosts(status, 0, int(request.POST['unit_ammount']),
                                              planet.x, planet.y, planet.i, request.POST['incantation'])
                     request.session['specop_planet_id'] = planet.id    
                     return redirect(request.META['HTTP_REFERER'])
+                    
         if 'ghost_select' in request.POST:
             ghost_select = request.POST.getlist('ghost_select')
             for ghost_id in ghost_select:

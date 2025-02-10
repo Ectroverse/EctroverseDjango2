@@ -16,16 +16,7 @@ import requests
 class Command(BaseCommand): # must be called command, use file name to name the functionality
     @transaction.atomic
     def handle(self, *args, **options):   
-        print(args)
-        if args[0] = 'redo_ops':
-            Ops.objects.all().delete()
-        else:
-            User = get_user_model()
-            user = User.objects.get(id=1)
-            UserStatus.objects.create(id=user.id, user=user)
-            TwoStatus.objects.create(id=user.id, user=user)
-            RoundStatus.objects.create(id=1)
-            StatusRound.objects.create(id=1)
+        Ops.objects.all().delete()
         for i, (key, val) in enumerate(inca_specs.items()):
             Ops.objects.create(specop_type='G',
                                 name=key,

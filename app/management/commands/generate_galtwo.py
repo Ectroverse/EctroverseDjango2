@@ -340,10 +340,10 @@ class Command(BaseCommand): # must be called command, use file name to name the 
         NewsFeed.objects.create(date_and_time = datetime.now(), message = msg)
         msg = "<@&1201666532753547315> " + str(msg)
         
-        webhook_url = "your webhook"
-        session = requests.Session()
+        #webhook_url = "your webhook"
+        #session = requests.Session()
 
-        webhook = SyncWebhook.from_url(webhook_url, session=session)
+        #webhook = SyncWebhook.from_url(webhook_url, session=session)
         
         #webhook.send(msg)
         

@@ -944,7 +944,8 @@ all_incantations = ["Survey System",
                     "Mind Control", 
                     "Vortex Portal", 
                     "Call to Arms", 
-                    "Energy Surge"]
+                    "Energy Surge",
+                    "Big Bang"]
 
 inca_specs= {"Survey System": [40, 20, 1, True, 'SS', "Your Ghost Ships will try and reveal information of all the planets in the system!"], 
     "Sense Artefact": [80, 20, 3, False, 'FA', "Your Ghost Ships will attempt to reveal the location of nearby Artefacts!"], 
@@ -954,5 +955,6 @@ inca_specs= {"Survey System": [40, 20, 1, True, 'SS', "Your Ghost Ships will try
     "Vortex Portal": [100, 60, 1, True, 'VP', "Your Ghost Ships will attempt to create a temporary portal!"], 
     "Mind Control": [120, 40, 5, True, 'MC', "Your Ghost Ships will attempt to take control of the planet!"], 
     "Energy Surge": [140, 80, 6, False, 'ES', "Your Ghost Ships will attempt a surge throughout the enemies empire, destroying infrastructure, reserves and research!"], 
+    "Big Bang": [140, 120, 1, True, 'BB', "Your Ghost Ships will attempt to alter space and time in order to bring out matter from parallel universe!"]
     
 }

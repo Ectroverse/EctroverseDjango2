@@ -48,8 +48,8 @@ BEGIN
 							 when '''||_op_type||''' = ''G'' then a.research_percent_culture end)
 		/ '||_diff||' 
 		/ (case when '||_op_penalty||' > 0 then 1 + (0.01 * '||_op_penalty||') else 1 end) 
-	from app_fleet f
-	join app_userstatus a on a.user_id = f.owner_id
+	from '|| _fleet_table ||' f
+	join '|| _userstatus_table ||' a on a.user_id = f.owner_id
 	join classes c on c.name = a.race
 	join constants att on att.class = c.id and att.name = case when '''||_op_type||''' = ''O'' then ''agent_coeff''
 																when '''||_op_type||''' = ''G'' then ''ghost_coeff'' end

@@ -40,6 +40,7 @@ arti_list = {
         "Obelisk": ["Raises readiness maximums by 15%!", 15, 0, 1, 0, "/static/arti/artimg39.png"],
         "Alchemist": ["Your psychics learn a new spell, converting Energy into a random resource!", 0, 0, 1, 0, "/static/arti/artimg18.gif"],
         "Resource Tree": ["Your scientists developed a new research, improving resource production!", 0, 0, 1, 0, "/static/arti/artimg16.gif"],
+        "Unified Field Theory": ["Your scientists have finished developing a Unified Field Theory, giving you full control over matter!", 0, 0, 1, 0, "/static/arti/AE.jpg"]
     }
 
 def artifacts():

@@ -88,10 +88,25 @@
 	 lock table '|| _news_table||';
 	 lock table '|| _specops_table||';
 	 lock table '|| _artefacts_table ||';
+	 
+	 update '|| _fleet_table ||' a
+		set command_order = 5
+		from
+		(select b.id from (
+		select a.id, row_number() over(partition by x, y order by a.id asc ) rn
+		from '|| _fleet_table ||' a 
+				where a.main_fleet = FALSE
+				and a.command_order = 7 --perform 
+				and a.ticks_remaining = 0
+				and a.id = case when '|| fleet_id ||' = 0 then a.id else -1 end
+				and a.specop in (''Big Bang'') 
+		) b where rn > 1 ) c
+		where a.id = c.id;
 
 	--operations
 	with recursive operation as (
-		select a.id id, a.owner_id, a.ghost ghosts, specop, target_planet_id p_id, p.system_id, cast(random()*(2147483647-0)+0 as int) random, command_order c_o, 
+		select a.id id, a.owner_id, a.ghost ghosts, specop, target_planet_id p_id, a.x, a.y,
+		p.system_id, cast(random()*(2147483647-0)+0 as int) random, command_order c_o, 
 		(select readiness from '|| _ops_table||' o where o.name = specop) base_cost,
 		ops_penalty('||gal_nr||', specop, a.owner_id) penalty,
 		(select owner_id from '|| _planets_table ||' where id = target_planet_id) defid,
@@ -100,19 +115,28 @@
 		u.empire_id
 		from '|| _fleet_table ||' a 
 		join '|| _userstatus_table ||' u on u.user_id = a.owner_id
-		join '|| _planets_table ||' p on p.id = target_planet_id
+		left join '|| _planets_table ||' p on p.id = target_planet_id
 		where a.main_fleet = FALSE
 		and a.command_order = 7 --perform 
 		and a.ticks_remaining = 0
 		and a.id = case when '|| fleet_id ||' = 0 then a.id else '|| fleet_id ||' end
-		and (a.specop in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') or p.owner_id is not null)
+		and (a.specop in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'', ''Big Bang'') or p.owner_id is not null)
 	),
-	-- cant op empty planets
-	
+	taken_system as (
+		select a.id id, p.id p_id, specop, a.owner_id oid
+		from '|| _fleet_table ||' a 
+		left join '|| _system_table ||' s on s.x = a.x and s.y = a.y
+		left join '|| _planets_table ||' p on p.x = a.x and p.y = a.y and p.i = 1
+		where a.specop in (''Big Bang'')  
+		and a.main_fleet = false
+		and a.command_order = 7 --perform 
+		and a.ticks_remaining = 0
+		and (s.id is not null or p.id is not null)
+	),
 	empty_planets as (
 		select a.id id, target_planet_id p_id, specop, owner_id oid
 		from '|| _fleet_table ||' a 
-		where a.specop not in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') 
+		where a.specop not in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'', ''Big Bang'') 
 		and (select owner_id from '|| _planets_table ||' where id = target_planet_id) is null
 		and a.main_fleet = false
 		and a.command_order = 7 --perform 
@@ -125,6 +149,7 @@
 		greatest(op.attack / 
 				 (case when op.specop in (''Survey System'', ''Sense Artefact'') 
 				  then greatest(1, u.networth / op.ghosts)
+				  when op.specop in (''Big Bang'') then 200000
 				  when p.owner_id is null or p.owner_id = op.owner_id then 
 				  50 else 1.0 + (dc1.num_val * (COALESCE(df.wizard,0)) * (1.0 + 0.005 * def.research_percent_culture) / 7) end)
 				,0) success,
@@ -138,7 +163,7 @@
 		
 		from operation op
 		join '|| _userstatus_table ||' u on u.id = op.owner_id
-		join '|| _planets_table ||' p on 
+		left join '|| _planets_table ||' p on 
 	   ((p.id =op.p_id and op.specop != ''Survey System'')
         or (p.system_id = op.system_id and op.specop = ''Survey System'') )
 		left join '|| _fleet_table ||' df on df.main_fleet = true and df.owner_id = op.defid
@@ -151,7 +176,7 @@
 	),
 	--losses
 	attloss as (
-		select s.s_id al_id, (case when p.owner_id is null or op.specop in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') 
+		select s.s_id al_id, (case when p.owner_id is null or op.specop in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'', ''Big Bang'') 
 		or p.owner_id = op.owner_id then 0 
 		else 
 			round(case when s.success < 2.0 
@@ -161,18 +186,17 @@
 		end) losses
 		from success s
 		join operation op on op.id = s.s_id
-		join '|| _planets_table ||' p on p.id = op.p_id 
-		where s.p_id = op.p_id
+		left join '|| _planets_table ||' p on p.id = op.p_id 
 	),
 	defloss as (
 		select s.s_id dl_id, op.defid, op.c_o, 
-		case when op.specop not in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') then
+		case when op.specop not in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'', ''Big Bang'') then
 			(case when p.owner_id is null or p.owner_id = op.owner_id then 0 else round(case 
 			when s.success < 2.0 then greatest(0, least(coalesce((select wizard from '|| _fleet_table ||' where main_fleet=true and owner_id = p.owner_id),0), 
 			(0.5 * power((0.5 * s.success ), 1.1)) * (1.0 - power((0.5 * s.success), 0.2)) * (0.75 + (0.5 / 255.0) 
 			* (op.random & 255))) * coalesce((select wizard from '|| _fleet_table ||' where main_fleet=true and owner_id = p.owner_id),0))else 0 end)
 			end) end losses,
-		case when op.specop not in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') then		
+		case when op.specop not in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'', ''Big Bang'') then		
 			(case when p.owner_id is null or p.owner_id = op.owner_id then 0 else round(case 
 			when s.success < 2.0 then greatest(0, least(coalesce((select ghost from '|| _fleet_table ||' where main_fleet=true and owner_id = p.owner_id),0), 
 			(0.5 * power((0.5 * s.success ), 1.1)) * (1.0 - power((0.5 * s.success), 0.2)) * (0.75 + (0.5 / 255.0) 
@@ -180,24 +204,27 @@
 			end) end g_losses
 		from success s
 		join operation op on op.id = s.s_id
-		join '|| _planets_table ||' p on p.id = op.p_id
-		where s.p_id = op.p_id
+		left join '|| _planets_table ||' p on p.id = op.p_id
 	),
 	
 
 	--readiness
 	p_cost as (
 		select op.id id, u.empire_id atemp, op.penalty, op.base_cost, op.specop, op.owner_id,
-		(case when p.owner_id is null then 1 else
+		(case when p.owner_id is null then 0 else
 		(select empire_id from '|| _userstatus_table ||' d where d.user_id = p.owner_id) end) demp,
+		case when ts.id is not null then 0 else 
 		(greatest((case when op.specop in (''Survey System'', ''Sense Artefact'', ''Vortex Portal'') or p.owner_id is null then 1 else 
 		(0.5*(power(((1.0+u.num_planets)/(1.0+(select num_planets from '|| _userstatus_table ||' d where d.user_id = p.owner_id))), 1.8)+
 		(power(((1.0+(select planets from '|| _empire_table ||' where id = u.empire_id))/
 		(1.0+(select planets from '|| _empire_table ||' where id =(select empire_id from '|| _userstatus_table ||' d where d.user_id = p.owner_id)))), 1.2))))
-		end), 0.75)) fa
+		end), 0.75))
+		end	as fa
 		from operation op
-		join '|| _planets_table ||' p on p.id = op.p_id
-		join '|| _userstatus_table ||' u on u.id = op.owner_id
+		left join '|| _planets_table ||' p on p.id = op.p_id
+		left join '|| _userstatus_table ||' u on u.id = op.owner_id
+		left join taken_system ts on ts.id = op.id
+		
 	),
 	
 	fa_cost as (
@@ -229,11 +256,11 @@
 	prevent_neg as (
 		select id from (
 		select b.*, lag(c_sum, 1, 100) over(partition by owner_id order by id) lag_sum from (
-		select r.* , u.agent_readiness - sum(fa )
+		select r.* , u.psychic_readiness - sum(fa )
 		OVER (PARTITION BY u.id
 		ORDER BY r.id) c_sum
 		from r_cost r
-		join app_userstatus u on u.id = r.owner_id
+		join '|| _userstatus_table ||' u on u.id = r.owner_id
 		where u.psychic_readiness >= 0 --the the first op always completes
 		)b  
 		) c where lag_sum >= 0
@@ -573,12 +600,82 @@
 		from esurge_losses e
 		where p.owner_id = e.defid
 	),
+	big_bang_create_system as(
+		insert into '|| _system_table ||' (x,y,img,home)
+		select op.x, op.y, ''/static/map/DeathStar2.jpg'',false
+		from operation op
+		join prevent_neg n on n.id = op.id
+		join success s on s.s_id = op.id and s.success >= 1
+		left join taken_system ts on ts.id = op.id
+		where op.specop = ''Big Bang''
+		and ts.id is null
+		
+		/*select least(greatest(s.success/2,1),9)::int, 	
+		case when op.attack < 3000000 then (pow(ln(greatest(s.success,2)),1.2)*200)::int
+		else (ln(greatest(s.success,2))*250)::int end,
+		op.attack, s.success, ''success big bang''
+		from operation op
+		join prevent_neg n on n.id = op.id
+		join success s on s.s_id = op.id and s.success >= 1
+		where op.specop = ''Big Bang''*/
 
+		),
+	
+	big_bang_recursive as 
+	   (
+			select b.*, 
+			   (original_size * (0.75 + (0.5 / 255.0) * (random()*255 )))::int as modified_random_size
+				 from (
+				select op.x, op.y, 1 planet,
+				least(greatest(s.success/2,1),9)::int planet_ammount, 	
+				(case when op.attack < 3000000 then (pow(ln(greatest(s.success,2)),1.2)*200)
+				else (ln(greatest(s.success,2))*250) end) original_size,
+				op.owner_id
+				from operation op
+				left join taken_system ts on ts.id = op.id
+				join prevent_neg n on n.id = op.id
+				join success s on s.s_id = op.id and s.success >= 1
+				where op.specop = ''Big Bang'' and ts.id is null
+			) b
+			union all
+
+			select c.*, 
+			   (original_size * (0.75 + (0.5 / 255.0) * (random()*255 )))::int as modified_random_size
+			from (
+				select r.x, r.y, (r.planet + 1) planet, r.planet_ammount, r.original_size, r.owner_id
+				from big_bang_recursive r
+				where  planet < planet_ammount
+			) c
+	   ),
+		
+	big_bang_insert as (
+		INSERT INTO '|| _planets_table ||'
+		(
+			x, y, i, 
+			home_planet, pos_in_system, size,
+			current_population, max_population, protection, 
+			overbuilt, overbuilt_percent, bonus_solar, bonus_mineral,
+			bonus_crystal, bonus_ectrolium, bonus_fission, 
+			solar_collectors, fission_reactors, mineral_plants,
+			crystal_labs, refinement_stations, cities, research_centers,
+			defense_sats, shield_networks, portal, portal_under_construction, 
+			total_buildings, buildings_under_construction, owner_id)
+	   select r.x, r.y, r.planet,
+			FALSE, 1, r.modified_random_size,
+			r.modified_random_size*20, r.modified_random_size*200, 0, 
+			0, 0, 0, 0, 
+			0, 0, 0,
+			0, 0, 0, 
+			0, 0, 0, 0, 
+			0, 0, FALSE, FALSE, 
+			0, 0, r.owner_id
+	   from big_bang_recursive r
+	),
 	-- news
 	ins_news_success as (
 		insert into '|| _news_table||' 
 		( user1_id, user2_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
-		is_read, tick_number, planet_id, fleet1, extra_info)
+		is_read, tick_number, planet_id, fleet1, extra_info, fleet2)
 		select e.owner_id, (select owner_id from '|| _planets_table ||' where id = e.p_id),   
 		(select empire_id from '|| _userstatus_table ||' u where u.user_id = e.owner_id), 
 		''GA'', current_timestamp, true, true, false, 
@@ -630,12 +727,22 @@
 			else
 				''Your Ghost Ships failed!''
 			end
-		end )
+		when e.specop = ''Big Bang'' and t.id is null then
+			case when (select success from success where s_id = e.id) >= 1.0 then 
+				''Your Ghost Ships managed to create a new system!''
+			else
+				''Your Ghost Ships failed!''
+			end
+		end ),
+		case when e.specop = ''Big Bang'' and t.id is null then
+			e.x::text ||'',''|| e.y::text
+		end
 		from operation e
+		left join taken_system t on t.id = e.id
 		join prevent_neg n on n.id = e.id
 		join attloss al on al.al_id = e.id
 		join defloss dl on dl.dl_id = e.id
-		where n.id = e.id
+		where t.id is null
 	),
 	ins_no_pr_news as (
 		insert into '|| _news_table||' 
@@ -671,6 +778,17 @@
 		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
 		''Your Ghost Ships cannot perform '' || e.specop || '' on an empty planet!'' || chr(10) || ''Ghost Ships returning!''
 		from empty_planets e
+	),
+	taken_system_news as (
+		insert into '|| _news_table||' 
+		( user1_id, empire1_id, news_type, date_and_time, is_personal_news, is_empire_news,
+		is_read, tick_number, planet_id, fleet1, extra_info)
+		select e.oid, (select empire_id from '|| _userstatus_table ||' u where u.user_id = e.oid), 
+		''GA'', current_timestamp, true, false, false, 
+		(select tick_number from '|| _roundstatus||' where round_number = '|| _round_number||'), e.p_id, e.specop,
+		''Your Ghost Ships cannot perform '' || e.specop || '' on an existing system!'' || chr(10) || ''Ghost Ships returning!''
+		from taken_system e
+		join prevent_neg n on e.id = n.id
 	),
 	ins_news_defence as (
 		insert into '|| _news_table||' 
@@ -779,7 +897,7 @@
 		where f.owner_id=o.defid and f.main_fleet=true
 	)
 	update '|| _userstatus_table ||' u
-	set military_flag = case when f.id is not null then 1 when c.owner_id is not null and u2.military_flag != 1 then 2 else u2.military_flag end,
+	set military_flag = case when f.id is not null or ts.id is not null then 1 when c.owner_id is not null and u2.military_flag != 1 then 2 else u2.military_flag end,
 	psychic_readiness = u.psychic_readiness - case when d.owner_id is not null then d.sm else 0 end,
 	-- e-surge part, cant have multiple updates of the same table inside 1 CTE
 	    energy = case when b.defid is not null then b.energy else u.energy end,
@@ -798,8 +916,10 @@
 	-- e-surge part
 	from '|| _userstatus_table ||' u2
 	left join (select oid id from empty_planets group by oid) f on u2.id = f.id
+	left join (select oid id from taken_system group by oid) ts on u2.id = ts.id
 	left join (select owner_id from operation group by owner_id) c on c.owner_id = u2.id
-	left join (select owner_id, sum(r.fa) sm from r_cost r join prevent_neg n on n.id = r.id group by owner_id) d on d.owner_id = u2.id
+	left join (select owner_id, sum(r.fa) sm from r_cost r 
+				join prevent_neg n on n.id = r.id group by owner_id) d on d.owner_id = u2.id
 	left join esurge_losses b on u2.id = b.defid -- e-surge part
 	where u.id = u2.id;
 
@@ -848,8 +968,39 @@
 	where 
 	a.main_fleet = false
 	and a.command_order = 5
-	and a.ticks_remaining = 0;
-	';
+	and a.ticks_remaining = 0
+	;
+	
+	update '|| _planets_table ||' p
+	set system_id = b.system_id
+	from 
+	(select p.id, s.id system_id 
+	from '|| _planets_table ||' p
+	join '|| _system_table ||' s on s.x= p.x and s.y = p.y
+	where system_id is null
+	) b
+	where p.id = b.id;
+	
+	-- give news a planet id after system creation
+	update '|| _news_table||' a
+	set planet_id = p_id
+	from 
+	( 
+	select p.id p_id, a3.id news_id from
+		(
+		select a2.id,
+			(regexp_matches(fleet2, ''[^,]+''))[1]::int x,
+			substring((regexp_matches(fleet2,''\,\d+''))[1],2)::int y
+			from '|| _news_table||' a2
+			where news_type = ''GA''
+			and fleet2 is not null and fleet1 =''Big Bang''
+			and planet_id is null
+		) a3
+		join '|| _planets_table ||' p on p.x = a3.x and p.y = a3.y and p.i = 1
+	) b
+	where a.id = b.news_id;
+	'
+	;
 	--raise notice '%', _sql;
 	execute _sql;
 	
@@ -857,7 +1008,7 @@ _end_ts   := clock_timestamp();
   
 select to_char(100 * extract(epoch FROM _end_ts - _start_ts), 'FM9999999999.99999999') into _retstr;
 
---RAISE NOTICE '%' , _sql;
+RAISE NOTICE '%' , _sql;
 
 --RAISE NOTICE 'Execution time in ms = %' , _retstr;
 

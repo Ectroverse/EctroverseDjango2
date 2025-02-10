@@ -362,7 +362,7 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     i = int(i)
 
     planet = Planet.objects.filter(x=x, y=y, i=i).first()
-    if planet is None:
+    if planet is None and specop != 'Big Bang':
         return "This planet doesn't exist!"
     portal_planets = Planet.objects.filter(owner=status.user, portal=True)
     if not portal_planets:
@@ -389,6 +389,7 @@ def send_ghosts(status, agents, ghost, x, y, i, specop):
     if fleet_time < 1:
         if ghost > 0:
             msg = "instant"
+            print(ghost_fleet)
             with connection.cursor() as cursor:
                 cursor.execute("call incantations("+str('1,')+str(ghost_fleet.id)+");")
 
