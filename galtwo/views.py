@@ -4346,11 +4346,10 @@ def specops(request, *args):
     inca = {}
     
     big_bang = Artefacts.objects.get(name="Unified Field Theory")
-    if big_bang.empire_holding == status.empire:
-        race_inca.append("Big Bang")
+
     
     for g in Ops.objects.filter(specop_type="G"):
-        if g.name in inca_ops:
+        if g.name in inca_ops or (g.name == "Big Bang" and big_bang.empire_holding == status.empire):
             if g.name == "Sense Artefact" and Artefacts.objects.filter(on_planet__isnull=False).count() == 0:
                 continue
             else:

@@ -4849,16 +4849,12 @@ def specops(request, *args):
     inca = {}
     
     big_bang = Artefacts.objects.get(name="Unified Field Theory")
-    if big_bang.empire_holding == status.empire:
-        inca_ops.append("Big Bang")
-        
-        
     
     print("inca ops: ",  inca_ops)
     for g in Ops.objects.filter(specop_type="G"):
         if roundstatus.tick_number < 1008 and g.name not in off_ops or roundstatus.tick_number >= 1008:
             print(g.name)
-            if g.name in inca_ops:
+            if g.name in inca_ops or (g.name == "Big Bang" and big_bang.empire_holding == status.empire):
                 if g.name == "Sense Artefact" and Artefacts.objects.filter(on_planet__isnull=False).count() == 0:
                     continue
                 else:
@@ -4949,7 +4945,7 @@ def specops(request, *args):
             elif request.POST['X'] == "" or request.POST['Y'] == "" or (request.POST['I'] == "" and request.POST['incantation'] !=  'Big Bang') :
                 msg = "You must specify a planet!"
             elif int(request.POST['X']) > 0 + map_size or int(request.POST['Y']) > 0 + map_size or int(request.POST['X']) < 0 or int(request.POST['Y']) < 0:
-                msg = "You specified coordinates out of map boundaries! " + map_size
+                msg = "You specified coordinates out of map boundaries! " 
                 
             elif get_op_penalty(status.research_percent_culture, op.tech) == -1:
                 msg = "You don't have enough culture research to perform this incantation!"
